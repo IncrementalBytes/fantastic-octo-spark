@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.Utils;
+package net.frostedbytes.android.cloudycurator.utils;
 
 import android.util.Log;
 import java.util.Locale;

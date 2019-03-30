@@ -1,20 +1,74 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     compileSdkVersion 28
-    defaultConfig {
-        applicationId "net.frostedbytes.android.cloudycurator"
-        minSdkVersion 24
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    def versionPropsFile = rootProject.file('version.properties')
+
+    if (versionPropsFile.canRead()) {
+        Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionPropsFile))
+
+        def majorVersionProperty = versionProps['MAJOR_VERSION'].toInteger()
+        def minorVersionProperty = versionProps['MINOR_VERSION'].toInteger()
+        def versionCodeProperty = versionProps['VERSION_CODE'].toInteger()
+        def updatedBuildVersion = versionProps['BUILD_VERSION'].toInteger() + 1
+
+        versionProps['BUILD_VERSION'] = updatedBuildVersion.toString()
+        versionProps.store(versionPropsFile.newWriter(), null)
+
+        def updatedVersionName = majorVersionProperty + "." + minorVersionProperty + "." + versionCodeProperty + "." + updatedBuildVersion
+
+        defaultConfig {
+            applicationId "net.frostedbytes.android.cloudycurator"
+            minSdkVersion 24
+            targetSdkVersion 28
+            versionCode versionCodeProperty
+            versionName updatedVersionName
+            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        }
+    } else {
+        throw new GradleException("Could not read version.properties!")
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "${variant.applicationId}-${variant.name}-${variant.versionName}.apk"
+        }
+    }
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
     }
     buildTypes {
         release {
+            debuggable false
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            buildConfigField 'Boolean', 'enableCrashlytics', 'true'
+        }
+        debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField 'Boolean', 'enableCrashlytics', 'false'
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE-FIREBASE.txt'
+        exclude 'META-INF/NOTICE'
+    }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
         }
     }
     compileOptions {
@@ -36,6 +90,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
     // Firebase
     implementation 'com.google.firebase:firebase-auth:16.2.0'
+    implementation 'com.google.firebase:firebase-database:16.1.0'
+    implementation 'com.google.firebase:firebase-ml-vision:19.0.3'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

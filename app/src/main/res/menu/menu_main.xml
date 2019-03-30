@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group>
+        <item
+            android:id="@+id/navigation_menu_home"
+            android:icon="@drawable/ic_home_dark"
+            android:title="@string/menu_home" />
+        <item
+            android:id="@+id/navigation_menu_retrieve"
+            android:icon="@drawable/ic_retrieve_dark"
+            android:title="@string/menu_upload" />
+    </group>
+
+    <group>
+        <item
+            android:id="@+id/navigation_menu_logout"
+            android:icon="@drawable/ic_logout_dark"
+            android:title="@string/menu_logout" />
+    </group>
+
+</menu>

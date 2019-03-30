@@ -34,7 +34,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import net.frostedbytes.android.cloudycurator.Utils.LogUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 public class SignInActivity extends BaseActivity implements OnClickListener {
 

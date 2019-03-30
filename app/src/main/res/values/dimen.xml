@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="activity_horizontal_margin">8dp</dimen>
+    <dimen name="activity_vertical_margin">8dp</dimen>
     <dimen name="default_view_margin">8dp</dimen>
+    <dimen name="nav_header_vertical_spacing">8dp</dimen>
+    <dimen name="nav_header_height">136dp</dimen>
+    <dimen name="image_height_thumbnail">@android:dimen/thumbnail_height</dimen>
+    <dimen name="image_width_thumbnail">@android:dimen/thumbnail_width</dimen>
+    <dimen name="image_height_minimum">1px</dimen>
+    <dimen name="image_width_minimum">1px</dimen>
 </resources>

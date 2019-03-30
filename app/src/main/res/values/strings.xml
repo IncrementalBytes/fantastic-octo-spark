@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">Cloudy Curator</string>
+    <string name="ok">OK</string>
+    <string name="permission_denied_explanation">Permissions needed for full app functionality.</string>
+    <string name="take_photo">Take Photo!</string>
+    <string name="enter_isbn">Enter ISBN:</string>
+    <string name="or">OR</string>
+    <string name="image_preview">Image containing an ISBN for scanning.</string>
+    <string name="retrieve_book">Retrieve Book</string>
+    <string name="title_main">Main</string>
+    <string name="title_author">Author</string>
+    <string name="title_book">Book</string>
+    <string name="title_upload">Upload</string>
+    <string name="desc_main_list">Main List</string>
+    <string name="placeholder">TBD</string>
+    <string name="menu_home">Home</string>
+    <string name="menu_upload">Upload</string>
+    <string name="menu_logout">Logout</string>
+    <string name="logout_message">Are you sure you want to log out of the app?</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="hint_isbn_number">ISBN number</string>
 </resources>

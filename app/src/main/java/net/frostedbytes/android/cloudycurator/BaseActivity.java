@@ -19,12 +19,15 @@ package net.frostedbytes.android.cloudycurator;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import net.frostedbytes.android.cloudycurator.Utils.LogUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 public class BaseActivity extends AppCompatActivity {
 
+    public static final String ARG_EMAIL = "email";
     public static final String ARG_USER_ID = "user_id";
+    public static final String ARG_USER_NAME = "user_name";
     public static final String DEFAULT_DATE = "0000-01-01";
+    public static final String DEFAULT_ISBN = "000000000";
     public static final String DEFAULT_ID = "000000000-0000-0000-0000-000000000000";
 
     public static final String BASE_TAG = "CloudyCurator::";
