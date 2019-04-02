@@ -7,9 +7,9 @@
             android:icon="@drawable/ic_home_dark"
             android:title="@string/menu_home" />
         <item
-            android:id="@+id/navigation_menu_retrieve"
-            android:icon="@drawable/ic_retrieve_dark"
-            android:title="@string/menu_upload" />
+            android:id="@+id/navigation_menu_add"
+            android:icon="@drawable/ic_add_dark"
+            android:title="@string/menu_add" />
     </group>
 
     <group>

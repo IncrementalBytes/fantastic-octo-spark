@@ -11,9 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
+import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -27,20 +30,21 @@ public class MainListFragment extends Fragment {
 
         void onMainListPopulated(int size);
 
-        void onMainListItemSelected();
+        void onMainListItemSelected(UserBook userBook);
     }
 
     private OnMainListListener mCallback;
 
     private RecyclerView mRecyclerView;
 
-    private List<String> mMainSummaries;
+    private ArrayList<UserBook> mUserBookList;
 
-    public static MainListFragment newInstance() {
+    public static MainListFragment newInstance(ArrayList<UserBook> userBookList) {
 
         LogUtils.debug(TAG, "++newInstance()");
         MainListFragment fragment = new MainListFragment();
         Bundle args = new Bundle();
+        args.putParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST, userBookList);
         fragment.setArguments(args);
         return fragment;
     }
@@ -62,6 +66,7 @@ public class MainListFragment extends Fragment {
 
         Bundle arguments = getArguments();
         if (arguments != null) {
+            mUserBookList = arguments.getParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST);
         } else {
             LogUtils.error(TAG, "Arguments were null.");
         }
@@ -103,59 +108,59 @@ public class MainListFragment extends Fragment {
      */
     private void updateUI() {
 
-        if (mMainSummaries != null && mMainSummaries.size() > 0) {
+        if (mUserBookList != null && mUserBookList.size() > 0) {
             LogUtils.debug(TAG, "++updateUI()");
-            MainSummaryAdapter mainAdapter = new MainSummaryAdapter(mMainSummaries);
-            mRecyclerView.setAdapter(mainAdapter);
-            mCallback.onMainListPopulated(mainAdapter.getItemCount());
+            UserBookAdapter userBookAdapter = new UserBookAdapter(mUserBookList);
+            mRecyclerView.setAdapter(userBookAdapter);
+            mCallback.onMainListPopulated(userBookAdapter.getItemCount());
         } else {
             mCallback.onMainListPopulated(0);
         }
     }
 
     /**
-     * Adapter class for MatchSummary objects
+     * Adapter class for UserBook objects
      */
-    private class MainSummaryAdapter extends RecyclerView.Adapter<MainSummaryHolder> {
+    private class UserBookAdapter extends RecyclerView.Adapter<UserBookHolder> {
 
-        private final List<String> mMainSummaries;
+        private final List<UserBook> mUserBookList;
 
-        MainSummaryAdapter(List<String> MainSummaries) {
+        UserBookAdapter(List<UserBook> userBookList) {
 
-            mMainSummaries = MainSummaries;
+            mUserBookList = userBookList;
         }
 
         @NonNull
         @Override
-        public MainSummaryHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public UserBookHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            return new MainSummaryHolder(layoutInflater, parent);
+            return new UserBookHolder(layoutInflater, parent);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MainSummaryHolder holder, int position) {
+        public void onBindViewHolder(@NonNull UserBookHolder holder, int position) {
 
-            String MainSummary = mMainSummaries.get(position);
-            holder.bind(MainSummary);
+            UserBook userBook = mUserBookList.get(position);
+            holder.bind(userBook);
         }
 
         @Override
         public int getItemCount() {
-            return mMainSummaries.size();
+            return mUserBookList.size();
         }
     }
 
     /**
-     * Holder class for MainSummary objects
+     * Holder class for UserBook objects
      */
-    private class MainSummaryHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    private class UserBookHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final TextView mTitleTextView;
 
-        private String mMainSummary;
+        private UserBook mUserBook;
 
-        MainSummaryHolder(LayoutInflater inflater, ViewGroup parent) {
+        UserBookHolder(LayoutInflater inflater, ViewGroup parent) {
             super(inflater.inflate(R.layout.main_item, parent, false));
 
             mTitleTextView = itemView.findViewById(R.id.main_item_title);
@@ -163,16 +168,18 @@ public class MainListFragment extends Fragment {
             itemView.setOnClickListener(this);
         }
 
-        void bind(String MainSummary) {
+        void bind(UserBook userBook) {
 
-            mMainSummary = MainSummary;
+            mUserBook = userBook;
+
+            mTitleTextView.setText(mUserBook.Title);
         }
 
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++MainSummaryHolder::onClick(View)");
-            mCallback.onMainListItemSelected();
+            LogUtils.debug(TAG, "++BookHolder::onClick(View)");
+            mCallback.onMainListItemSelected(mUserBook);
         }
     }
 }

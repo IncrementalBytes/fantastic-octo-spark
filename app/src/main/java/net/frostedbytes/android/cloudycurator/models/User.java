@@ -1,6 +1,6 @@
 package net.frostedbytes.android.cloudycurator.models;
 
-import com.google.firebase.database.Exclude;
+import com.google.firebase.firestore.Exclude;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 
@@ -25,6 +25,8 @@ public class User {
     public User() {
 
         this.Books = new HashMap<>();
+        this.Email = "";
+        this.FullName = "";
         this.Id = BaseActivity.DEFAULT_ID;
     }
 }
