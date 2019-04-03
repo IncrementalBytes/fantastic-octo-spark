@@ -29,7 +29,6 @@ public class MainListFragment extends Fragment {
     public interface OnMainListListener {
 
         void onMainListPopulated(int size);
-
         void onMainListItemSelected(UserBook userBook);
     }
 
@@ -41,7 +40,7 @@ public class MainListFragment extends Fragment {
 
     public static MainListFragment newInstance(ArrayList<UserBook> userBookList) {
 
-        LogUtils.debug(TAG, "++newInstance()");
+        LogUtils.debug(TAG, "++newInstance(%d)", userBookList.size());
         MainListFragment fragment = new MainListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST, userBookList);
@@ -84,7 +83,6 @@ public class MainListFragment extends Fragment {
         mRecyclerView.setLayoutManager(manager);
 
         updateUI();
-
         return view;
     }
 
@@ -93,6 +91,7 @@ public class MainListFragment extends Fragment {
         super.onDestroy();
 
         LogUtils.debug(TAG, "++onDestroy()");
+        mUserBookList = null;
     }
 
     @Override
@@ -108,13 +107,13 @@ public class MainListFragment extends Fragment {
      */
     private void updateUI() {
 
-        if (mUserBookList != null && mUserBookList.size() > 0) {
+        if (mUserBookList == null || mUserBookList.size() == 0) {
+            mCallback.onMainListPopulated(0);
+        } else {
             LogUtils.debug(TAG, "++updateUI()");
             UserBookAdapter userBookAdapter = new UserBookAdapter(mUserBookList);
             mRecyclerView.setAdapter(userBookAdapter);
             mCallback.onMainListPopulated(userBookAdapter.getItemCount());
-        } else {
-            mCallback.onMainListPopulated(0);
         }
     }
 
@@ -156,14 +155,16 @@ public class MainListFragment extends Fragment {
      */
     private class UserBookHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
+        private final TextView mAuthorsTextView;
         private final TextView mTitleTextView;
 
         private UserBook mUserBook;
 
         UserBookHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.main_item, parent, false));
+            super(inflater.inflate(R.layout.book_item, parent, false));
 
-            mTitleTextView = itemView.findViewById(R.id.main_item_title);
+            mAuthorsTextView = itemView.findViewById(R.id.book_item_authors);
+            mTitleTextView = itemView.findViewById(R.id.book_item_title);
 
             itemView.setOnClickListener(this);
         }
@@ -172,6 +173,7 @@ public class MainListFragment extends Fragment {
 
             mUserBook = userBook;
 
+            mAuthorsTextView.setText(mUserBook.Authors.get(0));
             mTitleTextView.setText(mUserBook.Title);
         }
 

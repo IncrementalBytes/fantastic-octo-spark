@@ -27,57 +27,71 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class UserBook implements Parcelable {
+public class CloudyBook implements Parcelable {
 
-    public long AddedDate;
+    @Exclude
+    public static final String ROOT = "CloudyBooks";
 
     public List<String> Authors;
 
-    public boolean HasRead;
+    public List<String> Categories;
+
+    public long CreatedDate;
 
     @Exclude
     public String ISBN;
 
-    public boolean IsOwned;
+    public String PublishedDate;
 
     public String Title;
 
     public long UpdatedDate;
 
-    public UserBook() {
+    public String VolumeId;
 
-        AddedDate = 0;
+    public CloudyBook() {
+
         Authors = new ArrayList<>();
-        HasRead = false;
+        Categories = new ArrayList<>();
+        CreatedDate = 0;
         ISBN = BaseActivity.DEFAULT_ISBN;
-        IsOwned = false;
+        PublishedDate = "";
         Title = "";
         UpdatedDate = 0;
+        VolumeId = "";
     }
 
-    protected UserBook(Parcel in) {
+    protected CloudyBook(Parcel in) {
 
-        AddedDate = in.readLong();
         Authors = new ArrayList<>();
         in.readList(Authors, String.class.getClassLoader());
-        HasRead = in.readByte() != 0;
+        Categories = new ArrayList<>();
+        in.readList(Categories, String.class.getClassLoader());
+        CreatedDate = in.readLong();
         ISBN = in.readString();
-        IsOwned = in.readByte() != 0;
+        PublishedDate = in.readString();
         Title = in.readString();
         UpdatedDate = in.readLong();
+        VolumeId = in.readString();
     }
 
-    public static final Creator<UserBook> CREATOR = new Creator<UserBook>() {
+    public static final Creator<CloudyBook> CREATOR = new Creator<CloudyBook>() {
 
         @Override
-        public UserBook createFromParcel(Parcel in) { return new UserBook(in); }
+        public CloudyBook createFromParcel(Parcel in) {
+            return new CloudyBook(in);
+        }
 
         @Override
-        public UserBook[] newArray(int size) { return new UserBook[size]; }
+        public CloudyBook[] newArray(int size) {
+            return new CloudyBook[size];
+        }
     };
 
     @Override
-    public int describeContents() { return 0; }
+    public int describeContents() {
+        return 0;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -90,40 +104,39 @@ public class UserBook implements Parcelable {
             return false;
         }
 
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        UserBook userBook = (UserBook) o;
-        return HasRead == userBook.HasRead && IsOwned == userBook.IsOwned;
+        CloudyBook cloudyBook = (CloudyBook) o;
+        return Objects.equals(ISBN, cloudyBook.ISBN) && Objects.equals(Title, cloudyBook.Title);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), HasRead, IsOwned);
+        return Objects.hash(ISBN, Title);
     }
 
     @Override
     public String toString() {
 
-        return "UserBook{" +
-            "HasRead=" + HasRead +
+        return "CloudyBook{" +
+            "CreatedDate=" + CreatedDate +
             ", ISBN='" + ISBN + '\'' +
-            ", IsOwned=" + IsOwned +
+            ", PublishedDate='" + PublishedDate + '\'' +
             ", Title='" + Title + '\'' +
+            ", UpdatedDate=" + UpdatedDate +
+            ", VolumeId='" + VolumeId + '\'' +
             '}';
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
 
-        dest.writeLong(AddedDate);
         dest.writeList(Authors);
-        dest.writeByte((byte) (HasRead ? 1 : 0));
+        dest.writeList(Categories);
+        dest.writeLong(CreatedDate);
         dest.writeString(ISBN);
-        dest.writeByte((byte) (IsOwned ? 1 : 0));
+        dest.writeString(PublishedDate);
         dest.writeString(Title);
         dest.writeLong(UpdatedDate);
+        dest.writeString(VolumeId);
     }
 }

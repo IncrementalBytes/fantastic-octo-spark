@@ -5,70 +5,71 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/book_text_title"
+        android:id="@+id/userbook_text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/title"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/userbook_text_author"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/book_text_title_value"
+        android:id="@+id/userbook_text_title_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/placeholder"
-        app:layout_constraintBottom_toBottomOf="@+id/book_text_title"
+        app:layout_constraintBottom_toBottomOf="@+id/userbook_text_title"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/book_text_title" />
+        app:layout_constraintTop_toTopOf="@+id/userbook_text_title" />
 
     <TextView
-        android:id="@+id/book_text_author"
+        android:id="@+id/userbook_text_author"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/author"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_text_title" />
+        app:layout_constraintBottom_toTopOf="@+id/userbook_text_isbn"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/book_text_author_value"
+        android:id="@+id/userbook_text_author_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/placeholder"
-        app:layout_constraintBottom_toBottomOf="@id/book_text_author"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/book_text_author" />
+        app:layout_constraintTop_toTopOf="@+id/userbook_text_author"
+        app:layout_constraintBottom_toBottomOf="@+id/userbook_text_author" />
 
     <TextView
-        android:id="@+id/book_text_isbn"
+        android:id="@+id/userbook_text_isbn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/isbn"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/book_text_author" />
+        app:layout_constraintBottom_toTopOf="@+id/userbook_toggle_read"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/book_text_isbn_value"
+        android:id="@+id/userbook_text_isbn_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/placeholder"
-        app:layout_constraintBottom_toBottomOf="@id/book_text_isbn"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/book_text_isbn" />
+        app:layout_constraintTop_toTopOf="@+id/userbook_text_isbn"
+        app:layout_constraintBottom_toBottomOf="@+id/userbook_text_isbn" />
 
     <ToggleButton
-        android:id="@+id/book_toggle_read"
+        android:id="@+id/userbook_toggle_read"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
@@ -76,10 +77,10 @@
         android:textOff="@string/unread"
         android:textOn="@string/read"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_text_isbn" />
+        app:layout_constraintTop_toBottomOf="@+id/userbook_text_isbn" />
 
     <ToggleButton
-        android:id="@+id/book_toggle_owned"
+        android:id="@+id/userbook_toggle_owned"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
@@ -87,16 +88,16 @@
         android:textOff="@string/not_owned"
         android:textOn="@string/owned"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_text_isbn_value" />
+        app:layout_constraintTop_toBottomOf="@+id/userbook_text_isbn" />
 
     <Button
-        android:id="@+id/book_button_add"
+        android:id="@+id/userbook_button_update"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
-        android:text="@string/add_to_library"
+        android:text="@string/update_book"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_toggle_owned" />
+        app:layout_constraintTop_toBottomOf="@+id/userbook_toggle_owned" />
 
 </android.support.constraint.ConstraintLayout>

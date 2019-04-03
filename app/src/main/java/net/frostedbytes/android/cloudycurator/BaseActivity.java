@@ -26,6 +26,7 @@ public class BaseActivity extends AppCompatActivity {
     public static final String ARG_BOOK = "book";
     public static final String ARG_BOOK_LIST = "book_list";
     public static final String ARG_EMAIL = "email";
+    public static final String ARG_FORCE_REFRESH = "force_refresh";
     public static final String ARG_MESSAGE = "message";
     public static final String ARG_USER_BOOK = "user_book";
     public static final String ARG_USER_BOOK_LIST = "user_book_list";

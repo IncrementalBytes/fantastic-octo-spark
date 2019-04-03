@@ -6,10 +6,10 @@
     <string name="or">OR</string>
     <string name="image_preview">Image containing an ISBN for scanning.</string>
     <string name="scan_image_for_isbn">Scan for ISBN</string>
-    <string name="title_main">Main</string>
+    <string name="title_main">In Your Library</string>
     <string name="title_author">Author</string>
     <string name="title_book">Book</string>
-    <string name="title_query">Query</string>
+    <string name="title_query">Look for Book</string>
     <string name="desc_main_list">Main List</string>
     <string name="placeholder">TBD</string>
     <string name="menu_home">Home</string>
@@ -33,4 +33,5 @@
     <string name="search_title">Search by Title:</string>
     <string name="err_book_search_fail">Unable to locate data for the book, please try again later.</string>
     <string name="err_add_book_fail">Unable to add book to library, please try again later.</string>
+    <string name="update_book">Update Book</string>
 </resources>

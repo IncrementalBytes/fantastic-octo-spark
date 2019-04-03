@@ -1,14 +1,14 @@
 package net.frostedbytes.android.cloudycurator.utils;
 
-import net.frostedbytes.android.cloudycurator.models.Book;
+import net.frostedbytes.android.cloudycurator.models.UserBook;
 
 import java.util.Comparator;
 
 public class SortUtils {
 
-    public static class ByBookName implements Comparator<Book> {
+    public static class ByBookName implements Comparator<UserBook> {
 
-        public int compare(Book a, Book b) {
+        public int compare(UserBook a, UserBook b) {
 
             return a.Title.compareTo(b.Title);
         }

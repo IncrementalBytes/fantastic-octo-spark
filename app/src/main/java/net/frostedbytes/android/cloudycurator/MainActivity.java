@@ -43,14 +43,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 
-import net.frostedbytes.android.cloudycurator.fragments.BookFragment;
+import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
 import net.frostedbytes.android.cloudycurator.fragments.MainListFragment;
-import net.frostedbytes.android.cloudycurator.fragments.QueryBookFragment;
-import net.frostedbytes.android.cloudycurator.models.Book;
+import net.frostedbytes.android.cloudycurator.fragments.QueryFragment;
+import net.frostedbytes.android.cloudycurator.fragments.UserBookFragment;
+import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.User;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
@@ -61,10 +62,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MainActivity extends BaseActivity implements
-    BookFragment.OnBookListListener,
+    CloudyBookFragment.OnCloudyBookListener,
     MainListFragment.OnMainListListener,
     NavigationView.OnNavigationItemSelectedListener,
-    QueryBookFragment.OnQueryBookListener {
+    QueryFragment.OnQueryListener {
 
     private static final String TAG = BASE_TAG + MainActivity.class.getSimpleName();
 
@@ -199,7 +200,7 @@ public class MainActivity extends BaseActivity implements
                         }
                     } else {
                         LogUtils.debug(TAG, "%s permission granted.", Manifest.permission.INTERNET);
-                        replaceFragment(QueryBookFragment.newInstance(mUserBookList));
+                        replaceFragment(QueryFragment.newInstance(mUserBookList));
                     }
                 }
 
@@ -214,7 +215,8 @@ public class MainActivity extends BaseActivity implements
 
                         // sign out of google, if necessary
                         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken(getString(R.string.default_web_client_id))
+                            //.requestIdToken(getString(R.string.default_web_client_id))
+                            .requestIdToken("AIzaSyBdLiDP_hTYqvxAdIDmBkglun2SGCiaKWA")
                             .requestEmail()
                             .build();
                         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -265,18 +267,18 @@ public class MainActivity extends BaseActivity implements
     /*
         Fragment Override(s)
      */
-    public void onBookAddedToLibrary(UserBook userBook) {
+    public void onUserBookAddedToLibrary(UserBook userBook) {
 
-        LogUtils.debug(TAG, "++onBookAddedToLibrary(%s)", userBook.toString());
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, Book.ROOT, userBook.ISBN);
+        LogUtils.debug(TAG, "++onUserBookAddedToLibrary(%s)", userBook.toString());
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, CloudyBook.ROOT, userBook.ISBN);
         FirebaseFirestore.getInstance().document(queryPath).set(userBook, SetOptions.merge())
             .addOnFailureListener(e -> LogUtils.error(TAG, "Could not merge data under %s", queryPath));
         getUserBookList();
     }
 
-    public void onBookLibraryFail() {
+    public void onUserBookAddedToLibraryFail() {
 
-        LogUtils.debug(TAG, "++onBookLibraryFail()");
+        LogUtils.debug(TAG, "++onUserBookAddedToLibraryFail()");
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             getString(R.string.err_add_book_fail),
@@ -285,17 +287,16 @@ public class MainActivity extends BaseActivity implements
         replaceFragment(MainListFragment.newInstance(mUserBookList));
     }
 
-    public void onBookInit(boolean isSuccessful) {
+    public void onCloudyBookInit(boolean isSuccessful) {
 
-        LogUtils.debug(TAG, "++onBookInit(%s)", String.valueOf(isSuccessful));
+        LogUtils.debug(TAG, "++onCloudyBookInit(%s)", String.valueOf(isSuccessful));
         mProgressBar.setIndeterminate(false);
     }
 
     public void onMainListItemSelected(UserBook userBook) {
 
         LogUtils.debug(TAG, "++onMainListItemSelected(UserBook)");
-        mAddButton.setEnabled(false);
-        replaceFragment(BookFragment.newInstance(mUser.Id, userBook));
+        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
     }
 
     public void onMainListPopulated(int size) {
@@ -309,24 +310,21 @@ public class MainActivity extends BaseActivity implements
                 Snackbar.LENGTH_LONG)
                 .setAction(
                     getString(R.string.add),
-                    view -> replaceFragment(QueryBookFragment.newInstance(mUserBookList)))
+                    view -> replaceFragment(QueryFragment.newInstance(mUserBookList)))
                 .show();
         }
     }
 
-    @Override
-    public void onQueryBookInit(boolean isSuccessful) {
+    public void onMainListRefreshed(ArrayList<UserBook> userBookList) {
 
-        LogUtils.debug(TAG, "++onQueryBookInit(%s)", String.valueOf(isSuccessful));
-        if (isSuccessful) {
-            mAddButton.setEnabled(false);
-        }
+        LogUtils.debug(TAG, "++onMainListRefreshed(%d)", userBookList.size());
+        mUserBookList = userBookList;
     }
 
     @Override
-    public void onQueryBookFailure() {
+    public void onQueryFailure() {
 
-        LogUtils.debug(TAG, "++onQueryBookFailure()");
+        LogUtils.debug(TAG, "++onQueryFailure()");
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             getString(R.string.err_book_search_fail),
@@ -336,10 +334,23 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onQueryBookFound(UserBook userBook) {
+    public void onQueryFoundBook(CloudyBook cloudBook) {
 
-        LogUtils.debug(TAG, "++onQueryBookFound(%s)", userBook.toString());
-        replaceFragment(BookFragment.newInstance(mUser.Id, userBook));
+        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudBook.toString());
+        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudBook));
+    }
+
+    @Override
+    public void onQueryFoundUserBook(UserBook userBook) {
+
+        LogUtils.debug(TAG, "++onQueryFoundUserBook(%s)", userBook.toString());
+        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
+    }
+
+    @Override
+    public void onQueryInit(boolean isSuccessful) {
+
+        LogUtils.debug(TAG, "++onQueryInit(%s)", String.valueOf(isSuccessful));
     }
 
     /*
@@ -348,22 +359,30 @@ public class MainActivity extends BaseActivity implements
     private void getUserBookList() {
 
         LogUtils.debug(TAG, "++getUserBookList()");
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, Book.ROOT);
+        mUserBookList = new ArrayList<>();
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, CloudyBook.ROOT);
         FirebaseFirestore.getInstance().collection(queryPath).get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
+            .addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                        UserBook userBook = document.toObject(UserBook.class);
+                        userBook.ISBN = document.getId();
+                        mUserBookList.add(userBook);
+                    }
 
-                mUserBookList = new ArrayList<>();
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    UserBook userBook = document.toObject(UserBook.class);
-                    userBook.ISBN = document.getId();
-                    mUserBookList.add(userBook);
+                    mUserBookList.sort(new SortUtils.ByBookName());
+                    mProgressBar.setIndeterminate(false);
+                    mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
+
+                    // we have the user book list, we need to fill in the data from the cloud library
+                    replaceFragment(MainListFragment.newInstance(mUserBookList));
+                } else {
+                    LogUtils.debug(TAG, "Could not get user book list: %s", queryPath);
+                    if (task.getException() != null) {
+                        task.getException().printStackTrace();
+                    }
                 }
-
-                mUserBookList.sort(new SortUtils.ByBookName());
-                mProgressBar.setIndeterminate(false);
-                mAddButton.setOnClickListener(pickView -> replaceFragment(QueryBookFragment.newInstance(mUserBookList)));
-                replaceFragment(MainListFragment.newInstance(mUserBookList));
-        }).addOnFailureListener(e -> LogUtils.debug(TAG, "Could not get user book list: %s", e.getMessage()));
+            });
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -384,9 +403,9 @@ public class MainActivity extends BaseActivity implements
         if (fragmentClassName.equals(MainListFragment.class.getName())) {
             mAddButton.show();
             setTitle(getString(R.string.title_main));
-        } else if (fragmentClassName.equals(BookFragment.class.getName())) {
+        } else if (fragmentClassName.equals(CloudyBookFragment.class.getName())) {
             setTitle(getString(R.string.title_book));
-        } else if (fragmentClassName.equals(QueryBookFragment.class.getName())) {
+        } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
             setTitle(getString(R.string.title_query));
         } else {
             mAddButton.show();

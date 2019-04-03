@@ -4,14 +4,13 @@ import com.google.firebase.firestore.Exclude;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class User {
 
     @Exclude
     public static final String ROOT = "Users";
-
-    public HashMap<String, String> Books;
 
     @Exclude
     public String Email;
@@ -22,11 +21,22 @@ public class User {
     @Exclude
     public String Id;
 
+    public List<UserBook> UserBooks;
+
     public User() {
 
-        this.Books = new HashMap<>();
-        this.Email = "";
-        this.FullName = "";
-        this.Id = BaseActivity.DEFAULT_ID;
+        Email = "";
+        FullName = "";
+        Id = BaseActivity.DEFAULT_ID;
+        UserBooks = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+            "Email='" + Email + '\'' +
+            ", FullName='" + FullName + '\'' +
+            ", Id='" + Id + '\'' +
+            '}';
     }
 }
