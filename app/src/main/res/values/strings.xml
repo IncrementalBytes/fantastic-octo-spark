@@ -10,7 +10,7 @@
     <string name="title_author">Author</string>
     <string name="title_book">Book</string>
     <string name="title_query">Look for Book</string>
-    <string name="desc_main_list">Main List</string>
+    <string name="desc_book_list">Book List</string>
     <string name="placeholder">TBD</string>
     <string name="menu_home">Home</string>
     <string name="menu_add">Add</string>
@@ -29,9 +29,20 @@
     <string name="owned">Owned</string>
     <string name="add">Add</string>
     <string name="add_to_library">Add to Library?</string>
-    <string name="search_isbn">or Search by ISBN:</string>
-    <string name="search_title">Search by Title:</string>
+    <string name="search_isbn">Search by ISBN</string>
+    <string name="search_title">Search by Title</string>
+    <string name="scan_image">Scan an image</string>
     <string name="err_book_search_fail">Unable to locate data for the book, please try again later.</string>
     <string name="err_add_book_fail">Unable to add book to library, please try again later.</string>
     <string name="update_book">Update Book</string>
+    <string name="search">Search</string>
+    <string name="search_title_hint">Title of book to search for</string>
+    <string name="search_isbn_hint">Enter ISBN number to search for</string>
+    <string name="no_results">Search yielded no results.</string>
+    <string name="select_a_book">Select a book to add</string>
+    <string name="fragment_cloudybook">Found Book</string>
+    <string name="fragment_cloudybooklist">Found Multiple Books</string>
+    <string name="fragment_query">Search for Book</string>
+    <string name="fragment_userbook">Your Book</string>
+    <string name="fragment_userbooklist">In Your Library</string>
 </resources>

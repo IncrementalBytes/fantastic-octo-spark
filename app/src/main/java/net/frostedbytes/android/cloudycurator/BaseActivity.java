@@ -23,16 +23,13 @@ import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 public class BaseActivity extends AppCompatActivity {
 
-    public static final String ARG_BOOK = "book";
-    public static final String ARG_BOOK_LIST = "book_list";
+    public static final String ARG_CLOUDY_BOOK = "book";
+    public static final String ARG_CLOUDY_BOOK_LIST = "cloudy_book_list";
     public static final String ARG_EMAIL = "email";
-    public static final String ARG_FORCE_REFRESH = "force_refresh";
-    public static final String ARG_MESSAGE = "message";
     public static final String ARG_USER_BOOK = "user_book";
     public static final String ARG_USER_BOOK_LIST = "user_book_list";
     public static final String ARG_USER_ID = "user_id";
     public static final String ARG_USER_NAME = "user_name";
-    public static final String DEFAULT_DATE = "0000-01-01";
     public static final String DEFAULT_ISBN = "000000000";
     public static final String DEFAULT_ID = "000000000-0000-0000-0000-000000000000";
 

@@ -82,11 +82,14 @@ public class UserBookFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_userbook, container, false);
-        TextView titleText = view.findViewById(R.id.userbook_text_title);
+        TextView titleText = view.findViewById(R.id.userbook_text_title_value);
         titleText.setText(mUserBook.Title);
-        TextView authorText = view.findViewById(R.id.userbook_text_author);
-        authorText.setText(mUserBook.Authors.get(0)); // TODO: update control to multiline
-        TextView isbnText = view.findViewById(R.id.userbook_text_isbn);
+        TextView authorText = view.findViewById(R.id.userbook_text_author_value);
+        if (mUserBook.Authors.size() > 0) {
+            authorText.setText(mUserBook.Authors.get(0)); // TODO: update control to multiline
+        }
+
+        TextView isbnText = view.findViewById(R.id.userbook_text_isbn_value);
         isbnText.setText(mUserBook.ISBN);
         ToggleButton read = view.findViewById(R.id.userbook_toggle_read);
         read.setChecked(mUserBook.HasRead);
@@ -105,12 +108,19 @@ public class UserBookFragment extends Fragment {
             updatedBook.IsOwned = owned.isChecked();
 
             String queryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.ISBN);
-            FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> mCallback.onUserBookUpdated(updatedBook))
-                .addOnFailureListener(e -> {
-                    LogUtils.error(TAG, "Failed to add book to user's library: %s", e.getMessage());
+            FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
+
+                if (task.isSuccessful()) {
+                    mCallback.onUserBookUpdated(updatedBook);
+                } else {
+                    LogUtils.error(TAG, "Failed to add book to user's library: %s", queryPath);
+                    if (task.getException() != null) {
+                        task.getException().printStackTrace();
+                    }
+
                     mCallback.onUserBookFail();
-                });
+                }
+            });
         });
 
         mCallback.onUserBookInit(true);

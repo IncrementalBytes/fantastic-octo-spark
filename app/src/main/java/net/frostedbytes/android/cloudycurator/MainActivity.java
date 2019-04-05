@@ -48,9 +48,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
-import net.frostedbytes.android.cloudycurator.fragments.MainListFragment;
+import net.frostedbytes.android.cloudycurator.fragments.CloudyBookListFragment;
 import net.frostedbytes.android.cloudycurator.fragments.QueryFragment;
 import net.frostedbytes.android.cloudycurator.fragments.UserBookFragment;
+import net.frostedbytes.android.cloudycurator.fragments.UserBookListFragment;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.User;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
@@ -63,9 +64,11 @@ import java.util.Calendar;
 
 public class MainActivity extends BaseActivity implements
     CloudyBookFragment.OnCloudyBookListener,
-    MainListFragment.OnMainListListener,
+    CloudyBookListFragment.OnCloudyBookListListener,
     NavigationView.OnNavigationItemSelectedListener,
-    QueryFragment.OnQueryListener {
+    QueryFragment.OnQueryListener,
+    UserBookFragment.OnUserBookListListener,
+    UserBookListFragment.OnUserBookListListener {
 
     private static final String TAG = BASE_TAG + MainActivity.class.getSimpleName();
 
@@ -74,7 +77,6 @@ public class MainActivity extends BaseActivity implements
 
     private FloatingActionButton mAddButton;
     private DrawerLayout mDrawerLayout;
-    private NavigationView mNavigationView;
     private ProgressBar mProgressBar;
 
     private ArrayList<UserBook> mUserBookList;
@@ -135,7 +137,7 @@ public class MainActivity extends BaseActivity implements
         mUser.FullName = getIntent().getStringExtra(BaseActivity.ARG_USER_NAME);
 
         // update the navigation header
-        mNavigationView = findViewById(R.id.main_navigation_view);
+        NavigationView mNavigationView = findViewById(R.id.main_navigation_view);
         mNavigationView.setNavigationItemSelectedListener(this);
         View navigationHeaderView = mNavigationView.inflateHeaderView(R.layout.main_navigation_header);
         TextView navigationFullName = navigationHeaderView.findViewById(R.id.navigation_text_full_name);
@@ -154,7 +156,7 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "++onNavigationItemSelected(%s)", item.getTitle());
         switch (item.getItemId()) {
             case R.id.navigation_menu_home:
-                replaceFragment(MainListFragment.newInstance(mUserBookList));
+                replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 break;
             case R.id.navigation_menu_add:
                 mProgressBar.setIndeterminate(true);
@@ -267,6 +269,123 @@ public class MainActivity extends BaseActivity implements
     /*
         Fragment Override(s)
      */
+    @Override
+    public void onCloudyBookInit(boolean isSuccessful) {
+
+        LogUtils.debug(TAG, "++onCloudyBookInit(%s)", String.valueOf(isSuccessful));
+        mProgressBar.setIndeterminate(false);
+    }
+
+    @Override
+    public void onCloudyBookListItemSelected(CloudyBook cloudyBook) {
+
+        LogUtils.debug(TAG, "++onCloudyBookListItemSelected(%s)", cloudyBook.toString());
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBook.ISBN);
+        FirebaseFirestore.getInstance().document(queryPath).set(cloudyBook, SetOptions.merge())
+            .addOnSuccessListener(aVoid -> {
+                LogUtils.debug(TAG, "Successfully added: %s", cloudyBook.toString());
+                replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
+            })
+            .addOnFailureListener(e -> {
+                LogUtils.warn(TAG, "Failed to added: %s", cloudyBook.toString());
+                e.printStackTrace();
+                // TODO: add empty object in cloud for manual import?
+            });
+    }
+
+    @Override
+    public void onCloudyBookListPopulated(int size) {
+
+        LogUtils.debug(TAG, "++onCloudyBookListPopulated(%d)", size);
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        if (size > 0) {
+            setTitle(R.string.select_a_book);
+        }
+    }
+
+    @Override
+    public void onQueryCancelled() {
+
+        LogUtils.debug(TAG, "++onQueryCancelled()");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+    }
+
+    @Override
+    public void onQueryFailure() {
+
+        LogUtils.debug(TAG, "++onQueryFailure()");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.show();
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            getString(R.string.err_book_search_fail),
+            Snackbar.LENGTH_LONG)
+            .show();
+        replaceFragment(UserBookListFragment.newInstance(mUserBookList));
+    }
+
+    @Override
+    public void onQueryFoundBook(CloudyBook cloudBook) {
+
+        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudBook.toString());
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudBook));
+    }
+
+    @Override
+    public void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks) {
+
+        LogUtils.debug(TAG, "++onQueryFoundMultipleBooks(%d)", cloudyBooks.size());
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        replaceFragment(CloudyBookListFragment.newInstance(cloudyBooks));
+    }
+
+    @Override
+    public void onQueryFoundUserBook(UserBook userBook) {
+
+        LogUtils.debug(TAG, "++onQueryFoundUserBook(%s)", userBook.toString());
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
+    }
+
+    @Override
+    public void onQueryInit(boolean isSuccessful) {
+
+        LogUtils.debug(TAG, "++onQueryInit(%s)", String.valueOf(isSuccessful));
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+    }
+
+    @Override
+    public void onQueryNoResultsFound() {
+
+        LogUtils.debug(TAG, "++onQueryNoResultsFound()");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            getString(R.string.no_results),
+            Snackbar.LENGTH_LONG)
+            .show();
+        replaceFragment(QueryFragment.newInstance(mUserBookList));
+    }
+
+    @Override
+    public void onQueryStarted() {
+
+        LogUtils.debug(TAG, "++onQueryStarted()");
+        mProgressBar.setIndeterminate(true);
+        mAddButton.hide();
+    }
+
+    @Override
     public void onUserBookAddedToLibrary(UserBook userBook) {
 
         LogUtils.debug(TAG, "++onUserBookAddedToLibrary(%s)", userBook.toString());
@@ -276,33 +395,61 @@ public class MainActivity extends BaseActivity implements
         getUserBookList();
     }
 
+    @Override
     public void onUserBookAddedToLibraryFail() {
 
         LogUtils.debug(TAG, "++onUserBookAddedToLibraryFail()");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.show();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             getString(R.string.err_add_book_fail),
             Snackbar.LENGTH_LONG)
             .show();
-        replaceFragment(MainListFragment.newInstance(mUserBookList));
+        replaceFragment(UserBookListFragment.newInstance(mUserBookList));
     }
 
-    public void onCloudyBookInit(boolean isSuccessful) {
+    @Override
+    public void onUserBookInit(boolean isSuccessful) {
 
-        LogUtils.debug(TAG, "++onCloudyBookInit(%s)", String.valueOf(isSuccessful));
+        LogUtils.debug(TAG, "++onUserBookInit(%s)", String.valueOf(isSuccessful));
         mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
     }
 
-    public void onMainListItemSelected(UserBook userBook) {
+    @Override
+    public void onUserBookFail() {
 
-        LogUtils.debug(TAG, "++onMainListItemSelected(UserBook)");
+        LogUtils.debug(TAG, "++onUserBookFail()");
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            getString(R.string.err_add_book_fail),
+            Snackbar.LENGTH_LONG)
+            .show();
+        getUserBookList();
+    }
+
+    @Override
+    public void onUserBookUpdated(UserBook userBook) {
+
+        LogUtils.debug(TAG, "++onUserBookUpdated(%s)", userBook.toString());
+        getUserBookList();
+    }
+
+    @Override
+    public void onUserBookListItemSelected(UserBook userBook) {
+
+        LogUtils.debug(TAG, "++onUserBookListItemSelected(%s)", userBook.toString());
+        mAddButton.hide();
         replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
     }
 
-    public void onMainListPopulated(int size) {
+    @Override
+    public void onUserBookListPopulated(int size) {
 
         LogUtils.debug(TAG, "++onMainListPopulated(%d)", size);
         mProgressBar.setIndeterminate(false);
+        mAddButton.show();
         if (size == 0) {
             Snackbar.make(
                 findViewById(R.id.main_drawer_layout),
@@ -315,44 +462,6 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    public void onMainListRefreshed(ArrayList<UserBook> userBookList) {
-
-        LogUtils.debug(TAG, "++onMainListRefreshed(%d)", userBookList.size());
-        mUserBookList = userBookList;
-    }
-
-    @Override
-    public void onQueryFailure() {
-
-        LogUtils.debug(TAG, "++onQueryFailure()");
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            getString(R.string.err_book_search_fail),
-            Snackbar.LENGTH_LONG)
-            .show();
-        replaceFragment(MainListFragment.newInstance(mUserBookList));
-    }
-
-    @Override
-    public void onQueryFoundBook(CloudyBook cloudBook) {
-
-        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudBook.toString());
-        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudBook));
-    }
-
-    @Override
-    public void onQueryFoundUserBook(UserBook userBook) {
-
-        LogUtils.debug(TAG, "++onQueryFoundUserBook(%s)", userBook.toString());
-        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
-    }
-
-    @Override
-    public void onQueryInit(boolean isSuccessful) {
-
-        LogUtils.debug(TAG, "++onQueryInit(%s)", String.valueOf(isSuccessful));
-    }
-
     /*
         Private Method(s)
      */
@@ -363,19 +472,24 @@ public class MainActivity extends BaseActivity implements
         String queryPath = PathUtils.combine(User.ROOT, mUser.Id, CloudyBook.ROOT);
         FirebaseFirestore.getInstance().collection(queryPath).get()
             .addOnCompleteListener(this, task -> {
-                if (task.isSuccessful()) {
+                if (task.isSuccessful() && task.getResult() != null) {
                     for (DocumentSnapshot document : task.getResult().getDocuments()) {
                         UserBook userBook = document.toObject(UserBook.class);
-                        userBook.ISBN = document.getId();
-                        mUserBookList.add(userBook);
+                        if (userBook != null) {
+                            userBook.ISBN = document.getId();
+                            mUserBookList.add(userBook);
+                        } else {
+                            LogUtils.warn(TAG, "Unable to convert user book: %s", queryPath);
+                        }
                     }
 
                     mUserBookList.sort(new SortUtils.ByBookName());
                     mProgressBar.setIndeterminate(false);
+                    mAddButton.show();
                     mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
 
                     // we have the user book list, we need to fill in the data from the cloud library
-                    replaceFragment(MainListFragment.newInstance(mUserBookList));
+                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 } else {
                     LogUtils.debug(TAG, "Could not get user book list: %s", queryPath);
                     if (task.getException() != null) {
@@ -400,13 +514,17 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "++updateTitleAndDrawer(Fragment)");
         String fragmentClassName = fragment.getClass().getName();
         mAddButton.hide();
-        if (fragmentClassName.equals(MainListFragment.class.getName())) {
-            mAddButton.show();
-            setTitle(getString(R.string.title_main));
-        } else if (fragmentClassName.equals(CloudyBookFragment.class.getName())) {
-            setTitle(getString(R.string.title_book));
+        if (fragmentClassName.equals(CloudyBookFragment.class.getName())) {
+            setTitle(getString(R.string.fragment_cloudybook));
+        } else if (fragmentClassName.equals(CloudyBookListFragment.class.getName())) {
+            setTitle(getString(R.string.fragment_cloudybooklist));
         } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
-            setTitle(getString(R.string.title_query));
+            setTitle(getString(R.string.fragment_query));
+        } else if (fragmentClassName.equals(UserBookFragment.class.getName())) {
+            setTitle(getString(R.string.fragment_userbook));
+        } else if (fragmentClassName.equals(UserBookListFragment.class.getName())) {
+            mAddButton.show();
+            setTitle(getString(R.string.fragment_userbooklist));
         } else {
             mAddButton.show();
             setTitle(getString(R.string.app_name));

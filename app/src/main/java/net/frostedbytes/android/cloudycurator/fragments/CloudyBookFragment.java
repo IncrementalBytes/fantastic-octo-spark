@@ -49,7 +49,7 @@ public class CloudyBookFragment extends Fragment {
         CloudyBookFragment fragment = new CloudyBookFragment();
         Bundle args = new Bundle();
         args.putString(BaseActivity.ARG_USER_ID, userId);
-        args.putParcelable(BaseActivity.ARG_BOOK, cloudyBook);
+        args.putParcelable(BaseActivity.ARG_CLOUDY_BOOK, cloudyBook);
         fragment.setArguments(args);
         return fragment;
     }
@@ -71,7 +71,7 @@ public class CloudyBookFragment extends Fragment {
 
         Bundle arguments = getArguments();
         if (arguments != null) {
-            mCloudyBook = arguments.getParcelable(BaseActivity.ARG_BOOK);
+            mCloudyBook = arguments.getParcelable(BaseActivity.ARG_CLOUDY_BOOK);
             mUserId = arguments.getString(BaseActivity.ARG_USER_ID);
         } else {
             LogUtils.error(TAG, "Arguments were null.");
@@ -86,7 +86,10 @@ public class CloudyBookFragment extends Fragment {
         TextView titleText = view.findViewById(R.id.book_text_title_value);
         titleText.setText(mCloudyBook.Title);
         TextView authorText = view.findViewById(R.id.book_text_author_value);
-        authorText.setText(mCloudyBook.Authors.get(0)); // TODO: update control to multiline
+        if (mCloudyBook.Authors.size() > 0) {
+            authorText.setText(mCloudyBook.Authors.get(0)); // TODO: update control to multiline
+        }
+
         TextView isbnText = view.findViewById(R.id.book_text_isbn_value);
         isbnText.setText(mCloudyBook.ISBN);
         ToggleButton read = view.findViewById(R.id.book_toggle_read);

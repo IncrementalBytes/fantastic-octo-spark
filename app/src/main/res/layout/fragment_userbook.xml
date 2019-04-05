@@ -12,7 +12,6 @@
         android:text="@string/title"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/userbook_text_author"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -34,7 +33,7 @@
         android:text="@string/author"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/userbook_text_isbn"
+        app:layout_constraintTop_toBottomOf="@id/userbook_text_title"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
@@ -55,7 +54,7 @@
         android:text="@string/isbn"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/userbook_toggle_read"
+        app:layout_constraintTop_toBottomOf="@id/userbook_text_author"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView

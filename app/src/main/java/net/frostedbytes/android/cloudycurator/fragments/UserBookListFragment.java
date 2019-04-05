@@ -22,26 +22,26 @@ import java.util.Locale;
 
 import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
 
-public class MainListFragment extends Fragment {
+public class UserBookListFragment extends Fragment {
 
-    private static final String TAG = BASE_TAG + MainListFragment.class.getSimpleName();
+    private static final String TAG = BASE_TAG + UserBookListFragment.class.getSimpleName();
 
-    public interface OnMainListListener {
+    public interface OnUserBookListListener {
 
-        void onMainListPopulated(int size);
-        void onMainListItemSelected(UserBook userBook);
+        void onUserBookListPopulated(int size);
+        void onUserBookListItemSelected(UserBook userBook);
     }
 
-    private OnMainListListener mCallback;
+    private OnUserBookListListener mCallback;
 
     private RecyclerView mRecyclerView;
 
     private ArrayList<UserBook> mUserBookList;
 
-    public static MainListFragment newInstance(ArrayList<UserBook> userBookList) {
+    public static UserBookListFragment newInstance(ArrayList<UserBook> userBookList) {
 
         LogUtils.debug(TAG, "++newInstance(%d)", userBookList.size());
-        MainListFragment fragment = new MainListFragment();
+        UserBookListFragment fragment = new UserBookListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST, userBookList);
         fragment.setArguments(args);
@@ -57,7 +57,7 @@ public class MainListFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onAttach(Context)");
         try {
-            mCallback = (OnMainListListener) context;
+            mCallback = (OnUserBookListListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(
                 String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
@@ -75,9 +75,9 @@ public class MainListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
-        final View view = inflater.inflate(R.layout.fragment_main_list, container, false);
+        final View view = inflater.inflate(R.layout.fragment_user_book_list, container, false);
 
-        mRecyclerView = view.findViewById(R.id.main_list_view);
+        mRecyclerView = view.findViewById(R.id.user_book_list_view);
 
         final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(manager);
@@ -108,12 +108,12 @@ public class MainListFragment extends Fragment {
     private void updateUI() {
 
         if (mUserBookList == null || mUserBookList.size() == 0) {
-            mCallback.onMainListPopulated(0);
+            mCallback.onUserBookListPopulated(0);
         } else {
             LogUtils.debug(TAG, "++updateUI()");
             UserBookAdapter userBookAdapter = new UserBookAdapter(mUserBookList);
             mRecyclerView.setAdapter(userBookAdapter);
-            mCallback.onMainListPopulated(userBookAdapter.getItemCount());
+            mCallback.onUserBookListPopulated(userBookAdapter.getItemCount());
         }
     }
 
@@ -173,7 +173,10 @@ public class MainListFragment extends Fragment {
 
             mUserBook = userBook;
 
-            mAuthorsTextView.setText(mUserBook.Authors.get(0));
+            if (mUserBook.Authors.size() > 0) {
+                mAuthorsTextView.setText(mUserBook.Authors.get(0));
+            }
+
             mTitleTextView.setText(mUserBook.Title);
         }
 
@@ -181,7 +184,7 @@ public class MainListFragment extends Fragment {
         public void onClick(View view) {
 
             LogUtils.debug(TAG, "++BookHolder::onClick(View)");
-            mCallback.onMainListItemSelected(mUserBook);
+            mCallback.onUserBookListItemSelected(mUserBook);
         }
     }
 }
