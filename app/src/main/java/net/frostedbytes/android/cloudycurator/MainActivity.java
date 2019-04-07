@@ -364,6 +364,20 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onQueryNoBarcode() {
+
+        LogUtils.debug(TAG, "++onQueryNoBarcode()");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            getString(R.string.no_bar_codes),
+            Snackbar.LENGTH_LONG)
+            .show();
+        replaceFragment(QueryFragment.newInstance(mUserBookList));
+    }
+
+    @Override
     public void onQueryNoResultsFound() {
 
         LogUtils.debug(TAG, "++onQueryNoResultsFound()");

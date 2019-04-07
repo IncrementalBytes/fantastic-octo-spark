@@ -45,4 +45,5 @@
     <string name="fragment_query">Search for Book</string>
     <string name="fragment_userbook">Your Book</string>
     <string name="fragment_userbooklist">In Your Library</string>
+    <string name="no_bar_codes">Did not find ISBN in image.</string>
 </resources>

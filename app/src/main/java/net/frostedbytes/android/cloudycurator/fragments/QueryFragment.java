@@ -3,8 +3,8 @@ package net.frostedbytes.android.cloudycurator.fragments;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -40,9 +40,6 @@ import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -69,6 +66,7 @@ public class QueryFragment extends Fragment {
         void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks);
         void onQueryFoundUserBook(UserBook userBook);
         void onQueryInit(boolean isSuccessful);
+        void onQueryNoBarcode();
         void onQueryNoResultsFound();
         void onQueryStarted();
     }
@@ -122,7 +120,18 @@ public class QueryFragment extends Fragment {
         CardView isbnCard = view.findViewById(R.id.book_query_card_isbn);
         isbnCard.setOnClickListener(v -> showInputDialog(R.string.search_isbn_hint));
         CardView scanCard = view.findViewById(R.id.book_query_card_photo);
-        scanCard.setOnClickListener(v -> takePictureIntent());
+        if (getActivity() != null) {
+            PackageManager packageManager = getActivity().getPackageManager();
+            if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+                scanCard.setOnClickListener(v -> takePictureIntent());
+            } else {
+                LogUtils.warn(TAG, "Camera feature is not available; disabling camera.");
+                scanCard.setEnabled(false);
+            }
+        } else {
+            LogUtils.warn(TAG, "Could not get package manager information from activity; disabling camera.");
+            scanCard.setEnabled(false);
+        }
 
         mCallback.onQueryInit(true);
         return view;
@@ -144,15 +153,13 @@ public class QueryFragment extends Fragment {
             UserBook userBook;
             switch (requestCode) {
                 case REQUEST_IMAGE_CAPTURE:
-                    try {
-                        //Bundle extras = data.getExtras();
-                        //mImageBitmap = (Bitmap) extras.get("data");
-                        File f = new File("/storage/self/primary/DCIM/Camera", "20190327_151502.jpg");
-                        mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+                    Bundle extras = data.getExtras();
+                    if (extras != null) {
+                        mImageBitmap = (Bitmap) extras.get("data");
                         scanImageForISBN();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                        LogUtils.warn(TAG, "Cannot search; Could not get image.");
+                    } else {
+                        LogUtils.warn(TAG, "Unexpected data from camera intent.");
+                        mCallback.onQueryNoBarcode();
                     }
 
                     break;
@@ -340,11 +347,11 @@ public class QueryFragment extends Fragment {
                             }
                         } else {
                             LogUtils.warn(TAG, "No bar codes found.");
-                            mCallback.onQueryFailure();
+                            mCallback.onQueryNoBarcode();
                         }
                     } else {
                         LogUtils.warn(TAG, "Could not detect bar code in image.");
-                        mCallback.onQueryFailure();
+                        mCallback.onQueryNoBarcode();
                     }
                 });
         } else {
