@@ -17,6 +17,9 @@
 package net.frostedbytes.android.cloudycurator.utils;
 
 import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
 import java.util.Locale;
 import net.frostedbytes.android.cloudycurator.BuildConfig;
 
@@ -47,7 +50,7 @@ public class LogUtils {
         if (BuildConfig.DEBUG) {
             Log.e(tag, String.format(Locale.ENGLISH, messageFormat, args));
         } else {
-//            Crashlytics.log(String.format(Locale.ENGLISH, messageFormat, args));
+            Crashlytics.log(String.format(Locale.ENGLISH, messageFormat, args));
         }
     }
 
@@ -60,6 +63,8 @@ public class LogUtils {
 
         if (BuildConfig.DEBUG) {
             Log.w(tag, String.format(Locale.ENGLISH, messageFormat, args));
+        } else {
+            Crashlytics.log(Log.WARN, tag, String.format(Locale.ENGLISH, messageFormat, args));
         }
     }
 }

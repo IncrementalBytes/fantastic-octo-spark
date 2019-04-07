@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
+
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
@@ -18,7 +20,6 @@ import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
 
@@ -59,8 +60,7 @@ public class UserBookListFragment extends Fragment {
         try {
             mCallback = (OnUserBookListListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(
-                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
+            Crashlytics.logException(e);
         }
 
         Bundle arguments = getArguments();

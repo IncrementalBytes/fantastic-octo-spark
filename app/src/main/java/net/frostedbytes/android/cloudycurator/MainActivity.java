@@ -39,6 +39,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -218,7 +219,7 @@ public class MainActivity extends BaseActivity implements
                         // sign out of google, if necessary
                         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                             //.requestIdToken(getString(R.string.default_web_client_id))
-                            .requestIdToken("AIzaSyBdLiDP_hTYqvxAdIDmBkglun2SGCiaKWA")
+                            .requestIdToken("1079143607884-n6m9tirs482fdn65bf54lnvfrk4u8e54.apps.googleusercontent.com")
                             .requestEmail()
                             .build();
                         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -403,7 +404,7 @@ public class MainActivity extends BaseActivity implements
     public void onUserBookAddedToLibrary(UserBook userBook) {
 
         LogUtils.debug(TAG, "++onUserBookAddedToLibrary(%s)", userBook.toString());
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, CloudyBook.ROOT, userBook.ISBN);
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.ISBN);
         FirebaseFirestore.getInstance().document(queryPath).set(userBook, SetOptions.merge())
             .addOnFailureListener(e -> LogUtils.error(TAG, "Could not merge data under %s", queryPath));
         getUserBookList();
@@ -483,7 +484,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++getUserBookList()");
         mUserBookList = new ArrayList<>();
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, CloudyBook.ROOT);
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT);
         FirebaseFirestore.getInstance().collection(queryPath).get()
             .addOnCompleteListener(this, task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
@@ -507,7 +508,7 @@ public class MainActivity extends BaseActivity implements
                 } else {
                     LogUtils.debug(TAG, "Could not get user book list: %s", queryPath);
                     if (task.getException() != null) {
-                        task.getException().printStackTrace();
+                        Crashlytics.logException(task.getException());
                     }
                 }
             });

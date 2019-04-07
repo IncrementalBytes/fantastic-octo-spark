@@ -29,6 +29,9 @@ import java.util.Objects;
 
 public class UserBook implements Parcelable {
 
+    @Exclude
+    public static final String ROOT = "UserBooks";
+
     public long AddedDate;
 
     public List<String> Authors;

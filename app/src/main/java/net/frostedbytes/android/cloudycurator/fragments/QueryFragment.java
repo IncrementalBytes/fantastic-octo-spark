@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.books.Books;
@@ -97,7 +98,7 @@ public class QueryFragment extends Fragment {
         try {
             mCallback = (OnQueryListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
+            Crashlytics.logException(e);
         }
 
         Bundle arguments = getArguments();
@@ -232,7 +233,7 @@ public class QueryFragment extends Fragment {
                     } else {
                         if (task.getException() != null) {
                             LogUtils.debug(TAG, "Query failed: %s where Title == %s", CloudyBook.ROOT, bookQueryFor.Title);
-                            task.getException().printStackTrace();
+                            Crashlytics.logException(task.getException());
                             mCallback.onQueryFailure();
                         }
                     }
@@ -381,13 +382,16 @@ public class QueryFragment extends Fragment {
                     switch (hintResourceId) {
                         case R.string.search_isbn_hint:
                             userBook.ISBN = editText.getText().toString();
+                            queryForUserBook(userBook);
                             break;
                         case R.string.search_title_hint:
                             userBook.Title = editText.getText().toString();
+                            queryForUserBook(userBook);
+                            break;
+                        default:
+                            mCallback.onQueryFailure();
                             break;
                     }
-
-                    queryForUserBook(userBook);
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {
                     mCallback.onQueryCancelled();
@@ -493,7 +497,7 @@ public class QueryFragment extends Fragment {
 
                 return mCloudyBooks;
             } catch (IOException ioe) {
-                ioe.printStackTrace();
+                Crashlytics.logException(ioe);
                 return new ArrayList<>();
             }
         }

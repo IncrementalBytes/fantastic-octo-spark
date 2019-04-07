@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -21,8 +22,6 @@ import net.frostedbytes.android.cloudycurator.models.User;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
-
-import java.util.Locale;
 
 import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
 
@@ -64,8 +63,7 @@ public class UserBookFragment extends Fragment {
         try {
             mCallback = (OnUserBookListListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(
-                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
+            Crashlytics.logException(e);
         }
 
         Bundle arguments = getArguments();
@@ -107,7 +105,7 @@ public class UserBookFragment extends Fragment {
             updatedBook.HasRead = read.isChecked();
             updatedBook.IsOwned = owned.isChecked();
 
-            String queryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.ISBN);
+            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.ISBN);
             FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
 
                 if (task.isSuccessful()) {
@@ -115,7 +113,7 @@ public class UserBookFragment extends Fragment {
                 } else {
                     LogUtils.error(TAG, "Failed to add book to user's library: %s", queryPath);
                     if (task.getException() != null) {
-                        task.getException().printStackTrace();
+                        Crashlytics.logException(task.getException());
                     }
 
                     mCallback.onUserBookFail();

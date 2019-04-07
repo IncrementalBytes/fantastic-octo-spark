@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -106,14 +107,14 @@ public class CloudyBookFragment extends Fragment {
             updatedBook.IsOwned = owned.isChecked();
             updatedBook.Title = titleText.getText().toString();
 
-            String queryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.ISBN);
+            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.ISBN);
             FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
 
                 if (task.isSuccessful()) {
                     mCallback.onUserBookAddedToLibrary(updatedBook);
                 } else {
                     if (task.getException() != null) {
-                        task.getException().printStackTrace();
+                        Crashlytics.logException(task.getException());
                     }
 
                     LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", queryPath);
