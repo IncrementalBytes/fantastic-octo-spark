@@ -50,7 +50,7 @@ public class LogUtils {
         if (BuildConfig.DEBUG) {
             Log.e(tag, String.format(Locale.ENGLISH, messageFormat, args));
         } else {
-            Crashlytics.log(String.format(Locale.ENGLISH, messageFormat, args));
+            Crashlytics.log(Log.ERROR, tag, String.format(Locale.ENGLISH, messageFormat, args));
         }
     }
 
