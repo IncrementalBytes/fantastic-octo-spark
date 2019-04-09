@@ -17,11 +17,13 @@ import com.google.firebase.firestore.SetOptions;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.User;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
+
+import java.util.Calendar;
+import java.util.Locale;
 
 import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
 
@@ -63,7 +65,8 @@ public class UserBookFragment extends Fragment {
         try {
             mCallback = (OnUserBookListListener) context;
         } catch (ClassCastException e) {
-            Crashlytics.logException(e);
+            throw new ClassCastException(
+                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
         }
 
         Bundle arguments = getArguments();
@@ -99,11 +102,13 @@ public class UserBookFragment extends Fragment {
         updateLibraryButton.setOnClickListener(v -> {
 
             UserBook updatedBook = new UserBook();
+            updatedBook.AddedDate = mUserBook.AddedDate;
             updatedBook.Title = titleText.getText().toString();
             updatedBook.Authors.add(authorText.getText().toString()); // TODO: parse the control for list of authors
             updatedBook.ISBN = isbnText.getText().toString();
             updatedBook.HasRead = read.isChecked();
             updatedBook.IsOwned = owned.isChecked();
+            updatedBook.UpdatedDate = Calendar.getInstance().getTimeInMillis();
 
             String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.ISBN);
             FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {

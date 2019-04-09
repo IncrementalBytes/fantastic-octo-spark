@@ -30,6 +30,8 @@ public class BaseActivity extends AppCompatActivity {
     public static final String ARG_USER_BOOK_LIST = "user_book_list";
     public static final String ARG_USER_ID = "user_id";
     public static final String ARG_USER_NAME = "user_name";
+
+    public static final String DEFAULT_LIBRARY_FILE = "localLibrary.txt";
     public static final String DEFAULT_ISBN = "000000000";
     public static final String DEFAULT_ID = "000000000-0000-0000-0000-000000000000";
 

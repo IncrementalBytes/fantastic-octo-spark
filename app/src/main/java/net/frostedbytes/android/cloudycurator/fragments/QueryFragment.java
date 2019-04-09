@@ -1,15 +1,17 @@
 package net.frostedbytes.android.cloudycurator.fragments;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
@@ -41,10 +43,13 @@ import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -98,7 +103,8 @@ public class QueryFragment extends Fragment {
         try {
             mCallback = (OnQueryListener) context;
         } catch (ClassCastException e) {
-            Crashlytics.logException(e);
+            throw new ClassCastException(
+                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
         }
 
         Bundle arguments = getArguments();
@@ -157,7 +163,22 @@ public class QueryFragment extends Fragment {
                     Bundle extras = data.getExtras();
                     if (extras != null) {
                         mImageBitmap = (Bitmap) extras.get("data");
-                        scanImageForISBN();
+                        if (mImageBitmap != null) {
+                            Bitmap emptyBitmap = Bitmap.createBitmap(
+                                mImageBitmap.getWidth(),
+                                mImageBitmap.getHeight(),
+                                mImageBitmap.getConfig());
+                            if (!mImageBitmap.sameAs(emptyBitmap)) {
+
+                                scanImageForISBN();
+                            } else {
+                                LogUtils.warn(TAG, "Image was empty.");
+                                mCallback.onQueryNoBarcode();
+                            }
+                        } else {
+                            LogUtils.warn(TAG, "Bitmap was null.");
+                            mCallback.onQueryNoBarcode();
+                        }
                     } else {
                         LogUtils.warn(TAG, "Unexpected data from camera intent.");
                         mCallback.onQueryNoBarcode();
@@ -185,19 +206,38 @@ public class QueryFragment extends Fragment {
     /*
         Private Method(s)
      */
+    private File createImageFile() throws IOException {
+
+        LogUtils.debug(TAG, "++createImageFile()");
+        String timeStamp = new SimpleDateFormat(getString(R.string.temp_file_name), Locale.ENGLISH).format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        if (getActivity() != null) {
+            File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+            LogUtils.debug(TAG, "Temporary file: %s", image.getAbsolutePath());
+            return image;
+        }
+
+        return null;
+    }
+
     private void parseFeed(ArrayList<CloudyBook> cloudyBooks) {
 
         LogUtils.debug(TAG, "++parseFeed(%d)", cloudyBooks.size());
         if (cloudyBooks.size() == 1) {
             String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBooks.get(0).ISBN);
             FirebaseFirestore.getInstance().document(queryPath).set(cloudyBooks.get(0), SetOptions.merge())
-                .addOnSuccessListener(aVoid -> {
-                    LogUtils.debug(TAG, "Successfully added: %s", cloudyBooks.get(0).toString());
-                    mCallback.onQueryFoundBook(cloudyBooks.get(0));
-                })
-                .addOnFailureListener(e -> {
-                    LogUtils.warn(TAG, "Failed to added: %s", cloudyBooks.get(0).toString());
-                    e.printStackTrace();
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        LogUtils.debug(TAG, "Successfully added: %s", cloudyBooks.get(0).toString());
+                        mCallback.onQueryFoundBook(cloudyBooks.get(0));
+                    } else {
+                        LogUtils.warn(TAG, "Failed to added: %s", cloudyBooks.get(0).toString());
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+                    }
+
                     // TODO: add empty object in cloud for manual import?
                 });
         } else if (cloudyBooks.size() > 1){
@@ -231,11 +271,12 @@ public class QueryFragment extends Fragment {
                             queryGoogleBookService(bookQueryFor);
                         }
                     } else {
+                        LogUtils.warn(TAG, "Query failed: %s where Title == %s", CloudyBook.ROOT, bookQueryFor.Title);
                         if (task.getException() != null) {
-                            LogUtils.debug(TAG, "Query failed: %s where Title == %s", CloudyBook.ROOT, bookQueryFor.Title);
                             Crashlytics.logException(task.getException());
-                            mCallback.onQueryFailure();
                         }
+
+                        mCallback.onQueryFailure();
                     }
                 });
         } else if (!bookQueryFor.ISBN.isEmpty() && !bookQueryFor.ISBN.equals(BaseActivity.DEFAULT_ISBN)) {
@@ -302,7 +343,7 @@ public class QueryFragment extends Fragment {
                     this,
                     searchParams,
                     getString(R.string.app_name),
-                    getString(R.string.google_books_key)).execute(getActivity().getContentResolver());
+                    getString(R.string.google_books_key)).execute();
             } else {
                 LogUtils.warn(TAG, "Could not get activity's content resolver.");
                 mCallback.onQueryFailure();
@@ -356,7 +397,8 @@ public class QueryFragment extends Fragment {
                     }
                 });
         } else {
-            LogUtils.debug(TAG, "Image not loaded!");
+            LogUtils.warn(TAG, "Image not loaded!");
+            mCallback.onQueryNoBarcode();
         }
     }
 
@@ -413,9 +455,28 @@ public class QueryFragment extends Fragment {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (getActivity() != null) {
             if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                } catch (IOException ioe) {
+                    LogUtils.warn(TAG, "Exception when creating image file.");
+                    Crashlytics.logException(ioe);
+                }
+
+                if (photoFile != null && getContext() != null) {
+                    Uri photoURI = FileProvider.getUriForFile(
+                        getContext(),
+                        "com.example.android.fileprovider",
+                        photoFile);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                } else {
+                    LogUtils.warn(TAG, "Unable to create photo.");
+                    mCallback.onQueryNoBarcode();
+                }
             } else {
                 LogUtils.warn(TAG, "Unable to create take picture intent.");
+                mCallback.onQueryFailure();
             }
         } else {
             LogUtils.warn(TAG, "Could not get activity object.");
@@ -426,7 +487,7 @@ public class QueryFragment extends Fragment {
     /*
         Retrieve data task; querying URLs for ISBN data
      */
-    static class RetrieveISBNDataTask extends AsyncTask<Object, Void, ArrayList<CloudyBook>> {
+    static class RetrieveISBNDataTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
 
         private WeakReference<QueryFragment> mFragmentWeakReference;
         private String mSearchParam;
@@ -442,13 +503,7 @@ public class QueryFragment extends Fragment {
             mAPIKey = apiKey;
         }
 
-        protected ArrayList<CloudyBook> doInBackground(Object... params) {
-
-            ContentResolver contentResolver = (ContentResolver) params[0];
-            if (contentResolver == null) {
-                LogUtils.warn(TAG, "ContentResolver unexpected.");
-                return new ArrayList<>();
-            }
+        protected ArrayList<CloudyBook> doInBackground(Void... params) {
 
             mCloudyBooks = new ArrayList<>();
             try {
@@ -497,6 +552,7 @@ public class QueryFragment extends Fragment {
 
                 return mCloudyBooks;
             } catch (IOException ioe) {
+                LogUtils.warn(TAG, "Exception when querying Book API service.");
                 Crashlytics.logException(ioe);
                 return new ArrayList<>();
             }

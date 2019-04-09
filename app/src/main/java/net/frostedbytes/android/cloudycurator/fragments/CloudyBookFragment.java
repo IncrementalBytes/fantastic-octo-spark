@@ -113,11 +113,11 @@ public class CloudyBookFragment extends Fragment {
                 if (task.isSuccessful()) {
                     mCallback.onUserBookAddedToLibrary(updatedBook);
                 } else {
+                    LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", queryPath);
                     if (task.getException() != null) {
                         Crashlytics.logException(task.getException());
                     }
 
-                    LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", queryPath);
                     mCallback.onUserBookAddedToLibraryFail();
                 }
             });

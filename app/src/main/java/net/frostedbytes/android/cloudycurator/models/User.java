@@ -21,6 +21,10 @@ public class User {
     @Exclude
     public String Id;
 
+    public long LastCloudySync;
+
+    public long LastLibrarySync;
+
     public List<UserBook> UserBooks;
 
     public User() {
@@ -28,6 +32,8 @@ public class User {
         Email = "";
         FullName = "";
         Id = BaseActivity.DEFAULT_ID;
+        LastCloudySync = 0;
+        LastLibrarySync = 0;
         UserBooks = new ArrayList<>();
     }
 

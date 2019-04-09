@@ -70,6 +70,19 @@ public class UserBook implements Parcelable {
         UpdatedDate = in.readLong();
     }
 
+    @Exclude
+    public String getAuthorsDelimited() {
+
+        StringBuilder builder = new StringBuilder();
+        for (String author : Authors) {
+            builder.append(author);
+            builder.append(",");
+        }
+
+        builder.deleteCharAt(builder.length() - 1);
+        return builder.toString();
+    }
+
     public static final Creator<UserBook> CREATOR = new Creator<UserBook>() {
 
         @Override
@@ -98,7 +111,7 @@ public class UserBook implements Parcelable {
         }
 
         UserBook userBook = (UserBook) o;
-        return HasRead == userBook.HasRead && IsOwned == userBook.IsOwned;
+        return ISBN.equals(userBook.ISBN);
     }
 
     @Override
