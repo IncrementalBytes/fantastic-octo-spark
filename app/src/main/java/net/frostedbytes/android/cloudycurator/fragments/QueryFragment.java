@@ -3,7 +3,9 @@ package net.frostedbytes.android.cloudycurator.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -18,12 +20,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.books.Books;
 import com.google.api.services.books.BooksRequestInitializer;
+import com.google.api.services.books.model.Geolayerdata;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
@@ -34,14 +37,19 @@ import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetectorOption
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
+import net.frostedbytes.android.cloudycurator.BuildConfig;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -59,13 +67,21 @@ public class QueryFragment extends Fragment {
     public interface OnQueryListener {
 
         void onQueryCancelled();
-        void onQueryFailure();
+
+        void onQueryFailure(String message);
+
         void onQueryFoundBook(CloudyBook cloudyBook);
+
         void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks);
+
         void onQueryFoundUserBook(UserBook userBook);
+
         void onQueryInit(boolean isSuccessful);
-        void onQueryNoBarcode();
+
+        void onQueryNoBarcode(String message);
+
         void onQueryNoResultsFound();
+
         void onQueryStarted();
     }
 
@@ -148,38 +164,46 @@ public class QueryFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case REQUEST_IMAGE_CAPTURE:
-                    Bundle extras = data.getExtras();
-                    if (extras != null) {
-                        mImageBitmap = (Bitmap) extras.get("data");
-                        if (mImageBitmap != null) {
-                            Bitmap emptyBitmap = Bitmap.createBitmap(
-                                mImageBitmap.getWidth(),
-                                mImageBitmap.getHeight(),
-                                mImageBitmap.getConfig());
-                            if (!mImageBitmap.sameAs(emptyBitmap)) {
-                                scanImageForISBN();
-                            } else {
-                                LogUtils.warn(TAG, "Image was empty.");
-                                mCallback.onQueryNoBarcode();
-                            }
-                        } else {
-                            LogUtils.warn(TAG, "Bitmap was null.");
-                            mCallback.onQueryNoBarcode();
-                        }
-                    } else {
-                        LogUtils.warn(TAG, "Unexpected data from camera intent.");
-                        mCallback.onQueryNoBarcode();
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            if (extras != null) {
+                if (BuildConfig.DEBUG) {
+                    File f = new File(getString(R.string.debug_path), "20190408_233337.jpg");
+                    try {
+                        mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
                     }
+                } else {
+                    mImageBitmap = (Bitmap) extras.get("data");
+                }
 
-                    break;
-                default:
-                    LogUtils.warn(TAG, "Unexpected request code: %d", requestCode);
+                if (mImageBitmap != null) {
+                    Bitmap emptyBitmap = Bitmap.createBitmap(
+                        mImageBitmap.getWidth(),
+                        mImageBitmap.getHeight(),
+                        mImageBitmap.getConfig());
+                    if (!mImageBitmap.sameAs(emptyBitmap)) {
+                        scanImageForISBN();
+                    } else {
+                        String message = "Image was empty.";
+                        LogUtils.warn(TAG, message);
+                        mCallback.onQueryNoBarcode(message);
+                    }
+                } else {
+                    String message = "Bitmap was null.";
+                    LogUtils.warn(TAG, message);
+                    mCallback.onQueryNoBarcode(message);
+                }
+            } else {
+                String message = "Unexpected data from camera intent.";
+                LogUtils.warn(TAG, message);
+                mCallback.onQueryNoBarcode(message);
             }
         } else {
-            LogUtils.error(TAG, "Unexpected result code: %d", resultCode);
+            String message = String.format(Locale.ENGLISH, "Unexpected result code: %d", resultCode);
+            LogUtils.error(TAG, message);
+            mCallback.onQueryFailure(message);
         }
     }
 
@@ -205,7 +229,7 @@ public class QueryFragment extends Fragment {
 
                     // TODO: add empty object in cloud for manual import?
                 });
-        } else if (cloudyBooks.size() > 1){
+        } else if (cloudyBooks.size() > 1) {
             mCallback.onQueryFoundMultipleBooks(cloudyBooks);
         } else {
             mCallback.onQueryNoResultsFound();
@@ -236,12 +260,17 @@ public class QueryFragment extends Fragment {
                             queryGoogleBookService(bookQueryFor);
                         }
                     } else {
-                        LogUtils.warn(TAG, "Query failed: %s where Title == %s", CloudyBook.ROOT, bookQueryFor.Title);
+                        String message = String.format(
+                            Locale.ENGLISH,
+                            "Query failed: %s where Title == %s",
+                            CloudyBook.ROOT,
+                            bookQueryFor.Title);
+                        LogUtils.warn(TAG, message);
                         if (task.getException() != null) {
                             Crashlytics.logException(task.getException());
                         }
 
-                        mCallback.onQueryFailure();
+                        mCallback.onQueryFailure(message);
                     }
                 });
         } else if (!bookQueryFor.ISBN.isEmpty() && !bookQueryFor.ISBN.equals(BaseActivity.DEFAULT_ISBN)) {
@@ -265,8 +294,9 @@ public class QueryFragment extends Fragment {
                     }
                 });
         } else {
-            LogUtils.error(TAG, "Cannot search; unexpected book: %s", bookQueryFor.toString());
-            mCallback.onQueryFailure();
+            String message = String.format(Locale.ENGLISH, "Cannot search; unexpected book: %s", bookQueryFor.toString());
+            LogUtils.error(TAG, message);
+            mCallback.onQueryFailure(message);
         }
     }
 
@@ -307,15 +337,17 @@ public class QueryFragment extends Fragment {
                 new RetrieveISBNDataTask(
                     this,
                     searchParams,
-                    getString(R.string.app_name),
+                    getActivity().getApplicationContext().getPackageManager(),
                     getString(R.string.google_books_key)).execute();
             } else {
-                LogUtils.warn(TAG, "Could not get activity's content resolver.");
-                mCallback.onQueryFailure();
+                String message = "Could not get activity's content resolver.";
+                LogUtils.warn(TAG, message);
+                mCallback.onQueryFailure(message);
             }
         } else {
-            LogUtils.debug(TAG, "Cannot search; unexpected search parameters: %s", cloudyBook.toString());
-            mCallback.onQueryFailure();
+            String message = String.format(Locale.ENGLISH, "Cannot search; unexpected search parameters: %s", cloudyBook.toString());
+            LogUtils.debug(TAG, message);
+            mCallback.onQueryFailure(message);
         }
     }
 
@@ -356,21 +388,25 @@ public class QueryFragment extends Fragment {
                             }
 
                             if (booksQueried < 1) {
-                                LogUtils.warn(TAG, "Image processed, but no bar codes found.");
-                                mCallback.onQueryNoBarcode();
+                                String message = "Image processed, but no bar codes found.";
+                                LogUtils.warn(TAG, message);
+                                mCallback.onQueryNoBarcode(message);
                             }
                         } else {
-                            LogUtils.warn(TAG, "No bar codes found.");
-                            mCallback.onQueryNoBarcode();
+                            String message = "No bar codes found.";
+                            LogUtils.warn(TAG, message);
+                            mCallback.onQueryNoBarcode(message);
                         }
                     } else {
-                        LogUtils.warn(TAG, "Could not detect bar code in image.");
-                        mCallback.onQueryNoBarcode();
+                        String message = "Could not detect bar code in image.";
+                        LogUtils.warn(TAG, message);
+                        mCallback.onQueryNoBarcode(message);
                     }
                 });
         } else {
-            LogUtils.warn(TAG, "Image not loaded!");
-            mCallback.onQueryNoBarcode();
+            String message = "Image not loaded";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryNoBarcode(message);
         }
     }
 
@@ -403,7 +439,7 @@ public class QueryFragment extends Fragment {
                             queryForUserBook(userBook);
                             break;
                         default:
-                            mCallback.onQueryFailure();
+                            mCallback.onQueryFailure(String.format(Locale.ENGLISH, "Unknown search term: %d", hintResourceId));
                             break;
                     }
                 })
@@ -415,8 +451,9 @@ public class QueryFragment extends Fragment {
             AlertDialog alert = alertDialogBuilder.create();
             alert.show();
         } else {
-            LogUtils.warn(TAG, "Could not get activity object.");
-            mCallback.onQueryFailure();
+            String message = "Could not get activity object.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryFailure(message);
         }
     }
 
@@ -429,12 +466,14 @@ public class QueryFragment extends Fragment {
             if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             } else {
-                LogUtils.warn(TAG, "Unable to create camera intent.");
-                mCallback.onQueryFailure();
+                String message = "Unable to create camera intent.";
+                LogUtils.warn(TAG, message);
+                mCallback.onQueryFailure(message);
             }
         } else {
-            LogUtils.warn(TAG, "Could not get activity object.");
-            mCallback.onQueryFailure();
+            String message = "Could not get activity object.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryFailure(message);
         }
     }
 
@@ -445,15 +484,15 @@ public class QueryFragment extends Fragment {
 
         private WeakReference<QueryFragment> mFragmentWeakReference;
         private String mSearchParam;
-        private String mAppName;
+        private PackageManager mPackageManager;
         private String mAPIKey;
         private ArrayList<CloudyBook> mCloudyBooks;
 
-        RetrieveISBNDataTask(QueryFragment context, String searchParam, String appName, String apiKey) {
+        RetrieveISBNDataTask(QueryFragment context, String searchParam, PackageManager packageManager, String apiKey) {
 
             mFragmentWeakReference = new WeakReference<>(context);
+            mPackageManager = packageManager;
             mSearchParam = searchParam;
-            mAppName = appName;
             mAPIKey = apiKey;
         }
 
@@ -461,11 +500,16 @@ public class QueryFragment extends Fragment {
 
             mCloudyBooks = new ArrayList<>();
             try {
-                JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+                final Books books = new Books.Builder(
+                    new com.google.api.client.http.javanet.NetHttpTransport(),
+                    JacksonFactory.getDefaultInstance(),
+                    request -> {
 
-                // set up Books client
-                final Books books = new Books.Builder(new com.google.api.client.http.javanet.NetHttpTransport(), jsonFactory, null)
-                    .setApplicationName(mAppName)
+                        String SHA1 = getSHA1();
+                        request.getHeaders().set("X-Android-Package", BuildConfig.APPLICATION_ID);
+                        request.getHeaders().set("X-Android-Cert", SHA1);
+                    })
+                    .setApplicationName(BuildConfig.APPLICATION_ID)
                     .setGoogleClientRequestInitializer(new BooksRequestInitializer(mAPIKey))
                     .build();
 
@@ -505,9 +549,9 @@ public class QueryFragment extends Fragment {
                 }
 
                 return mCloudyBooks;
-            } catch (IOException ioe) {
+            } catch (Exception e) {
                 LogUtils.warn(TAG, "Exception when querying Book API service.");
-                Crashlytics.logException(ioe);
+                Crashlytics.logException(e);
                 return new ArrayList<>();
             }
         }
@@ -522,6 +566,27 @@ public class QueryFragment extends Fragment {
             }
 
             fragment.parseFeed(cloudyBooks);
+        }
+
+        private String getSHA1() {
+
+            try {
+                Signature[] signatures = mPackageManager.getPackageInfo(
+                    BuildConfig.APPLICATION_ID,
+                    PackageManager.GET_SIGNATURES).signatures;
+                if (signatures.length > 0) {
+                    MessageDigest md;
+                    md = MessageDigest.getInstance("SHA-1");
+                    md.update(signatures[0].toByteArray());
+                    return BaseEncoding.base16().encode(md.digest());
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+
+            return null;
         }
     }
 }

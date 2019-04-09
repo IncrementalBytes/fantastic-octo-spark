@@ -170,7 +170,7 @@ public class MainActivity extends BaseActivity implements
             mAddButton.show();
             mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
             mSyncButton.show();
-            mSyncButton.setOnClickListener(pickView -> synchronizeLibrary());
+            mSyncButton.setOnClickListener(pickView -> readServerLibrary());
             replaceFragment(UserBookListFragment.newInstance(mUserBookList));
         }
     }
@@ -347,15 +347,15 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onQueryFailure() {
+    public void onQueryFailure(String message) {
 
-        LogUtils.debug(TAG, "++onQueryFailure()");
+        LogUtils.debug(TAG, "++onQueryFailure(String)");
         mProgressBar.setIndeterminate(false);
         mAddButton.show();
         mSyncButton.show();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
-            getString(R.string.err_book_search_fail),
+            message,
             Snackbar.LENGTH_LONG)
             .show();
         replaceFragment(UserBookListFragment.newInstance(mUserBookList));
@@ -401,7 +401,7 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onQueryNoBarcode() {
+    public void onQueryNoBarcode(String message) {
 
         LogUtils.debug(TAG, "++onQueryNoBarcode()");
         mProgressBar.setIndeterminate(false);
@@ -409,7 +409,7 @@ public class MainActivity extends BaseActivity implements
         mSyncButton.hide();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
-            getString(R.string.no_bar_codes),
+            String.format(Locale.ENGLISH, "%s: %s", getString(R.string.no_bar_codes), message),
             Snackbar.LENGTH_LONG)
             .show();
         replaceFragment(QueryFragment.newInstance(mUserBookList));
@@ -450,6 +450,7 @@ public class MainActivity extends BaseActivity implements
                 if (task.isSuccessful()) {
                     mUserBookList.add(userBook);
                     new WriteToLocalLibraryTask(this, mUserBookList).execute();
+                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 } else {
                     LogUtils.error(TAG, "Could not merge data under %s", queryPath);
                     if (task.getException() != null) {
@@ -616,7 +617,7 @@ public class MainActivity extends BaseActivity implements
                     mAddButton.show();
                     mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
                     mSyncButton.show();
-                    mSyncButton.setOnClickListener(pickView -> synchronizeLibrary());
+                    mSyncButton.setOnClickListener(pickView -> readServerLibrary());
                     replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 } else {
                     LogUtils.debug(TAG, "Could not get user book list: %s", queryPath);
@@ -632,12 +633,6 @@ public class MainActivity extends BaseActivity implements
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.main_fragment_container, fragment);
         fragmentTransaction.commit();
-    }
-
-    private void synchronizeLibrary() {
-
-        LogUtils.debug(TAG, "++synchronizeLibrary()");
-        readServerLibrary();
     }
 
     private void updateTitleAndDrawer(Fragment fragment) {

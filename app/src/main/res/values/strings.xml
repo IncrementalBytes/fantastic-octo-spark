@@ -47,4 +47,5 @@
     <string name="fragment_userbooklist">In Your Library</string>
     <string name="no_bar_codes">Did not find ISBN in image.</string>
     <string name="temp_file_name">yyyyMMdd_HHmmss</string>
+    <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
 </resources>

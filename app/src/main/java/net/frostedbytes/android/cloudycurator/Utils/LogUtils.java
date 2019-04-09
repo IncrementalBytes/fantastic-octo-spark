@@ -36,7 +36,8 @@ public class LogUtils {
     public static void debug(final String tag, String messageFormat, Object... args) {
 
         if (BuildConfig.DEBUG) {
-            Log.d(tag, String.format(Locale.ENGLISH, messageFormat, args));
+            //Log.d(tag, String.format(Locale.ENGLISH, messageFormat, args));
+            Crashlytics.log(Log.DEBUG, tag, String.format(Locale.ENGLISH, messageFormat, args));
         }
     }
 
