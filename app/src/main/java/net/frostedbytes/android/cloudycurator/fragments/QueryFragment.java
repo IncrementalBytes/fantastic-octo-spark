@@ -4,14 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
@@ -43,13 +40,10 @@ import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,8 +55,6 @@ public class QueryFragment extends Fragment {
     private static final String TAG = BASE_TAG + QueryFragment.class.getSimpleName();
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final int REQUEST_TITLE_SEARCH = 2;
-    static final int REQUEST_ISBN_SEARCH = 3;
 
     public interface OnQueryListener {
 
@@ -157,7 +149,6 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
         if (resultCode == RESULT_OK) {
-            UserBook userBook;
             switch (requestCode) {
                 case REQUEST_IMAGE_CAPTURE:
                     Bundle extras = data.getExtras();
@@ -169,7 +160,6 @@ public class QueryFragment extends Fragment {
                                 mImageBitmap.getHeight(),
                                 mImageBitmap.getConfig());
                             if (!mImageBitmap.sameAs(emptyBitmap)) {
-
                                 scanImageForISBN();
                             } else {
                                 LogUtils.warn(TAG, "Image was empty.");
@@ -185,16 +175,6 @@ public class QueryFragment extends Fragment {
                     }
 
                     break;
-                case REQUEST_ISBN_SEARCH:
-                    userBook = new UserBook();
-                    userBook.ISBN = "";
-                    queryForUserBook(userBook);
-                    break;
-                case REQUEST_TITLE_SEARCH:
-                    userBook = new UserBook();
-                    userBook.Title = "";
-                    queryForUserBook(userBook);
-                    break;
                 default:
                     LogUtils.warn(TAG, "Unexpected request code: %d", requestCode);
             }
@@ -206,21 +186,6 @@ public class QueryFragment extends Fragment {
     /*
         Private Method(s)
      */
-    private File createImageFile() throws IOException {
-
-        LogUtils.debug(TAG, "++createImageFile()");
-        String timeStamp = new SimpleDateFormat(getString(R.string.temp_file_name), Locale.ENGLISH).format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        if (getActivity() != null) {
-            File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-            File image = File.createTempFile(imageFileName, ".jpg", storageDir);
-            LogUtils.debug(TAG, "Temporary file: %s", image.getAbsolutePath());
-            return image;
-        }
-
-        return null;
-    }
-
     private void parseFeed(ArrayList<CloudyBook> cloudyBooks) {
 
         LogUtils.debug(TAG, "++parseFeed(%d)", cloudyBooks.size());
@@ -372,20 +337,27 @@ public class QueryFragment extends Fragment {
 
                     if (task.isSuccessful()) {
                         List<FirebaseVisionBarcode> codes = task.getResult();
-                        if (codes != null) {
+                        if (codes != null && codes.size() > 0) {
+                            int booksQueried = 0;
                             for (FirebaseVisionBarcode barcode : codes) {
                                 int valueType = barcode.getValueType();
                                 switch (valueType) {
                                     case FirebaseVisionBarcode.TYPE_ISBN:
-                                        LogUtils.debug(TAG, "Found barcode: %s", barcode.getDisplayValue());
+                                        LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
+                                        booksQueried++;
                                         UserBook userBook = new UserBook();
                                         userBook.ISBN = barcode.getDisplayValue();
                                         queryForUserBook(userBook);
                                         break;
                                     default:
-                                        LogUtils.warn(TAG, "Unexpected barcode: %s", barcode.getDisplayValue());
+                                        LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
                                         break;
                                 }
+                            }
+
+                            if (booksQueried < 1) {
+                                LogUtils.warn(TAG, "Image processed, but no bar codes found.");
+                                mCallback.onQueryNoBarcode();
                             }
                         } else {
                             LogUtils.warn(TAG, "No bar codes found.");
@@ -455,27 +427,9 @@ public class QueryFragment extends Fragment {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (getActivity() != null) {
             if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                File photoFile = null;
-                try {
-                    photoFile = createImageFile();
-                } catch (IOException ioe) {
-                    LogUtils.warn(TAG, "Exception when creating image file.");
-                    Crashlytics.logException(ioe);
-                }
-
-                if (photoFile != null && getContext() != null) {
-                    Uri photoURI = FileProvider.getUriForFile(
-                        getContext(),
-                        "com.example.android.fileprovider",
-                        photoFile);
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                } else {
-                    LogUtils.warn(TAG, "Unable to create photo.");
-                    mCallback.onQueryNoBarcode();
-                }
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             } else {
-                LogUtils.warn(TAG, "Unable to create take picture intent.");
+                LogUtils.warn(TAG, "Unable to create camera intent.");
                 mCallback.onQueryFailure();
             }
         } else {
