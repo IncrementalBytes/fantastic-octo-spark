@@ -35,7 +35,9 @@ public class CloudyBookFragment extends Fragment {
     public interface OnCloudyBookListener {
 
         void onUserBookAddedToLibrary(UserBook userBook);
+
         void onUserBookAddedToLibraryFail();
+
         void onCloudyBookInit(boolean isSuccessful);
     }
 

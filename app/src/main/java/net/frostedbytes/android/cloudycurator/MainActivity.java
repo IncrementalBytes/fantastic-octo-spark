@@ -84,7 +84,9 @@ public class MainActivity extends BaseActivity implements
     private static final String TAG = BASE_TAG + MainActivity.class.getSimpleName();
 
     static final int READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST = 12;
-    static final int INTERNET_PERMISSIONS_REQUEST = 13;
+    static final int CAMERA_PERMISSIONS_REQUEST = 13;
+
+    private QueryFragment mQueryFragment;
 
     private FloatingActionButton mAddButton;
     private DrawerLayout mDrawerLayout;
@@ -161,18 +163,7 @@ public class MainActivity extends BaseActivity implements
         navigationVersion.setText(BuildConfig.VERSION_NAME);
 
         // get user's book library
-        readLocalLibrary();
-        if (mUserBookList == null || mUserBookList.size() == 0) {
-            readServerLibrary(); // attempt to get user's book library from cloud
-        } else {
-            mUserBookList.sort(new SortUtils.ByBookName());
-            mProgressBar.setIndeterminate(false);
-            mAddButton.show();
-            mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
-            mSyncButton.show();
-            mSyncButton.setOnClickListener(pickView -> readServerLibrary());
-            replaceFragment(UserBookListFragment.newInstance(mUserBookList));
-        }
+        checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
     }
 
     @Override
@@ -184,53 +175,11 @@ public class MainActivity extends BaseActivity implements
                 replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 break;
             case R.id.navigation_menu_add:
-                mProgressBar.setIndeterminate(true);
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        Snackbar.make(
-                            findViewById(R.id.main_drawer_layout),
-                            getString(R.string.permission_denied_explanation),
-                            Snackbar.LENGTH_INDEFINITE)
-                            .setAction(
-                                getString(R.string.ok),
-                                view -> ActivityCompat.requestPermissions(
-                                    MainActivity.this,
-                                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                    READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST))
-                            .show();
-                    } else {
-                        ActivityCompat.requestPermissions(
-                            this,
-                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                            READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
-                    }
-                } else {
-                    LogUtils.debug(TAG, "%s permission granted.", Manifest.permission.READ_EXTERNAL_STORAGE);
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-                        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.INTERNET)) {
-                            Snackbar.make(
-                                findViewById(R.id.main_drawer_layout),
-                                getString(R.string.permission_denied_explanation),
-                                Snackbar.LENGTH_INDEFINITE)
-                                .setAction(
-                                    getString(R.string.ok),
-                                    view -> ActivityCompat.requestPermissions(
-                                        MainActivity.this,
-                                        new String[]{Manifest.permission.INSTALL_LOCATION_PROVIDER},
-                                        INTERNET_PERMISSIONS_REQUEST))
-                                .show();
-                        } else {
-                            ActivityCompat.requestPermissions(
-                                this,
-                                new String[]{Manifest.permission.INTERNET},
-                                INTERNET_PERMISSIONS_REQUEST);
-                        }
-                    } else {
-                        LogUtils.debug(TAG, "%s permission granted.", Manifest.permission.INTERNET);
-                        replaceFragment(QueryFragment.newInstance(mUserBookList));
-                    }
-                }
-
+                mProgressBar.setIndeterminate(false);
+                mAddButton.hide();
+                mSyncButton.hide();
+                mQueryFragment = QueryFragment.newInstance(mUserBookList);
+                replaceFragment(mQueryFragment);
                 break;
             case R.id.navigation_menu_logout:
                 AlertDialog dialog = new AlertDialog.Builder(this)
@@ -272,16 +221,20 @@ public class MainActivity extends BaseActivity implements
             case READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     LogUtils.debug(TAG, "READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST permission granted.");
+                    readLocalLibrary();
                 } else {
                     LogUtils.debug(TAG, "READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST permission denied.");
                 }
 
                 break;
-            case INTERNET_PERMISSIONS_REQUEST:
+            case CAMERA_PERMISSIONS_REQUEST:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    LogUtils.debug(TAG, "INTERNET_PERMISSIONS_REQUEST permission granted.");
+                    LogUtils.debug(TAG, "CAMERA_PERMISSIONS_REQUEST permission granted.");
+                    if (mQueryFragment != null) {
+                        mQueryFragment.takePictureIntent();
+                    }
                 } else {
-                    LogUtils.debug(TAG, "INTERNET_PERMISSIONS_REQUEST permission denied.");
+                    LogUtils.debug(TAG, "CAMERA_PERMISSIONS_REQUEST permission denied.");
                 }
 
                 break;
@@ -412,7 +365,8 @@ public class MainActivity extends BaseActivity implements
             String.format(Locale.ENGLISH, "%s: %s", getString(R.string.no_bar_codes), message),
             Snackbar.LENGTH_LONG)
             .show();
-        replaceFragment(QueryFragment.newInstance(mUserBookList));
+        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+        replaceFragment(mQueryFragment);
     }
 
     @Override
@@ -427,7 +381,8 @@ public class MainActivity extends BaseActivity implements
             getString(R.string.no_results),
             Snackbar.LENGTH_LONG)
             .show();
-        replaceFragment(QueryFragment.newInstance(mUserBookList));
+        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+        replaceFragment(mQueryFragment);
     }
 
     @Override
@@ -437,6 +392,13 @@ public class MainActivity extends BaseActivity implements
         mProgressBar.setIndeterminate(true);
         mAddButton.hide();
         mSyncButton.hide();
+    }
+
+    @Override
+    public void onQueryTakePicture() {
+
+        LogUtils.debug(TAG, "++onQueryTakePicture()");
+        checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
     }
 
     @Override
@@ -535,7 +497,10 @@ public class MainActivity extends BaseActivity implements
                 Snackbar.LENGTH_LONG)
                 .setAction(
                     getString(R.string.add),
-                    view -> replaceFragment(QueryFragment.newInstance(mUserBookList)))
+                    view -> {
+                        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+                        replaceFragment(mQueryFragment);
+                    })
                 .show();
         }
     }
@@ -543,6 +508,44 @@ public class MainActivity extends BaseActivity implements
     /*
         Private Method(s)
      */
+    private void checkPermission(String permission, int permissionCode) {
+
+        LogUtils.debug(TAG, "++checkPermission()");
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                Snackbar.make(
+                    findViewById(R.id.main_drawer_layout),
+                    getString(R.string.permission_denied_explanation),
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(
+                        getString(R.string.ok),
+                        view -> ActivityCompat.requestPermissions(
+                            MainActivity.this,
+                            new String[]{permission},
+                            permissionCode))
+                    .show();
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{permission},
+                    permissionCode);
+            }
+        } else {
+            LogUtils.debug(TAG, "%s permission granted.", permission);
+            switch (permissionCode) {
+                case READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST:
+                    readLocalLibrary();
+                    break;
+                case CAMERA_PERMISSIONS_REQUEST:
+                    if (mQueryFragment != null) {
+                        mQueryFragment.takePictureIntent();
+                    }
+
+                    break;
+            }
+        }
+    }
+
     private void readLocalLibrary() {
 
         LogUtils.debug(TAG, "++readLocalLibrary()");
@@ -583,6 +586,21 @@ public class MainActivity extends BaseActivity implements
                         LogUtils.debug(TAG, "Adding %s to user book collection.", currentUserBook.toString());
                     }
                 }
+
+                if (mUserBookList == null || mUserBookList.size() == 0) {
+                    readServerLibrary(); // attempt to get user's book library from cloud
+                } else {
+                    mUserBookList.sort(new SortUtils.ByBookName());
+                    mProgressBar.setIndeterminate(false);
+                    mAddButton.show();
+                    mAddButton.setOnClickListener(pickView -> {
+                        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+                        replaceFragment(mQueryFragment);
+                    });
+                    mSyncButton.show();
+                    mSyncButton.setOnClickListener(pickView -> readServerLibrary());
+                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
+                }
             } else {
                 LogUtils.debug(TAG, "%s does not exist yet.", resourcePath);
             }
@@ -615,7 +633,10 @@ public class MainActivity extends BaseActivity implements
                     new WriteToLocalLibraryTask(this, mUserBookList).execute();
                     mProgressBar.setIndeterminate(false);
                     mAddButton.show();
-                    mAddButton.setOnClickListener(pickView -> replaceFragment(QueryFragment.newInstance(mUserBookList)));
+                    mAddButton.setOnClickListener(pickView -> {
+                        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+                        replaceFragment(mQueryFragment);
+                    });
                     mSyncButton.show();
                     mSyncButton.setOnClickListener(pickView -> readServerLibrary());
                     replaceFragment(UserBookListFragment.newInstance(mUserBookList));

@@ -29,6 +29,7 @@ public class CloudyBookListFragment extends Fragment {
     public interface OnCloudyBookListListener {
 
         void onCloudyBookListItemSelected(CloudyBook cloudyBook);
+
         void onCloudyBookListPopulated(int size);
     }
 

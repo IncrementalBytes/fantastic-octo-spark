@@ -29,6 +29,7 @@ public class UserBookListFragment extends Fragment {
     public interface OnUserBookListListener {
 
         void onUserBookListPopulated(int size);
+
         void onUserBookListItemSelected(UserBook userBook);
     }
 

@@ -34,7 +34,9 @@ public class UserBookFragment extends Fragment {
     public interface OnUserBookListListener {
 
         void onUserBookInit(boolean isSuccessful);
+
         void onUserBookFail();
+
         void onUserBookUpdated(UserBook userBook);
     }
 

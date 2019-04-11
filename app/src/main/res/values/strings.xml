@@ -38,6 +38,7 @@
     <string name="search">Search</string>
     <string name="search_title_hint">Search for book by Title</string>
     <string name="search_isbn_hint">Search for book by ISBN number</string>
+    <string name="search_image_hint">Search for book by Image</string>
     <string name="no_results">Search yielded no results.</string>
     <string name="select_a_book">Select a book to add</string>
     <string name="fragment_cloudybook">Found Book</string>

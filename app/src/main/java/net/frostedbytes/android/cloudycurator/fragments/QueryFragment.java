@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -17,13 +18,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.books.Books;
 import com.google.api.services.books.BooksRequestInitializer;
-import com.google.api.services.books.model.Geolayerdata;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 import com.google.common.io.BaseEncoding;
@@ -52,7 +53,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 import static android.app.Activity.RESULT_OK;
@@ -83,6 +83,8 @@ public class QueryFragment extends Fragment {
         void onQueryNoResultsFound();
 
         void onQueryStarted();
+
+        void onQueryTakePicture();
     }
 
     private OnQueryListener mCallback;
@@ -138,7 +140,7 @@ public class QueryFragment extends Fragment {
         if (getActivity() != null) {
             PackageManager packageManager = getActivity().getPackageManager();
             if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-                scanCard.setOnClickListener(v -> takePictureIntent());
+                scanCard.setOnClickListener(v -> mCallback.onQueryTakePicture());
             } else {
                 LogUtils.warn(TAG, "Camera feature is not available; disabling camera.");
                 scanCard.setEnabled(false);
@@ -184,7 +186,7 @@ public class QueryFragment extends Fragment {
                         mImageBitmap.getHeight(),
                         mImageBitmap.getConfig());
                     if (!mImageBitmap.sameAs(emptyBitmap)) {
-                        scanImageForISBN();
+                        showInputDialog(R.string.search_image_hint);
                     } else {
                         String message = "Image was empty.";
                         LogUtils.warn(TAG, message);
@@ -203,6 +205,25 @@ public class QueryFragment extends Fragment {
         } else {
             String message = String.format(Locale.ENGLISH, "Unexpected result code: %d", resultCode);
             LogUtils.error(TAG, message);
+            mCallback.onQueryFailure(message);
+        }
+    }
+
+    public void takePictureIntent() {
+
+        LogUtils.debug(TAG, "++takePictureIntent()");
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (getActivity() != null) {
+            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            } else {
+                String message = "Unable to create camera intent.";
+                LogUtils.warn(TAG, message);
+                mCallback.onQueryFailure(message);
+            }
+        } else {
+            String message = "Could not get activity object.";
+            LogUtils.warn(TAG, message);
             mCallback.onQueryFailure(message);
         }
     }
@@ -365,46 +386,44 @@ public class QueryFragment extends Fragment {
             FirebaseVisionBarcodeDetector detector = FirebaseVision.getInstance()
                 .getVisionBarcodeDetector(options);
             com.google.android.gms.tasks.Task<java.util.List<FirebaseVisionBarcode>> result = detector.detectInImage(image)
-                .addOnCompleteListener(task -> {
+                .addOnSuccessListener(firebaseVisionBarcodes -> {
 
-                    if (task.isSuccessful()) {
-                        List<FirebaseVisionBarcode> codes = task.getResult();
-                        if (codes != null && codes.size() > 0) {
-                            int booksQueried = 0;
-                            for (FirebaseVisionBarcode barcode : codes) {
-                                int valueType = barcode.getValueType();
-                                switch (valueType) {
-                                    case FirebaseVisionBarcode.TYPE_ISBN:
-                                        LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
-                                        booksQueried++;
-                                        UserBook userBook = new UserBook();
-                                        userBook.ISBN = barcode.getDisplayValue();
-                                        queryForUserBook(userBook);
-                                        break;
-                                    default:
-                                        LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
-                                        break;
-                                }
+                    if (firebaseVisionBarcodes != null && firebaseVisionBarcodes.size() > 0) {
+                        int booksQueried = 0;
+                        for (FirebaseVisionBarcode barcode : firebaseVisionBarcodes) {
+                            int valueType = barcode.getValueType();
+                            switch (valueType) {
+                                case FirebaseVisionBarcode.TYPE_ISBN:
+                                    LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
+                                    booksQueried++;
+                                    UserBook userBook = new UserBook();
+                                    userBook.ISBN = barcode.getDisplayValue();
+                                    queryForUserBook(userBook);
+                                    break;
+                                default:
+                                    LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
+                                    break;
                             }
+                        }
 
-                            if (booksQueried < 1) {
-                                String message = "Image processed, but no bar codes found.";
-                                LogUtils.warn(TAG, message);
-                                mCallback.onQueryNoBarcode(message);
-                            }
-                        } else {
-                            String message = "No bar codes found.";
+                        if (booksQueried < 1) {
+                            String message = "Image processed, but no bar codes found.";
                             LogUtils.warn(TAG, message);
                             mCallback.onQueryNoBarcode(message);
                         }
                     } else {
-                        String message = "Could not detect bar code in image.";
+                        String message = "No bar codes found.";
                         LogUtils.warn(TAG, message);
                         mCallback.onQueryNoBarcode(message);
                     }
+                }).addOnFailureListener(e -> {
+
+                    String message = "Could not detect bar code in image.";
+                    LogUtils.warn(TAG, message);
+                    mCallback.onQueryNoBarcode(message);
                 });
         } else {
-            String message = "Image not loaded";
+            String message = "Image not loaded.";
             LogUtils.warn(TAG, message);
             mCallback.onQueryNoBarcode(message);
         }
@@ -424,6 +443,17 @@ public class QueryFragment extends Fragment {
             textView.setText(getString(R.string.search));
             final EditText editText = promptView.findViewById(R.id.dialog_edit_search);
             editText.setHint(getString(hintResourceId));
+            final ImageView imageView = promptView.findViewById(R.id.dialog_image_search);
+
+            // adjust layout
+            if (hintResourceId == R.string.search_image_hint) {
+                editText.setVisibility(View.INVISIBLE);
+                imageView.setImageBitmap(mImageBitmap);
+            } else {
+                ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(0, 0);
+                imageView.setLayoutParams(layoutParams);
+                imageView.setVisibility(View.INVISIBLE);
+            }
 
             alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("OK", (dialog, id) -> {
@@ -438,6 +468,9 @@ public class QueryFragment extends Fragment {
                             userBook.Title = editText.getText().toString();
                             queryForUserBook(userBook);
                             break;
+                        case R.string.search_image_hint:
+                            scanImageForISBN();
+                            break;
                         default:
                             mCallback.onQueryFailure(String.format(Locale.ENGLISH, "Unknown search term: %d", hintResourceId));
                             break;
@@ -450,26 +483,6 @@ public class QueryFragment extends Fragment {
 
             AlertDialog alert = alertDialogBuilder.create();
             alert.show();
-        } else {
-            String message = "Could not get activity object.";
-            LogUtils.warn(TAG, message);
-            mCallback.onQueryFailure(message);
-        }
-    }
-
-    private void takePictureIntent() {
-
-        LogUtils.debug(TAG, "++takePictureIntent()");
-        mCallback.onQueryStarted();
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (getActivity() != null) {
-            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-            } else {
-                String message = "Unable to create camera intent.";
-                LogUtils.warn(TAG, message);
-                mCallback.onQueryFailure(message);
-            }
         } else {
             String message = "Could not get activity object.";
             LogUtils.warn(TAG, message);
