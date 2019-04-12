@@ -31,10 +31,9 @@
     <string name="add_to_library">Add to Library?</string>
     <string name="search_isbn">Search by ISBN</string>
     <string name="search_title">Search by Title</string>
-    <string name="scan_image">Scan an image</string>
     <string name="err_book_search_fail">Unable to locate data for the book, please try again later.</string>
     <string name="err_add_book_fail">Unable to add book to library, please try again later.</string>
-    <string name="update_book">Update Book</string>
+    <string name="update">Update</string>
     <string name="search">Search</string>
     <string name="search_title_hint">Search for book by Title</string>
     <string name="search_isbn_hint">Search for book by ISBN number</string>
@@ -49,4 +48,8 @@
     <string name="temp_file_name">yyyyMMdd_HHmmss</string>
     <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
     <string name="err_no_camera_detected">No camera was detected.</string>
+    <string name="remove_from_library">Remove from Library</string>
+    <string name="remove_book_message">Remove \'%s\' from your library?</string>
+    <string name="err_remove_user_book">Unable to remove book from library, please try again later.</string>
+    <string name="err_update_user_book">Failed to update user book, please try again later.</string>
 </resources>

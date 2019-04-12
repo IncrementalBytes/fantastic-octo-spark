@@ -11,16 +11,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.crashlytics.android.Crashlytics;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
-
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.models.User;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
-import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -35,7 +29,7 @@ public class UserBookFragment extends Fragment {
 
         void onUserBookInit(boolean isSuccessful);
 
-        void onUserBookFail();
+        void onUserBookRemoved(UserBook userBook);
 
         void onUserBookUpdated(UserBook userBook);
     }
@@ -43,14 +37,12 @@ public class UserBookFragment extends Fragment {
     private OnUserBookListListener mCallback;
 
     private UserBook mUserBook;
-    private String mUserId;
 
-    public static UserBookFragment newInstance(String userId, UserBook userBook) {
+    public static UserBookFragment newInstance(UserBook userBook) {
 
-        LogUtils.debug(TAG, "++newInstance(%s, %s)", userId, userBook.toString());
+        LogUtils.debug(TAG, "++newInstance(%s)", userBook.toString());
         UserBookFragment fragment = new UserBookFragment();
         Bundle args = new Bundle();
-        args.putString(BaseActivity.ARG_USER_ID, userId);
         args.putParcelable(BaseActivity.ARG_USER_BOOK, userBook);
         fragment.setArguments(args);
         return fragment;
@@ -74,7 +66,6 @@ public class UserBookFragment extends Fragment {
         Bundle arguments = getArguments();
         if (arguments != null) {
             mUserBook = arguments.getParcelable(BaseActivity.ARG_USER_BOOK);
-            mUserId = arguments.getString(BaseActivity.ARG_USER_ID);
         } else {
             LogUtils.error(TAG, "Arguments were null.");
         }
@@ -99,45 +90,25 @@ public class UserBookFragment extends Fragment {
         ToggleButton owned = view.findViewById(R.id.userbook_toggle_owned);
         owned.setChecked(mUserBook.IsOwned);
         Button updateLibraryButton = view.findViewById(R.id.userbook_button_update);
+        Button removeFromLibraryButton = view.findViewById(R.id.userbook_button_remove);
 
         // TODO: enable updateLibraryButton only if content has changed
         updateLibraryButton.setOnClickListener(v -> {
 
             UserBook updatedBook = new UserBook();
             updatedBook.AddedDate = mUserBook.AddedDate;
-            updatedBook.Title = titleText.getText().toString();
-            updatedBook.Authors.add(authorText.getText().toString()); // TODO: parse the control for list of authors
-            updatedBook.ISBN = isbnText.getText().toString();
+            updatedBook.Title = mUserBook.Title;
+            updatedBook.Authors.addAll(mUserBook.Authors);
+            updatedBook.ISBN = mUserBook.ISBN;
             updatedBook.HasRead = read.isChecked();
             updatedBook.IsOwned = owned.isChecked();
             updatedBook.UpdatedDate = Calendar.getInstance().getTimeInMillis();
-
-            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.ISBN);
-            FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
-
-                if (task.isSuccessful()) {
-                    mCallback.onUserBookUpdated(updatedBook);
-                } else {
-                    LogUtils.error(TAG, "Failed to add book to user's library: %s", queryPath);
-                    if (task.getException() != null) {
-                        Crashlytics.logException(task.getException());
-                    }
-
-                    mCallback.onUserBookFail();
-                }
-            });
+            mCallback.onUserBookUpdated(updatedBook);
         });
+
+        removeFromLibraryButton.setOnClickListener(v -> mCallback.onUserBookRemoved(mUserBook));
 
         mCallback.onUserBookInit(true);
         return view;
     }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LogUtils.debug(TAG, "++onDestroy()");
-    }
-
-    // TODO: when leaving fragment; make an update (if changed)
 }

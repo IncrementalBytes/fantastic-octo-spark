@@ -117,7 +117,7 @@ public class UserBook implements Parcelable {
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), HasRead, IsOwned);
+        return Objects.hash(super.hashCode(), ISBN);
     }
 
     @Override

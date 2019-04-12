@@ -341,7 +341,7 @@ public class MainActivity extends BaseActivity implements
         mProgressBar.setIndeterminate(false);
         mAddButton.hide();
         mSyncButton.hide();
-        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
+        replaceFragment(UserBookFragment.newInstance(userBook));
     }
 
     @Override
@@ -455,31 +455,79 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onUserBookFail() {
+    public void onUserBookRemoved(UserBook userBook) {
 
-        LogUtils.debug(TAG, "++onUserBookFail()");
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            getString(R.string.err_add_book_fail),
-            Snackbar.LENGTH_LONG)
-            .show();
+        LogUtils.debug(TAG, "++onUserBookRemoved(%s)", userBook.toString());
+        String message = String.format(Locale.US, getString(R.string.remove_book_message), userBook.Title);
+        if (userBook.Title.isEmpty()) {
+            message = "Remove book from your library?";
+        }
+
+        AlertDialog removeBookDialog = new AlertDialog.Builder(this)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+
+                mProgressBar.setIndeterminate(true);
+                String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.ISBN);
+                FirebaseFirestore.getInstance().document(queryPath).delete().addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful()) {
+                        mUserBookList.remove(userBook);
+                    } else {
+                        LogUtils.error(TAG, "Failed to remove book from user's library: %s", queryPath);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+
+                        Snackbar.make(
+                            findViewById(R.id.main_drawer_layout),
+                            getString(R.string.err_remove_user_book),
+                            Snackbar.LENGTH_LONG)
+                            .show();
+                    }
+
+                    new WriteToLocalLibraryTask(this, mUserBookList).execute();
+                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
+                });
+            })
+            .setNegativeButton(android.R.string.no, null)
+            .create();
+        removeBookDialog.show();
     }
 
     @Override
     public void onUserBookUpdated(UserBook updatedUserBook) {
 
         LogUtils.debug(TAG, "++onUserBookUpdated(%s)", updatedUserBook.toString());
-        ArrayList<UserBook> updatedUserBookList = new ArrayList<>();
-        for (UserBook userBook : mUserBookList) {
-            if (userBook.equals(updatedUserBook)) {
-                updatedUserBookList.add(updatedUserBook);
-            } else {
-                updatedUserBookList.add(userBook);
-            }
-        }
+        mProgressBar.setIndeterminate(true);
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, updatedUserBook.ISBN);
+        FirebaseFirestore.getInstance().document(queryPath).set(updatedUserBook, SetOptions.merge()).addOnCompleteListener(task -> {
 
-        new WriteToLocalLibraryTask(this, updatedUserBookList).execute();
-        replaceFragment(UserBookListFragment.newInstance(updatedUserBookList));
+            if (task.isSuccessful()) {
+                ArrayList<UserBook> updatedUserBookList = new ArrayList<>();
+                for (UserBook userBook : mUserBookList) {
+                    if (userBook.ISBN.equals(updatedUserBook.ISBN)) {
+                        updatedUserBookList.add(updatedUserBook);
+                    } else {
+                        updatedUserBookList.add(userBook);
+                    }
+                }
+
+                new WriteToLocalLibraryTask(this, updatedUserBookList).execute();
+                replaceFragment(UserBookListFragment.newInstance(updatedUserBookList));
+            } else {
+                LogUtils.error(TAG, "Failed to update book in user's library: %s", queryPath);
+                if (task.getException() != null) {
+                    Crashlytics.logException(task.getException());
+                }
+
+                Snackbar.make(
+                    findViewById(R.id.main_drawer_layout),
+                    getString(R.string.err_update_user_book),
+                    Snackbar.LENGTH_LONG)
+                    .show();
+            }
+        });
     }
 
     @Override
@@ -488,7 +536,7 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "++onUserBookListItemSelected(%s)", userBook.toString());
         mAddButton.hide();
         mSyncButton.hide();
-        replaceFragment(UserBookFragment.newInstance(mUser.Id, userBook));
+        replaceFragment(UserBookFragment.newInstance(userBook));
     }
 
     @Override
@@ -583,7 +631,7 @@ public class MainActivity extends BaseActivity implements
                     // attempt to locate this book in existing list
                     boolean bookFound = false;
                     for (UserBook userBook : mUserBookList) {
-                        if (userBook.equals(currentUserBook)) {
+                        if (userBook.ISBN.equals(currentUserBook.ISBN)) {
                             bookFound = true;
                             break;
                         }
@@ -712,7 +760,7 @@ public class MainActivity extends BaseActivity implements
             FileOutputStream outputStream;
             try {
                 outputStream = mFragmentWeakReference.get().getApplicationContext().openFileOutput(
-                    "localLibrary.txt",
+                    BaseActivity.DEFAULT_LIBRARY_FILE,
                     Context.MODE_PRIVATE);
                 for (UserBook userBook : mUserBooks) {
                     String lineContents = String.format(

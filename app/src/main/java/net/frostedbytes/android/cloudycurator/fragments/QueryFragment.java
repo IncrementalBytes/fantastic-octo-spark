@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
@@ -21,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -385,7 +383,7 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++queryGoogleBookService(%s)", cloudyBook.toString());
         String searchParams;
-        if (!cloudyBook.ISBN.isEmpty() && !cloudyBook.ISBN.equalsIgnoreCase(BaseActivity.DEFAULT_ISBN)) {
+        if (!cloudyBook.ISBN.isEmpty() && !cloudyBook.ISBN.equals(BaseActivity.DEFAULT_ISBN)) {
             searchParams = String.format(Locale.US, "isbn:%s", cloudyBook.ISBN);
         } else {
             searchParams = "intitle:" + "\"" + cloudyBook.Title + "\"";
@@ -424,41 +422,42 @@ public class QueryFragment extends Fragment {
             FirebaseVisionBarcodeDetector detector = FirebaseVision.getInstance()
                 .getVisionBarcodeDetector(options);
             com.google.android.gms.tasks.Task<java.util.List<FirebaseVisionBarcode>> result = detector.detectInImage(image)
-                .addOnSuccessListener(firebaseVisionBarcodes -> {
+                .addOnCompleteListener(task -> {
 
-                    if (firebaseVisionBarcodes != null && firebaseVisionBarcodes.size() > 0) {
-                        int booksQueried = 0;
-                        for (FirebaseVisionBarcode barcode : firebaseVisionBarcodes) {
-                            int valueType = barcode.getValueType();
-                            switch (valueType) {
-                                case FirebaseVisionBarcode.TYPE_ISBN:
-                                    LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
-                                    booksQueried++;
-                                    UserBook userBook = new UserBook();
-                                    userBook.ISBN = barcode.getDisplayValue();
-                                    queryForUserBook(userBook);
-                                    break;
-                                default:
-                                    LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
-                                    break;
+                    if (task.isSuccessful()) {
+                        if (task.getResult() != null) {
+                            int booksQueried = 0;
+                            for (FirebaseVisionBarcode barcode : task.getResult()) {
+                                int valueType = barcode.getValueType();
+                                switch (valueType) {
+                                    case FirebaseVisionBarcode.TYPE_ISBN:
+                                        LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
+                                        booksQueried++;
+                                        UserBook userBook = new UserBook();
+                                        userBook.ISBN = barcode.getDisplayValue();
+                                        queryForUserBook(userBook);
+                                        break;
+                                    default:
+                                        LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
+                                        break;
+                                }
                             }
-                        }
 
-                        if (booksQueried < 1) {
-                            String message = "Image processed, but no bar codes found.";
+                            if (booksQueried < 1) {
+                                String message = "Image processed, but no bar codes found.";
+                                LogUtils.warn(TAG, message);
+                                mCallback.onQueryNoBarcode(message);
+                            }
+                        } else {
+                            String message = "No bar codes found.";
                             LogUtils.warn(TAG, message);
                             mCallback.onQueryNoBarcode(message);
                         }
                     } else {
-                        String message = "No bar codes found.";
+                        String message = "Image detection task failed.";
                         LogUtils.warn(TAG, message);
-                        mCallback.onQueryNoBarcode(message);
+                        mCallback.onQueryFailure(message);
                     }
-                }).addOnFailureListener(e -> {
-
-                    String message = "Could not detect bar code in image.";
-                    LogUtils.warn(TAG, message);
-                    mCallback.onQueryNoBarcode(message);
                 });
         } else {
             String message = "Image not loaded.";
