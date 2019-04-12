@@ -362,7 +362,7 @@ public class MainActivity extends BaseActivity implements
         mSyncButton.hide();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
-            String.format(Locale.ENGLISH, "%s: %s", getString(R.string.no_bar_codes), message),
+            String.format(Locale.US, "%s: %s", getString(R.string.no_bar_codes), message),
             Snackbar.LENGTH_LONG)
             .show();
         mQueryFragment = QueryFragment.newInstance(mUserBookList);
@@ -398,7 +398,15 @@ public class MainActivity extends BaseActivity implements
     public void onQueryTakePicture() {
 
         LogUtils.debug(TAG, "++onQueryTakePicture()");
-        checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+            checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
+        } else {
+            Snackbar.make(
+                findViewById(R.id.main_drawer_layout),
+                getString(R.string.err_no_camera_detected),
+                Snackbar.LENGTH_LONG)
+                .show();
+        }
     }
 
     @Override
@@ -708,7 +716,7 @@ public class MainActivity extends BaseActivity implements
                     Context.MODE_PRIVATE);
                 for (UserBook userBook : mUserBooks) {
                     String lineContents = String.format(
-                        Locale.ENGLISH,
+                        Locale.US,
                         "%s|%s|%s|%s|%s|%s\r\n",
                         userBook.ISBN,
                         userBook.Title,

@@ -36,8 +36,8 @@ public class LogUtils {
     public static void debug(final String tag, String messageFormat, Object... args) {
 
         if (BuildConfig.DEBUG) {
-            //Log.d(tag, String.format(Locale.ENGLISH, messageFormat, args));
-            Crashlytics.log(Log.DEBUG, tag, String.format(Locale.ENGLISH, messageFormat, args));
+            //Log.d(tag, String.format(Locale.US, messageFormat, args));
+            Crashlytics.log(Log.DEBUG, tag, String.format(Locale.US, messageFormat, args));
         }
     }
 
@@ -49,9 +49,9 @@ public class LogUtils {
     public static void error(final String tag, String messageFormat, Object... args) {
 
         if (BuildConfig.DEBUG) {
-            Log.e(tag, String.format(Locale.ENGLISH, messageFormat, args));
+            Log.e(tag, String.format(Locale.US, messageFormat, args));
         } else {
-            Crashlytics.log(Log.ERROR, tag, String.format(Locale.ENGLISH, messageFormat, args));
+            Crashlytics.log(Log.ERROR, tag, String.format(Locale.US, messageFormat, args));
         }
     }
 
@@ -63,9 +63,9 @@ public class LogUtils {
     public static void warn(final String tag, String messageFormat, Object... args) {
 
         if (BuildConfig.DEBUG) {
-            Log.w(tag, String.format(Locale.ENGLISH, messageFormat, args));
+            Log.w(tag, String.format(Locale.US, messageFormat, args));
         } else {
-            Crashlytics.log(Log.WARN, tag, String.format(Locale.ENGLISH, messageFormat, args));
+            Crashlytics.log(Log.WARN, tag, String.format(Locale.US, messageFormat, args));
         }
     }
 }

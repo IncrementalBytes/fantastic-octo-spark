@@ -12,7 +12,7 @@ public class PathUtils {
                 format = "%s/%d";
             }
 
-            finalPath = String.format(Locale.ENGLISH, format, finalPath, path);
+            finalPath = String.format(Locale.US, format, finalPath, path);
         }
 
         return finalPath;

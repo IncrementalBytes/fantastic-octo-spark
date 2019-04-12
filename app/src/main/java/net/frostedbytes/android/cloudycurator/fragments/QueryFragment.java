@@ -6,12 +6,15 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
@@ -48,11 +51,14 @@ import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 import static android.app.Activity.RESULT_OK;
@@ -89,6 +95,7 @@ public class QueryFragment extends Fragment {
 
     private OnQueryListener mCallback;
 
+    private String mCurrentPhotoPath;
     private Bitmap mImageBitmap;
     private ArrayList<UserBook> mUserBookList;
 
@@ -114,7 +121,7 @@ public class QueryFragment extends Fragment {
             mCallback = (OnQueryListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(
-                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
+                String.format(Locale.US, "Missing interface implementations for %s", context.toString()));
         }
 
         Bundle arguments = getArguments();
@@ -167,45 +174,43 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            if (extras != null) {
-                if (BuildConfig.DEBUG) {
-                    File f = new File(getString(R.string.debug_path), "20190408_233337.jpg");
-                    try {
-                        mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    mImageBitmap = (Bitmap) extras.get("data");
+            if (BuildConfig.DEBUG) {
+                File f = new File(getString(R.string.debug_path), "20190408_233337.jpg");
+                try {
+                    mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
+            } else {
+                File f = new File(mCurrentPhotoPath);
+                try {
+                    mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
 
-                if (mImageBitmap != null) {
-                    Bitmap emptyBitmap = Bitmap.createBitmap(
-                        mImageBitmap.getWidth(),
-                        mImageBitmap.getHeight(),
-                        mImageBitmap.getConfig());
-                    if (!mImageBitmap.sameAs(emptyBitmap)) {
-                        showInputDialog(R.string.search_image_hint);
-                    } else {
-                        String message = "Image was empty.";
-                        LogUtils.warn(TAG, message);
-                        mCallback.onQueryNoBarcode(message);
-                    }
+            if (mImageBitmap != null) {
+                Bitmap emptyBitmap = Bitmap.createBitmap(
+                    mImageBitmap.getWidth(),
+                    mImageBitmap.getHeight(),
+                    mImageBitmap.getConfig());
+                if (!mImageBitmap.sameAs(emptyBitmap)) {
+                    scanImageForISBN();
                 } else {
-                    String message = "Bitmap was null.";
+                    String message = "Image was empty.";
                     LogUtils.warn(TAG, message);
                     mCallback.onQueryNoBarcode(message);
                 }
             } else {
-                String message = "Unexpected data from camera intent.";
+                String message = "Bitmap was null.";
                 LogUtils.warn(TAG, message);
                 mCallback.onQueryNoBarcode(message);
             }
         } else {
-            String message = String.format(Locale.ENGLISH, "Unexpected result code: %d", resultCode);
-            LogUtils.error(TAG, message);
-            mCallback.onQueryFailure(message);
+            String message = "Unexpected data from camera intent.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryNoBarcode(message);
         }
     }
 
@@ -215,7 +220,25 @@ public class QueryFragment extends Fragment {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (getActivity() != null) {
             if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+
+                if (photoFile != null) {
+                    Uri photoURI = FileProvider.getUriForFile(
+                        getActivity(),
+                        "net.frostedbytes.android.cloudycurator.fileprovider",
+                        photoFile);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                } else {
+                    String message = "Failed to get file for photo.";
+                    LogUtils.warn(TAG, message);
+                    mCallback.onQueryFailure(message);
+                }
             } else {
                 String message = "Unable to create camera intent.";
                 LogUtils.warn(TAG, message);
@@ -231,6 +254,21 @@ public class QueryFragment extends Fragment {
     /*
         Private Method(s)
      */
+    private File createImageFile() throws IOException {
+
+        LogUtils.debug(TAG, "++createImageFile()");
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        if (getActivity() != null) {
+            File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+            mCurrentPhotoPath = image.getAbsolutePath();
+            return image;
+        }
+
+        return null;
+    }
+
     private void parseFeed(ArrayList<CloudyBook> cloudyBooks) {
 
         LogUtils.debug(TAG, "++parseFeed(%d)", cloudyBooks.size());
@@ -282,7 +320,7 @@ public class QueryFragment extends Fragment {
                         }
                     } else {
                         String message = String.format(
-                            Locale.ENGLISH,
+                            Locale.US,
                             "Query failed: %s where Title == %s",
                             CloudyBook.ROOT,
                             bookQueryFor.Title);
@@ -315,7 +353,7 @@ public class QueryFragment extends Fragment {
                     }
                 });
         } else {
-            String message = String.format(Locale.ENGLISH, "Cannot search; unexpected book: %s", bookQueryFor.toString());
+            String message = String.format(Locale.US, "Cannot search; unexpected book: %s", bookQueryFor.toString());
             LogUtils.error(TAG, message);
             mCallback.onQueryFailure(message);
         }
@@ -348,7 +386,7 @@ public class QueryFragment extends Fragment {
         LogUtils.debug(TAG, "++queryGoogleBookService(%s)", cloudyBook.toString());
         String searchParams;
         if (!cloudyBook.ISBN.isEmpty() && !cloudyBook.ISBN.equalsIgnoreCase(BaseActivity.DEFAULT_ISBN)) {
-            searchParams = String.format(Locale.ENGLISH, "isbn:%s", cloudyBook.ISBN);
+            searchParams = String.format(Locale.US, "isbn:%s", cloudyBook.ISBN);
         } else {
             searchParams = "intitle:" + "\"" + cloudyBook.Title + "\"";
         }
@@ -366,7 +404,7 @@ public class QueryFragment extends Fragment {
                 mCallback.onQueryFailure(message);
             }
         } else {
-            String message = String.format(Locale.ENGLISH, "Cannot search; unexpected search parameters: %s", cloudyBook.toString());
+            String message = String.format(Locale.US, "Cannot search; unexpected search parameters: %s", cloudyBook.toString());
             LogUtils.debug(TAG, message);
             mCallback.onQueryFailure(message);
         }
@@ -443,17 +481,6 @@ public class QueryFragment extends Fragment {
             textView.setText(getString(R.string.search));
             final EditText editText = promptView.findViewById(R.id.dialog_edit_search);
             editText.setHint(getString(hintResourceId));
-            final ImageView imageView = promptView.findViewById(R.id.dialog_image_search);
-
-            // adjust layout
-            if (hintResourceId == R.string.search_image_hint) {
-                editText.setVisibility(View.INVISIBLE);
-                imageView.setImageBitmap(mImageBitmap);
-            } else {
-                ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(0, 0);
-                imageView.setLayoutParams(layoutParams);
-                imageView.setVisibility(View.INVISIBLE);
-            }
 
             alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("OK", (dialog, id) -> {
@@ -468,11 +495,8 @@ public class QueryFragment extends Fragment {
                             userBook.Title = editText.getText().toString();
                             queryForUserBook(userBook);
                             break;
-                        case R.string.search_image_hint:
-                            scanImageForISBN();
-                            break;
                         default:
-                            mCallback.onQueryFailure(String.format(Locale.ENGLISH, "Unknown search term: %d", hintResourceId));
+                            mCallback.onQueryFailure(String.format(Locale.US, "Unknown search term: %d", hintResourceId));
                             break;
                     }
                 })

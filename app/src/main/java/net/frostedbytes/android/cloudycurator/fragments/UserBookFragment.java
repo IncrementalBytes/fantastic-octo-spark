@@ -68,7 +68,7 @@ public class UserBookFragment extends Fragment {
             mCallback = (OnUserBookListListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(
-                String.format(Locale.ENGLISH, "Missing interface implementations for %s", context.toString()));
+                String.format(Locale.US, "Missing interface implementations for %s", context.toString()));
         }
 
         Bundle arguments = getArguments();

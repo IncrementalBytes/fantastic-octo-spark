@@ -74,7 +74,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
             .enableAutoManage(this, connectionResult -> {
                 LogUtils.debug(TAG, "++onConnectionFailed(ConnectionResult)");
-                String message = String.format(Locale.ENGLISH, "Connection result was null: %s", connectionResult.getErrorMessage());
+                String message = String.format(Locale.US, "Connection result was null: %s", connectionResult.getErrorMessage());
                 LogUtils.debug(TAG, message);
                 Snackbar.make(findViewById(R.id.activity_sign_in), message, Snackbar.LENGTH_LONG).show();
             })
@@ -116,7 +116,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
                     firebaseAuthenticateWithGoogle(account);
                 } else {
                     String message = String.format(
-                        Locale.ENGLISH,
+                        Locale.US,
                         "Could not get sign-in account: %d - %s",
                         result.getStatus().getStatusCode(),
                         result.getStatus().getStatusMessage());
@@ -125,7 +125,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
                 }
             } else {
                 String message = String.format(
-                    Locale.ENGLISH,
+                    Locale.US,
                     "Getting task result failed: %d - %s",
                     result.getStatus().getStatusCode(),
                     result.getStatus().getStatusMessage());
