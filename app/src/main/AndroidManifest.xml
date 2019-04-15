@@ -33,7 +33,7 @@
 
         <meta-data
             android:name="com.google.firebase.ml.vision.DEPENDENCIES"
-            android:value="barcode" />
+            android:value="barcode,ocr" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"

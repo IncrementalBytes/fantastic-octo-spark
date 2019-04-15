@@ -20,7 +20,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.RadioGroup;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -37,6 +37,8 @@ import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetectorOptions;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.BuildConfig;
@@ -74,6 +76,8 @@ public class QueryFragment extends Fragment {
 
         void onQueryFailure(String message);
 
+        void onQueryFeatureNotAvailable(String message);
+
         void onQueryFoundBook(CloudyBook cloudyBook);
 
         void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks);
@@ -89,6 +93,8 @@ public class QueryFragment extends Fragment {
         void onQueryStarted();
 
         void onQueryTakePicture();
+
+        void onQueryTextResultsFound(ArrayList<String> textResults);
     }
 
     private OnQueryListener mCallback;
@@ -137,11 +143,7 @@ public class QueryFragment extends Fragment {
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         View view = inflater.inflate(R.layout.fragment_book_query, container, false);
 
-        CardView titleCard = view.findViewById(R.id.book_query_card_title);
-        titleCard.setOnClickListener(v -> showInputDialog(R.string.search_title_hint));
-        CardView isbnCard = view.findViewById(R.id.book_query_card_isbn);
-        isbnCard.setOnClickListener(v -> showInputDialog(R.string.search_isbn_hint));
-        CardView scanCard = view.findViewById(R.id.book_query_card_photo);
+        CardView scanCard = view.findViewById(R.id.query_card_image);
         if (getActivity() != null) {
             PackageManager packageManager = getActivity().getPackageManager();
             if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
@@ -151,9 +153,14 @@ public class QueryFragment extends Fragment {
                 scanCard.setEnabled(false);
             }
         } else {
-            LogUtils.warn(TAG, "Could not get package manager information from activity; disabling camera.");
+            String message = "Camera not detected.";
+            LogUtils.warn(TAG, message);
             scanCard.setEnabled(false);
+            mCallback.onQueryFeatureNotAvailable(message);
         }
+
+        CardView manualCard = view.findViewById(R.id.query_card_manual);
+        manualCard.setOnClickListener(v -> showManualDialog());
 
         mCallback.onQueryInit(true);
         return view;
@@ -165,6 +172,16 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onDestroy()");
         mUserBookList = null;
+        if (mCurrentPhotoPath != null) {
+            File file = new File(mCurrentPhotoPath);
+            if (file.exists()) {
+                if (file.delete()) {
+                    LogUtils.debug(TAG, "Removed processed image: %s", mCurrentPhotoPath);
+                } else {
+                    LogUtils.warn(TAG, "Unable to remove processed image: %s", mCurrentPhotoPath);
+                }
+            }
+        }
     }
 
     @Override
@@ -173,6 +190,7 @@ public class QueryFragment extends Fragment {
         LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             if (BuildConfig.DEBUG) {
+                // File f = new File(getString(R.string.debug_path), "20190413_094436.jpg");
                 File f = new File(getString(R.string.debug_path), "20190408_233337.jpg");
                 try {
                     mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
@@ -209,6 +227,28 @@ public class QueryFragment extends Fragment {
             String message = "Unexpected data from camera intent.";
             LogUtils.warn(TAG, message);
             mCallback.onQueryNoBarcode(message);
+        }
+    }
+
+    public void queryInUserBooks(CloudyBook cloudyBook) {
+
+        LogUtils.debug(TAG, "++queryInUserBooks(%s)", cloudyBook.toString());
+        UserBook foundBook = null;
+        for (UserBook userBook : mUserBookList) {
+            if (userBook.Title.equals(cloudyBook.Title) ||
+                (!userBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) && userBook.ISBN_8.equals(cloudyBook.ISBN_8)) ||
+                (!userBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) && userBook.ISBN_13.equals(cloudyBook.ISBN_13)) ||
+                (!userBook.LCCN.equals(BaseActivity.DEFAULT_LCCN) && userBook.LCCN.equals(cloudyBook.LCCN))) {
+                foundBook = userBook;
+                break;
+            }
+        }
+
+        if (foundBook != null) {
+            mCallback.onQueryFoundUserBook(foundBook);
+        } else {
+            LogUtils.debug(TAG, "Did not find %s in user's book list.", cloudyBook.toString());
+            queryInCloudyBooks(cloudyBook);
         }
     }
 
@@ -271,7 +311,7 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++parseFeed(%d)", cloudyBooks.size());
         if (cloudyBooks.size() == 1) {
-            String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBooks.get(0).ISBN);
+            String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBooks.get(0).VolumeId);
             FirebaseFirestore.getInstance().document(queryPath).set(cloudyBooks.get(0), SetOptions.merge())
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -293,9 +333,9 @@ public class QueryFragment extends Fragment {
         }
     }
 
-    private void queryForBook(CloudyBook bookQueryFor) {
+    private void queryInCloudyBooks(CloudyBook bookQueryFor) {
 
-        LogUtils.debug(TAG, "++queryForBook(%s)", bookQueryFor.toString());
+        LogUtils.debug(TAG, "++queryInCloudyBooks(%s)", bookQueryFor.toString());
         if (!bookQueryFor.Title.isEmpty()) {
             FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("Title", bookQueryFor.Title).get()
                 .addOnCompleteListener(task -> {
@@ -305,10 +345,10 @@ public class QueryFragment extends Fragment {
                         for (DocumentSnapshot document : task.getResult().getDocuments()) {
                             cloudyBook = document.toObject(CloudyBook.class);
                             if (cloudyBook != null) {
-                                cloudyBook.ISBN = document.getId();
+                                cloudyBook.VolumeId = document.getId();
+
+                                // TODO: handle multiple documents
                                 mCallback.onQueryFoundBook(cloudyBook);
-                            } else {
-                                LogUtils.warn(TAG, "Failed to convert document into CloudyBook: %s", document.getId());
                             }
                         }
 
@@ -330,24 +370,104 @@ public class QueryFragment extends Fragment {
                         mCallback.onQueryFailure(message);
                     }
                 });
-        } else if (!bookQueryFor.ISBN.isEmpty() && !bookQueryFor.ISBN.equals(BaseActivity.DEFAULT_ISBN)) {
-            String queryPath = PathUtils.combine(CloudyBook.ROOT, bookQueryFor.ISBN);
-            FirebaseFirestore.getInstance().document(queryPath).get()
+        } else if (!bookQueryFor.ISBN_8.contains(BaseActivity.DEFAULT_ISBN_8)) {
+            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("ISBN_8", bookQueryFor.ISBN_8).get()
                 .addOnCompleteListener(task -> {
 
                     if (task.isSuccessful() && task.getResult() != null) {
-                        DocumentSnapshot document = task.getResult();
-                        CloudyBook cloudyBook = document.toObject(CloudyBook.class);
-                        if (cloudyBook != null) {
-                            cloudyBook.ISBN = document.getId();
-                            mCallback.onQueryFoundBook(cloudyBook);
-                        } else {
-                            LogUtils.warn(TAG, "Unable to convert cloudy book: %s", queryPath);
+                        CloudyBook cloudyBook = null;
+                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                            cloudyBook = document.toObject(CloudyBook.class);
+                            if (cloudyBook != null) {
+                                cloudyBook.VolumeId = document.getId();
+
+                                // TODO: handle multiple documents
+                                mCallback.onQueryFoundBook(cloudyBook);
+                            }
+                        }
+
+                        if (cloudyBook == null) {
+                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
                             queryGoogleBookService(bookQueryFor);
                         }
                     } else {
-                        LogUtils.debug(TAG, "Query failed: %s", queryPath);
-                        queryGoogleBookService(bookQueryFor);
+                        String message = String.format(
+                            Locale.US,
+                            "Query failed: %s where ISBN_8 == %s",
+                            CloudyBook.ROOT,
+                            bookQueryFor.ISBN_8);
+                        LogUtils.warn(TAG, message);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+
+                        mCallback.onQueryFailure(message);
+                    }
+                });
+        } else if (!bookQueryFor.ISBN_13.contains(BaseActivity.DEFAULT_ISBN_13)) {
+            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("ISBN_13", bookQueryFor.ISBN_13).get()
+                .addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        CloudyBook cloudyBook = null;
+                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                            cloudyBook = document.toObject(CloudyBook.class);
+                            if (cloudyBook != null) {
+                                cloudyBook.VolumeId = document.getId();
+
+                                // TODO: handle multiple documents
+                                mCallback.onQueryFoundBook(cloudyBook);
+                            }
+                        }
+
+                        if (cloudyBook == null) {
+                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
+                            queryGoogleBookService(bookQueryFor);
+                        }
+                    } else {
+                        String message = String.format(
+                            Locale.US,
+                            "Query failed: %s where ISBN_13 == %s",
+                            CloudyBook.ROOT,
+                            bookQueryFor.ISBN_13);
+                        LogUtils.warn(TAG, message);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+
+                        mCallback.onQueryFailure(message);
+                    }
+                });
+        } else if (!bookQueryFor.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
+            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("LCCN", bookQueryFor.LCCN).get()
+                .addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        CloudyBook cloudyBook = null;
+                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                            cloudyBook = document.toObject(CloudyBook.class);
+                            if (cloudyBook != null) {
+                                cloudyBook.VolumeId = document.getId();
+                                mCallback.onQueryFoundBook(cloudyBook);
+                            }
+                        }
+
+                        if (cloudyBook == null) {
+                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
+                            queryGoogleBookService(bookQueryFor);
+                        }
+                    } else {
+                        String message = String.format(
+                            Locale.US,
+                            "Query failed: %s where LCCN == %s",
+                            CloudyBook.ROOT,
+                            bookQueryFor.LCCN);
+                        LogUtils.warn(TAG, message);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+
+                        mCallback.onQueryFailure(message);
                     }
                 });
         } else {
@@ -357,43 +477,21 @@ public class QueryFragment extends Fragment {
         }
     }
 
-    private void queryForUserBook(UserBook userBookQueryFor) {
-
-        LogUtils.debug(TAG, "++queryForUserBook(%s)", userBookQueryFor.toString());
-        UserBook foundBook = null;
-        for (UserBook userBook : mUserBookList) {
-            if (userBook.Title.equals(userBookQueryFor.Title) || userBook.ISBN.equals(userBookQueryFor.ISBN)) {
-                foundBook = userBook;
-                break;
-            }
-        }
-
-        if (foundBook != null) {
-            mCallback.onQueryFoundUserBook(foundBook);
-        } else {
-            LogUtils.debug(TAG, "Did not find %s in user's book list.", userBookQueryFor.toString());
-            CloudyBook cloudyBook = new CloudyBook();
-            cloudyBook.ISBN = userBookQueryFor.ISBN;
-            cloudyBook.Title = userBookQueryFor.Title;
-            queryForBook(cloudyBook);
-        }
-    }
-
     private void queryGoogleBookService(CloudyBook cloudyBook) {
 
         LogUtils.debug(TAG, "++queryGoogleBookService(%s)", cloudyBook.toString());
-        String searchParams;
-        if (!cloudyBook.ISBN.isEmpty() && !cloudyBook.ISBN.equals(BaseActivity.DEFAULT_ISBN)) {
-            searchParams = String.format(Locale.US, "isbn:%s", cloudyBook.ISBN);
+        if (cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) &&
+            cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) &&
+            cloudyBook.LCCN.equals(BaseActivity.DEFAULT_LCCN) &&
+            cloudyBook.Title.isEmpty()) {
+            String message = "Invalid search criteria.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryFailure(message);
         } else {
-            searchParams = "intitle:" + "\"" + cloudyBook.Title + "\"";
-        }
-
-        if (!searchParams.isEmpty()) {
             if (getActivity() != null) {
-                new RetrieveISBNDataTask(
+                new RetrieveBookDataTask(
                     this,
-                    searchParams,
+                    cloudyBook,
                     getActivity().getApplicationContext().getPackageManager(),
                     getString(R.string.google_books_key)).execute();
             } else {
@@ -401,10 +499,6 @@ public class QueryFragment extends Fragment {
                 LogUtils.warn(TAG, message);
                 mCallback.onQueryFailure(message);
             }
-        } else {
-            String message = String.format(Locale.US, "Cannot search; unexpected search parameters: %s", cloudyBook.toString());
-            LogUtils.debug(TAG, message);
-            mCallback.onQueryFailure(message);
         }
     }
 
@@ -426,16 +520,18 @@ public class QueryFragment extends Fragment {
 
                     if (task.isSuccessful()) {
                         if (task.getResult() != null) {
-                            int booksQueried = 0;
+                            CloudyBook cloudyBook = new CloudyBook();
                             for (FirebaseVisionBarcode barcode : task.getResult()) {
-                                int valueType = barcode.getValueType();
-                                switch (valueType) {
+                                switch (barcode.getValueType()) {
                                     case FirebaseVisionBarcode.TYPE_ISBN:
-                                        LogUtils.debug(TAG, "Found bar code: %s", barcode.getDisplayValue());
-                                        booksQueried++;
-                                        UserBook userBook = new UserBook();
-                                        userBook.ISBN = barcode.getDisplayValue();
-                                        queryForUserBook(userBook);
+                                        String barcodeValue = barcode.getDisplayValue();
+                                        LogUtils.debug(TAG, "Found a bar code: %s", barcodeValue);
+                                        if (barcodeValue != null && barcodeValue.length() == 8) {
+                                            cloudyBook.ISBN_8 = barcodeValue;
+                                        } else if (barcodeValue != null && barcodeValue.length() == 13) {
+                                            cloudyBook.ISBN_13 = barcodeValue;
+                                        }
+
                                         break;
                                     default:
                                         LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
@@ -443,18 +539,17 @@ public class QueryFragment extends Fragment {
                                 }
                             }
 
-                            if (booksQueried < 1) {
-                                String message = "Image processed, but no bar codes found.";
-                                LogUtils.warn(TAG, message);
-                                mCallback.onQueryNoBarcode(message);
+                            if (!cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
+                                !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                                queryInUserBooks(cloudyBook);
+                            } else {
+                                scanImageForText();
                             }
                         } else {
-                            String message = "No bar codes found.";
-                            LogUtils.warn(TAG, message);
-                            mCallback.onQueryNoBarcode(message);
+                            scanImageForText();
                         }
                     } else {
-                        String message = "Image detection task failed.";
+                        String message = "Bar code detection task failed.";
                         LogUtils.warn(TAG, message);
                         mCallback.onQueryFailure(message);
                     }
@@ -466,37 +561,80 @@ public class QueryFragment extends Fragment {
         }
     }
 
-    protected void showInputDialog(int hintResourceId) {
+    private void scanImageForText() {
 
-        LogUtils.debug(TAG, "++showInputDialog(%s)", getString(hintResourceId));
+        LogUtils.debug(TAG, "++scanImageForText()");
+        if (mImageBitmap != null) {
+            FirebaseVisionBarcodeDetectorOptions options =
+                new FirebaseVisionBarcodeDetectorOptions.Builder()
+                    .setBarcodeFormats(
+                        FirebaseVisionBarcode.FORMAT_EAN_8,
+                        FirebaseVisionBarcode.FORMAT_EAN_13)
+                    .build();
+            FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mImageBitmap);
+            FirebaseVisionTextRecognizer detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+            com.google.android.gms.tasks.Task<FirebaseVisionText> result = detector.processImage(image).addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    ArrayList<String> blocks = new ArrayList<>();
+                    for (FirebaseVisionText.TextBlock textBlock : task.getResult().getTextBlocks()) {
+                        String block = textBlock.getText().replace("\n", " ").replace("\r", " ");
+                        blocks.add(block);
+                    }
+
+                    mCallback.onQueryTextResultsFound(blocks);
+                } else {
+                    String message = "Text detection task failed.";
+                    LogUtils.warn(TAG, message);
+                    mCallback.onQueryFailure(message);
+                }
+            });
+        } else {
+            String message = "Image not loaded.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryNoBarcode(message);
+        }
+    }
+
+    protected void showManualDialog() {
+
+        LogUtils.debug(TAG, "++showManualDialog()");
         mCallback.onQueryStarted();
         LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-        View promptView = layoutInflater.inflate(R.layout.dialog_search_input, null);
+        View promptView = layoutInflater.inflate(R.layout.dialog_search_manual, null);
+        EditText editText = promptView.findViewById(R.id.manual_dialog_edit_search);
+        RadioGroup radioGroup = promptView.findViewById(R.id.manual_dialog_radio_search);
         if (getActivity() != null) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
             alertDialogBuilder.setView(promptView);
-
-            final TextView textView = promptView.findViewById(R.id.dialog_text_search);
-            textView.setText(getString(R.string.search));
-            final EditText editText = promptView.findViewById(R.id.dialog_edit_search);
-            editText.setHint(getString(hintResourceId));
-
             alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("OK", (dialog, id) -> {
 
-                    UserBook userBook = new UserBook();
-                    switch (hintResourceId) {
-                        case R.string.search_isbn_hint:
-                            userBook.ISBN = editText.getText().toString();
-                            queryForUserBook(userBook);
+                    CloudyBook cloudyBook = new CloudyBook();
+                    switch (radioGroup.getCheckedRadioButtonId()) {
+                        case R.id.manual_dialog_radio_isbn:
+                            String value = editText.getText().toString();
+                            if (value.length() == 8) {
+                                cloudyBook.ISBN_8 = value;
+                            } else if (value.length() == 13) {
+                                cloudyBook.ISBN_13 = value;
+                            }
+
+                            if (!cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
+                                !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                                queryInUserBooks(cloudyBook);
+                            } else {
+                                String message = "Invalid ISBN value.";
+                                mCallback.onQueryFailure(message);
+                            }
+
                             break;
-                        case R.string.search_title_hint:
-                            userBook.Title = editText.getText().toString();
-                            queryForUserBook(userBook);
+                        case R.id.manual_dialog_radio_title:
+                            cloudyBook.Title = editText.getText().toString();
+                            queryInUserBooks(cloudyBook);
                             break;
-                        default:
-                            mCallback.onQueryFailure(String.format(Locale.US, "Unknown search term: %d", hintResourceId));
-                            break;
+                        case R.id.manual_dialog_radio_lccn:
+                            cloudyBook.LCCN = editText.getText().toString();
+                            queryInUserBooks(cloudyBook);
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {
@@ -514,27 +652,27 @@ public class QueryFragment extends Fragment {
     }
 
     /*
-        Retrieve data task; querying URLs for ISBN data
+        Retrieve data task; querying URLs for data
      */
-    static class RetrieveISBNDataTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
+    static class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
 
-        private WeakReference<QueryFragment> mFragmentWeakReference;
-        private String mSearchParam;
-        private PackageManager mPackageManager;
         private String mAPIKey;
+        private CloudyBook mCloudyBook;
         private ArrayList<CloudyBook> mCloudyBooks;
+        private WeakReference<QueryFragment> mFragmentWeakReference;
+        private PackageManager mPackageManager;
 
-        RetrieveISBNDataTask(QueryFragment context, String searchParam, PackageManager packageManager, String apiKey) {
+        RetrieveBookDataTask(QueryFragment context, CloudyBook cloudyBook, PackageManager packageManager, String apiKey) {
 
+            mAPIKey = apiKey;
+            mCloudyBook = cloudyBook;
+            mCloudyBooks = new ArrayList<>();
             mFragmentWeakReference = new WeakReference<>(context);
             mPackageManager = packageManager;
-            mSearchParam = searchParam;
-            mAPIKey = apiKey;
         }
 
         protected ArrayList<CloudyBook> doInBackground(Void... params) {
 
-            mCloudyBooks = new ArrayList<>();
             try {
                 final Books books = new Books.Builder(
                     new com.google.api.client.http.javanet.NetHttpTransport(),
@@ -549,39 +687,54 @@ public class QueryFragment extends Fragment {
                     .setGoogleClientRequestInitializer(new BooksRequestInitializer(mAPIKey))
                     .build();
 
-                LogUtils.debug(TAG, "Query: [" + mSearchParam + "]");
-                Books.Volumes.List volumesList = books.volumes().list(mSearchParam);
-
-                Volumes volumes = volumesList.execute();
-                if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
-                    LogUtils.debug(TAG, "No matches found.");
-                    return new ArrayList<>();
+                String searchParam = null;
+                if (!mCloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) {
+                    searchParam = String.format(Locale.US, "isbn:%s", mCloudyBook.ISBN_8);
+                } else if (!mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                    searchParam = String.format(Locale.US, "isbn:%s", mCloudyBook.ISBN_13);
+                } else if (!mCloudyBook.Title.isEmpty()){
+                    searchParam = "intitle:" + "\"" + mCloudyBook.Title + "\"";
+                } else if (!mCloudyBook.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
+                    searchParam = String.format(Locale.US, "lccn:%s", mCloudyBook.LCCN);
                 }
 
-                for (Volume volume : volumes.getItems()) {
-                    Volume.VolumeInfo volumeInfo = volume.getVolumeInfo();
-                    CloudyBook cloudyBook = new CloudyBook();
-                    cloudyBook.Title = volumeInfo.getTitle();
-                    java.util.List<String> authors = volumeInfo.getAuthors();
-                    if (authors != null && !authors.isEmpty()) {
-                        cloudyBook.Authors.addAll(authors);
-                    }
+                if (searchParam != null && !searchParam.isEmpty()) {
+                    LogUtils.debug(TAG, "Query: [%s]", searchParam);
+                    Books.Volumes.List volumesList = books.volumes().list(searchParam);
+                    Volumes volumes = volumesList.execute();
+                    if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
+                        LogUtils.debug(TAG, "No matches found.");
+                    } else {
+                        for (Volume volume : volumes.getItems()) {
+                            Volume.VolumeInfo volumeInfo = volume.getVolumeInfo();
+                            CloudyBook cloudyBook = new CloudyBook();
+                            cloudyBook.Title = volumeInfo.getTitle();
+                            java.util.List<String> authors = volumeInfo.getAuthors();
+                            if (authors != null && !authors.isEmpty()) {
+                                cloudyBook.Authors.addAll(authors);
+                            }
 
-                    java.util.List<String> categories = volumeInfo.getCategories();
-                    if (categories != null && !categories.isEmpty()) {
-                        cloudyBook.Categories.addAll(categories);
-                    }
+                            java.util.List<String> categories = volumeInfo.getCategories();
+                            if (categories != null && !categories.isEmpty()) {
+                                cloudyBook.Categories.addAll(categories);
+                            }
 
-                    cloudyBook.CreatedDate = Calendar.getInstance().getTimeInMillis();
-                    cloudyBook.PublishedDate = volumeInfo.getPublishedDate();
-                    for (Volume.VolumeInfo.IndustryIdentifiers isbn : volumeInfo.getIndustryIdentifiers()) {
-                        if (isbn.getType().equalsIgnoreCase("ISBN_13")) {
-                            cloudyBook.ISBN = isbn.getIdentifier();
+                            cloudyBook.CreatedDate = Calendar.getInstance().getTimeInMillis();
+                            cloudyBook.PublishedDate = volumeInfo.getPublishedDate();
+                            for (Volume.VolumeInfo.IndustryIdentifiers isbn : volumeInfo.getIndustryIdentifiers()) {
+                                if (isbn.getType().equalsIgnoreCase("ISBN_10")) {
+                                    cloudyBook.ISBN_8 = isbn.getIdentifier();
+                                } else if (isbn.getType().equalsIgnoreCase("ISBN_13")) {
+                                    cloudyBook.ISBN_13 = isbn.getIdentifier();
+                                }
+                            }
+
+                            cloudyBook.VolumeId = volume.getId();
+                            mCloudyBooks.add(cloudyBook);
                         }
                     }
-
-                    cloudyBook.VolumeId = volume.getId();
-                    mCloudyBooks.add(cloudyBook);
+                } else {
+                    LogUtils.error(TAG, "Unexpected search parameters.");
                 }
 
                 return mCloudyBooks;

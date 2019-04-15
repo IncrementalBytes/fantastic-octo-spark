@@ -6,94 +6,68 @@
     android:id="@+id/fragment_book_query">
 
     <android.support.v7.widget.CardView
-        android:id="@+id/book_query_card_title"
+        android:id="@+id/query_card_image"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/default_view_margin"
         android:clickable="true"
         android:focusable="true"
         card_view:cardCornerRadius="4dp"
-        card_view:layout_constraintEnd_toStartOf="@id/book_query_card_isbn"
+        card_view:layout_constraintEnd_toEndOf="parent"
         card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintBottom_toTopOf="@id/book_query_card_photo">
+        card_view:layout_constraintBottom_toTopOf="@id/query_card_manual">
 
         <TextView
-            android:id="@+id/book_query_text_title"
+            android:id="@+id/query_text_image"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_margin="@dimen/default_view_margin"
-            android:text="@string/search_title"
+            android:text="@string/search_by_image"
+            android:textAlignment="center"
             android:textSize="18sp" />
 
         <ImageView
-            android:id="@+id/book_query_image_title"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/book_query_image_image"
+            android:layout_width="@dimen/image_width_thumbnail"
+            android:layout_height="@dimen/image_height_thumbnail"
+            android:layout_gravity="center"
             android:layout_margin="@dimen/default_view_margin"
-            card_view:srcCompat="@drawable/ic_search_dark"
-            android:contentDescription="@string/search_title"/>
+            android:contentDescription="@string/search_by_image"
+            card_view:srcCompat="@drawable/ic_camera_dark" />
 
     </android.support.v7.widget.CardView>
 
     <android.support.v7.widget.CardView
-        android:id="@+id/book_query_card_isbn"
+        android:id="@+id/query_card_manual"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clickable="true"
         android:focusable="true"
         card_view:cardCornerRadius="4dp"
         android:layout_margin="@dimen/default_view_margin"
-        card_view:layout_constraintTop_toTopOf="parent"
+        card_view:layout_constraintTop_toBottomOf="@id/query_card_image"
         card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintStart_toEndOf="@id/book_query_card_title"
-        card_view:layout_constraintBottom_toTopOf="@id/book_query_card_photo">
-
-        <TextView
-            android:id="@+id/book_query_text_isbn"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="@dimen/default_view_margin"
-            android:text="@string/search_isbn"
-            android:textSize="18sp" />
-
-        <ImageView
-            android:id="@+id/book_query_image_isbn"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="@dimen/default_view_margin"
-            card_view:srcCompat="@drawable/ic_isbn_dark"
-            android:contentDescription="@string/search_isbn"/>
-
-    </android.support.v7.widget.CardView>
-
-    <android.support.v7.widget.CardView
-        android:id="@+id/book_query_card_photo"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="@dimen/default_view_margin"
-        android:clickable="true"
-        android:focusable="true"
-        card_view:cardCornerRadius="4dp"
-        card_view:layout_constraintTop_toBottomOf="@id/book_query_card_title"
         card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintBottom_toBottomOf="parent">
 
         <TextView
-            android:id="@+id/book_query_text_photo"
+            android:id="@+id/query_text_manual"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_margin="@dimen/default_view_margin"
-            android:text="@string/scan_image_for_isbn"
+            android:text="@string/search_manual"
+            android:textAlignment="center"
             android:textSize="18sp" />
 
         <ImageView
-            android:id="@+id/book_query_image_photo"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="24dp"
-            android:contentDescription="@string/search_title"
-            card_view:srcCompat="@drawable/ic_camera_dark" />
+            android:id="@+id/query_image_manual"
+            android:layout_width="@dimen/image_width_thumbnail"
+            android:layout_height="@dimen/image_height_thumbnail"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/default_view_margin"
+            android:contentDescription="@string/search_manual"
+            card_view:srcCompat="@drawable/ic_search_dark" />
 
     </android.support.v7.widget.CardView>
 

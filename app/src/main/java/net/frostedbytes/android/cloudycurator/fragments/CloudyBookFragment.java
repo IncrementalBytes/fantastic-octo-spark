@@ -94,7 +94,12 @@ public class CloudyBookFragment extends Fragment {
         }
 
         TextView isbnText = view.findViewById(R.id.book_text_isbn_value);
-        isbnText.setText(mCloudyBook.ISBN);
+        if (mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+            isbnText.setText(mCloudyBook.ISBN_8);
+        } else {
+            isbnText.setText(mCloudyBook.ISBN_13);
+        }
+
         ToggleButton read = view.findViewById(R.id.book_toggle_read);
         ToggleButton owned = view.findViewById(R.id.book_toggle_owned);
 
@@ -103,13 +108,15 @@ public class CloudyBookFragment extends Fragment {
 
             UserBook updatedBook = new UserBook();
             updatedBook.AddedDate = Calendar.getInstance().getTimeInMillis();
-            updatedBook.Authors.add(authorText.getText().toString()); // TODO: parse the control for list of authors
+            updatedBook.Authors.addAll(mCloudyBook.Authors);
             updatedBook.HasRead = read.isChecked();
-            updatedBook.ISBN = isbnText.getText().toString();
+            updatedBook.ISBN_8 = mCloudyBook.ISBN_8;
+            updatedBook.ISBN_13 = mCloudyBook.ISBN_13;
             updatedBook.IsOwned = owned.isChecked();
             updatedBook.Title = titleText.getText().toString();
+            updatedBook.VolumeId = mCloudyBook.VolumeId;
 
-            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.ISBN);
+            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.VolumeId);
             FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
 
                 if (task.isSuccessful()) {
@@ -128,13 +135,4 @@ public class CloudyBookFragment extends Fragment {
         mCallback.onCloudyBookInit(true);
         return view;
     }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LogUtils.debug(TAG, "++onDestroy()");
-    }
-
-    // TODO: when leaving fragment; make an update (if changed)
 }

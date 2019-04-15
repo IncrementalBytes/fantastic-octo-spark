@@ -53,6 +53,7 @@ import com.google.firebase.firestore.SetOptions;
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookListFragment;
 import net.frostedbytes.android.cloudycurator.fragments.QueryFragment;
+import net.frostedbytes.android.cloudycurator.fragments.ScanResultsFragment;
 import net.frostedbytes.android.cloudycurator.fragments.UserBookFragment;
 import net.frostedbytes.android.cloudycurator.fragments.UserBookListFragment;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
@@ -78,6 +79,7 @@ public class MainActivity extends BaseActivity implements
     CloudyBookListFragment.OnCloudyBookListListener,
     NavigationView.OnNavigationItemSelectedListener,
     QueryFragment.OnQueryListener,
+    ScanResultsFragment.OnScanResultsListener,
     UserBookFragment.OnUserBookListListener,
     UserBookListFragment.OnUserBookListListener {
 
@@ -261,7 +263,7 @@ public class MainActivity extends BaseActivity implements
         mProgressBar.setIndeterminate(false);
         mAddButton.hide();
         mSyncButton.hide();
-        String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBook.ISBN);
+        String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBook.VolumeId);
         FirebaseFirestore.getInstance().document(queryPath).set(cloudyBook, SetOptions.merge())
             .addOnCompleteListener(task -> {
 
@@ -313,6 +315,18 @@ public class MainActivity extends BaseActivity implements
             .show();
         replaceFragment(UserBookListFragment.newInstance(mUserBookList));
     }
+
+    @Override
+    public void onQueryFeatureNotAvailable(String message) {
+        LogUtils.debug(TAG, "++onQueryFeatureNotAvailable(String)");
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        mSyncButton.hide();
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            message,
+            Snackbar.LENGTH_LONG)
+            .show();    }
 
     @Override
     public void onQueryFoundBook(CloudyBook cloudBook) {
@@ -410,10 +424,47 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onQueryTextResultsFound(ArrayList<String> results) {
+
+        LogUtils.debug(TAG, "++onQueryTextResultsFound(%d)", results.size());
+        if (results.size() > 0) {
+            replaceFragment(ScanResultsFragment.newInstance(results));
+        } else {
+            Snackbar.make(
+                findViewById(R.id.main_drawer_layout),
+                getString(R.string.err_no_text_detected),
+                Snackbar.LENGTH_LONG)
+                .show();
+            mQueryFragment = QueryFragment.newInstance(mUserBookList);
+            replaceFragment(mQueryFragment);
+        }
+    }
+
+    @Override
+    public void onScanResultsPopulated(int size) {
+
+        LogUtils.debug(TAG, "++onScanResultsPopulated(%d)", size);
+        mProgressBar.setIndeterminate(false);
+        mAddButton.hide();
+        mSyncButton.hide();
+    }
+
+    @Override
+    public void onScanResultsItemSelected(String searchText) {
+
+        LogUtils.debug(TAG, "++onScanResultsItemSelected(%s)", searchText);
+        CloudyBook cloudyBook = new CloudyBook();
+        cloudyBook.Title = searchText;
+        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+        replaceFragment(mQueryFragment);
+        mQueryFragment.queryInUserBooks(cloudyBook);
+    }
+
+    @Override
     public void onUserBookAddedToLibrary(UserBook userBook) {
 
         LogUtils.debug(TAG, "++onUserBookAddedToLibrary(%s)", userBook.toString());
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.ISBN);
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.VolumeId);
         FirebaseFirestore.getInstance().document(queryPath).set(userBook, SetOptions.merge())
             .addOnCompleteListener(task -> {
 
@@ -468,7 +519,7 @@ public class MainActivity extends BaseActivity implements
             .setPositiveButton(android.R.string.yes, (dialog, which) -> {
 
                 mProgressBar.setIndeterminate(true);
-                String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.ISBN);
+                String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, userBook.VolumeId);
                 FirebaseFirestore.getInstance().document(queryPath).delete().addOnCompleteListener(task -> {
 
                     if (task.isSuccessful()) {
@@ -500,13 +551,13 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onUserBookUpdated(%s)", updatedUserBook.toString());
         mProgressBar.setIndeterminate(true);
-        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, updatedUserBook.ISBN);
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id, UserBook.ROOT, updatedUserBook.VolumeId);
         FirebaseFirestore.getInstance().document(queryPath).set(updatedUserBook, SetOptions.merge()).addOnCompleteListener(task -> {
 
             if (task.isSuccessful()) {
                 ArrayList<UserBook> updatedUserBookList = new ArrayList<>();
                 for (UserBook userBook : mUserBookList) {
-                    if (userBook.ISBN.equals(updatedUserBook.ISBN)) {
+                    if (userBook.VolumeId.equals(updatedUserBook.VolumeId)) {
                         updatedUserBookList.add(updatedUserBook);
                     } else {
                         updatedUserBookList.add(userBook);
@@ -594,6 +645,7 @@ public class MainActivity extends BaseActivity implements
                     break;
                 case CAMERA_PERMISSIONS_REQUEST:
                     if (mQueryFragment != null) {
+                        mProgressBar.setIndeterminate(true);
                         mQueryFragment.takePictureIntent();
                     }
 
@@ -611,17 +663,20 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "Loading %s", file.getAbsolutePath());
         mUserBookList = new ArrayList<>();
         try {
-            if (file.exists() && file.canWrite()) {
+            if (file.exists() && file.canRead()) {
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
                 while ((parsableString = bufferedReader.readLine()) != null) { //process line
                     if (parsableString.startsWith("--")) { // comment line; ignore
                         continue;
                     }
 
-                    // [ISBN]|[Title]|[Author(s)]|[AddedDate]|[HasRead]|[IsOwned]
+                    // [VOLUMEID]|[ISBN_8]|[ISBN_13]|[LCCN]|[Title]|[Author(s)]|[AddedDate]|[HasRead]|[IsOwned]
                     List<String> elements = new ArrayList<>(Arrays.asList(parsableString.split("\\|")));
                     UserBook currentUserBook = new UserBook();
-                    currentUserBook.ISBN = elements.remove(0);
+                    currentUserBook.VolumeId = elements.remove(0);
+                    currentUserBook.ISBN_8 = elements.remove(0);
+                    currentUserBook.ISBN_13 = elements.remove(0);
+                    currentUserBook.LCCN = elements.remove(0);
                     currentUserBook.Title = elements.remove(0);
                     currentUserBook.Authors = new ArrayList<>(Arrays.asList(elements.remove(0).split(",")));
                     currentUserBook.AddedDate = Long.parseLong(elements.remove(0));
@@ -631,7 +686,7 @@ public class MainActivity extends BaseActivity implements
                     // attempt to locate this book in existing list
                     boolean bookFound = false;
                     for (UserBook userBook : mUserBookList) {
-                        if (userBook.ISBN.equals(currentUserBook.ISBN)) {
+                        if (userBook.VolumeId.equals(currentUserBook.VolumeId)) {
                             bookFound = true;
                             break;
                         }
@@ -642,27 +697,30 @@ public class MainActivity extends BaseActivity implements
                         LogUtils.debug(TAG, "Adding %s to user book collection.", currentUserBook.toString());
                     }
                 }
-
-                if (mUserBookList == null || mUserBookList.size() == 0) {
-                    readServerLibrary(); // attempt to get user's book library from cloud
-                } else {
-                    mUserBookList.sort(new SortUtils.ByBookName());
-                    mProgressBar.setIndeterminate(false);
-                    mAddButton.show();
-                    mAddButton.setOnClickListener(pickView -> {
-                        mQueryFragment = QueryFragment.newInstance(mUserBookList);
-                        replaceFragment(mQueryFragment);
-                    });
-                    mSyncButton.show();
-                    mSyncButton.setOnClickListener(pickView -> readServerLibrary());
-                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
-                }
             } else {
                 LogUtils.debug(TAG, "%s does not exist yet.", resourcePath);
             }
         } catch (Exception e) {
             LogUtils.warn(TAG, "Exception when reading local library data.");
             Crashlytics.logException(e);
+            mProgressBar.setIndeterminate(false);
+            mAddButton.show();
+            mSyncButton.show();
+        } finally {
+            if (mUserBookList == null || mUserBookList.size() == 0) {
+                readServerLibrary(); // attempt to get user's book library from cloud
+            } else {
+                mUserBookList.sort(new SortUtils.ByBookName());
+                mProgressBar.setIndeterminate(false);
+                mAddButton.show();
+                mAddButton.setOnClickListener(pickView -> {
+                    mQueryFragment = QueryFragment.newInstance(mUserBookList);
+                    replaceFragment(mQueryFragment);
+                });
+                mSyncButton.show();
+                mSyncButton.setOnClickListener(pickView -> readServerLibrary());
+                replaceFragment(UserBookListFragment.newInstance(mUserBookList));
+            }
         }
     }
 
@@ -678,7 +736,7 @@ public class MainActivity extends BaseActivity implements
                     for (DocumentSnapshot document : task.getResult().getDocuments()) {
                         UserBook userBook = document.toObject(UserBook.class);
                         if (userBook != null) {
-                            userBook.ISBN = document.getId();
+                            userBook.VolumeId = document.getId();
                             mUserBookList.add(userBook);
                         } else {
                             LogUtils.warn(TAG, "Unable to convert user book: %s", queryPath);
@@ -765,8 +823,11 @@ public class MainActivity extends BaseActivity implements
                 for (UserBook userBook : mUserBooks) {
                     String lineContents = String.format(
                         Locale.US,
-                        "%s|%s|%s|%s|%s|%s\r\n",
-                        userBook.ISBN,
+                        "%s|%s|%s|%s|%s|%s|%s|%s|%s\r\n",
+                        userBook.VolumeId,
+                        userBook.ISBN_8,
+                        userBook.ISBN_13,
+                        userBook.LCCN,
                         userBook.Title,
                         userBook.getAuthorsDelimited(),
                         String.valueOf(userBook.AddedDate),

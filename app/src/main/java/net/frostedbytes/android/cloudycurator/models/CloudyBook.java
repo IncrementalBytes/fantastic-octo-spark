@@ -21,44 +21,29 @@ import android.os.Parcelable;
 
 import com.google.firebase.firestore.Exclude;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CloudyBook implements Parcelable {
+public class CloudyBook extends Book implements Parcelable {
 
     @Exclude
     public static final String ROOT = "CloudyBooks";
-
-    public List<String> Authors;
 
     public List<String> Categories;
 
     public long CreatedDate;
 
-    @Exclude
-    public String ISBN;
-
     public String PublishedDate;
-
-    public String Title;
 
     public long UpdatedDate;
 
-    public String VolumeId;
-
     public CloudyBook() {
 
-        Authors = new ArrayList<>();
         Categories = new ArrayList<>();
         CreatedDate = 0;
-        ISBN = BaseActivity.DEFAULT_ISBN;
         PublishedDate = "";
-        Title = "";
         UpdatedDate = 0;
-        VolumeId = "";
     }
 
     protected CloudyBook(Parcel in) {
@@ -68,7 +53,9 @@ public class CloudyBook implements Parcelable {
         Categories = new ArrayList<>();
         in.readList(Categories, String.class.getClassLoader());
         CreatedDate = in.readLong();
-        ISBN = in.readString();
+        ISBN_8 = in.readString();
+        ISBN_13 = in.readString();
+        LCCN = in.readString();
         PublishedDate = in.readString();
         Title = in.readString();
         UpdatedDate = in.readLong();
@@ -105,13 +92,13 @@ public class CloudyBook implements Parcelable {
         }
 
         CloudyBook cloudyBook = (CloudyBook) o;
-        return Objects.equals(ISBN, cloudyBook.ISBN) && Objects.equals(Title, cloudyBook.Title);
+        return Objects.equals(VolumeId, cloudyBook.VolumeId);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(ISBN, Title);
+        return Objects.hash(VolumeId);
     }
 
     @Override
@@ -119,7 +106,6 @@ public class CloudyBook implements Parcelable {
 
         return "CloudyBook{" +
             "CreatedDate=" + CreatedDate +
-            ", ISBN='" + ISBN + '\'' +
             ", PublishedDate='" + PublishedDate + '\'' +
             ", Title='" + Title + '\'' +
             ", UpdatedDate=" + UpdatedDate +
@@ -133,7 +119,9 @@ public class CloudyBook implements Parcelable {
         dest.writeList(Authors);
         dest.writeList(Categories);
         dest.writeLong(CreatedDate);
-        dest.writeString(ISBN);
+        dest.writeString(ISBN_8);
+        dest.writeString(ISBN_13);
+        dest.writeString(LCCN);
         dest.writeString(PublishedDate);
         dest.writeString(Title);
         dest.writeLong(UpdatedDate);

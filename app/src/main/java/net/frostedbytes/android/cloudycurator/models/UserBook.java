@@ -21,41 +21,43 @@ import android.os.Parcelable;
 
 import com.google.firebase.firestore.Exclude;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-public class UserBook implements Parcelable {
+public class UserBook extends Book implements Parcelable {
 
     @Exclude
     public static final String ROOT = "UserBooks";
 
     public long AddedDate;
 
-    public List<String> Authors;
-
     public boolean HasRead;
 
-    @Exclude
-    public String ISBN;
-
     public boolean IsOwned;
-
-    public String Title;
 
     public long UpdatedDate;
 
     public UserBook() {
 
         AddedDate = 0;
-        Authors = new ArrayList<>();
         HasRead = false;
-        ISBN = BaseActivity.DEFAULT_ISBN;
         IsOwned = false;
-        Title = "";
         UpdatedDate = 0;
+    }
+
+    public UserBook(UserBook userBook) {
+
+        AddedDate = userBook.AddedDate;
+        Authors = new ArrayList<>();
+        Authors.addAll(userBook.Authors);
+        HasRead = userBook.HasRead;
+        ISBN_8 = userBook.ISBN_8;
+        ISBN_13 = userBook.ISBN_13;
+        IsOwned = userBook.IsOwned;
+        LCCN = userBook.LCCN;
+        Title = userBook.Title;
+        UpdatedDate = userBook.UpdatedDate;
+        VolumeId = userBook.VolumeId;
     }
 
     protected UserBook(Parcel in) {
@@ -64,10 +66,13 @@ public class UserBook implements Parcelable {
         Authors = new ArrayList<>();
         in.readList(Authors, String.class.getClassLoader());
         HasRead = in.readByte() != 0;
-        ISBN = in.readString();
+        ISBN_8 = in.readString();
+        ISBN_13 = in.readString();
         IsOwned = in.readByte() != 0;
+        LCCN = in.readString();
         Title = in.readString();
         UpdatedDate = in.readLong();
+        VolumeId = in.readString();
     }
 
     @Exclude
@@ -111,13 +116,13 @@ public class UserBook implements Parcelable {
         }
 
         UserBook userBook = (UserBook) o;
-        return ISBN.equals(userBook.ISBN);
+        return VolumeId.equals(userBook.VolumeId);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), ISBN);
+        return Objects.hash(super.hashCode(), VolumeId);
     }
 
     @Override
@@ -125,7 +130,6 @@ public class UserBook implements Parcelable {
 
         return "UserBook{" +
             "HasRead=" + HasRead +
-            ", ISBN='" + ISBN + '\'' +
             ", IsOwned=" + IsOwned +
             ", Title='" + Title + '\'' +
             '}';
@@ -137,9 +141,12 @@ public class UserBook implements Parcelable {
         dest.writeLong(AddedDate);
         dest.writeList(Authors);
         dest.writeByte((byte) (HasRead ? 1 : 0));
-        dest.writeString(ISBN);
+        dest.writeString(ISBN_8);
+        dest.writeString(ISBN_13);
         dest.writeByte((byte) (IsOwned ? 1 : 0));
+        dest.writeString(LCCN);
         dest.writeString(Title);
         dest.writeLong(UpdatedDate);
+        dest.writeString(VolumeId);
     }
 }

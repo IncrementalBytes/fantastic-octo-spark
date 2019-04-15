@@ -100,7 +100,7 @@ public class UserBookListFragment extends Fragment {
         super.onResume();
 
         LogUtils.debug(TAG, "++onResume()");
-        updateUI();
+        //updateUI();
     }
 
     /*

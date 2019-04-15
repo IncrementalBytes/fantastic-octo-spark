@@ -100,7 +100,7 @@ public class CloudyBookListFragment extends Fragment {
         super.onResume();
 
         LogUtils.debug(TAG, "++onResume()");
-        updateUI();
+        //updateUI();
     }
 
     /*

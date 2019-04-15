@@ -84,7 +84,12 @@ public class UserBookFragment extends Fragment {
         }
 
         TextView isbnText = view.findViewById(R.id.userbook_text_isbn_value);
-        isbnText.setText(mUserBook.ISBN);
+        if (mUserBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+            isbnText.setText(mUserBook.ISBN_8);
+        } else {
+            isbnText.setText(mUserBook.ISBN_13);
+        }
+
         ToggleButton read = view.findViewById(R.id.userbook_toggle_read);
         read.setChecked(mUserBook.HasRead);
         ToggleButton owned = view.findViewById(R.id.userbook_toggle_owned);
@@ -95,11 +100,7 @@ public class UserBookFragment extends Fragment {
         // TODO: enable updateLibraryButton only if content has changed
         updateLibraryButton.setOnClickListener(v -> {
 
-            UserBook updatedBook = new UserBook();
-            updatedBook.AddedDate = mUserBook.AddedDate;
-            updatedBook.Title = mUserBook.Title;
-            updatedBook.Authors.addAll(mUserBook.Authors);
-            updatedBook.ISBN = mUserBook.ISBN;
+            UserBook updatedBook = new UserBook(mUserBook);
             updatedBook.HasRead = read.isChecked();
             updatedBook.IsOwned = owned.isChecked();
             updatedBook.UpdatedDate = Calendar.getInstance().getTimeInMillis();
