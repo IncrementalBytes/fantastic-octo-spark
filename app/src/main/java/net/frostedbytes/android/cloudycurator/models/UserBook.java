@@ -22,7 +22,6 @@ import android.os.Parcelable;
 import com.google.firebase.firestore.Exclude;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class UserBook extends Book implements Parcelable {
 
@@ -101,37 +100,17 @@ public class UserBook extends Book implements Parcelable {
     public int describeContents() { return 0; }
 
     @Override
-    public boolean equals(Object o) {
-
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        UserBook userBook = (UserBook) o;
-        return VolumeId.equals(userBook.VolumeId);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(super.hashCode(), VolumeId);
-    }
-
-    @Override
     public String toString() {
 
         return "UserBook{" +
-            "HasRead=" + HasRead +
-            ", IsOwned=" + IsOwned +
+            "VolumeId=" + VolumeId +
             ", Title='" + Title + '\'' +
+            ", HasRead=" + HasRead +
+            ", IsOwned=" + IsOwned +
+            ", ISBN={" + ISBN_8 + ", " + ISBN_13 + "}\'" +
+            ", LCCN=" + LCCN + "\'" +
+            ", AddedDate=" + AddedDate +
+            ", UpdatedDate=" + UpdatedDate +
             '}';
     }
 

@@ -23,7 +23,6 @@ import com.google.firebase.firestore.Exclude;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class CloudyBook extends Book implements Parcelable {
 
@@ -81,35 +80,15 @@ public class CloudyBook extends Book implements Parcelable {
     }
 
     @Override
-    public boolean equals(Object o) {
-
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        CloudyBook cloudyBook = (CloudyBook) o;
-        return Objects.equals(VolumeId, cloudyBook.VolumeId);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(VolumeId);
-    }
-
-    @Override
     public String toString() {
 
         return "CloudyBook{" +
-            "CreatedDate=" + CreatedDate +
-            ", PublishedDate='" + PublishedDate + '\'' +
+            "VolumeId=" + VolumeId +
             ", Title='" + Title + '\'' +
+            ", PublishedDate='" + PublishedDate + '\'' +
+            ", ISBN={" + ISBN_8 + ", " + ISBN_13 + "}\'" +
+            ", LCCN=" + LCCN + "\'" +
             ", UpdatedDate=" + UpdatedDate +
-            ", VolumeId='" + VolumeId + '\'' +
             '}';
     }
 

@@ -75,7 +75,7 @@ public class UserBookFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
-        final View view = inflater.inflate(R.layout.fragment_userbook, container, false);
+        final View view = inflater.inflate(R.layout.fragment_user_book, container, false);
         TextView titleText = view.findViewById(R.id.userbook_text_title_value);
         titleText.setText(mUserBook.Title);
         TextView authorText = view.findViewById(R.id.userbook_text_author_value);

@@ -230,6 +230,13 @@ public class QueryFragment extends Fragment {
         }
     }
 
+    /*
+        Public method(s)
+     */
+    /**
+     * Queries the user's current book list for book.
+     * @param cloudyBook Book to search for in user's current book list.
+     */
     public void queryInUserBooks(CloudyBook cloudyBook) {
 
         LogUtils.debug(TAG, "++queryInUserBooks(%s)", cloudyBook.toString());
@@ -252,6 +259,9 @@ public class QueryFragment extends Fragment {
         }
     }
 
+    /**
+     * Starts the common ACTION_IMAGE_CAPTURE intent.
+     */
     public void takePictureIntent() {
 
         LogUtils.debug(TAG, "++takePictureIntent()");
