@@ -47,4 +47,11 @@ public class BaseActivity extends AppCompatActivity {
 
         LogUtils.debug(TAG, "++onCreate(Bundle)");
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        LogUtils.debug(TAG, "++onDestroy()");
+    }
 }

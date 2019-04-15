@@ -135,4 +135,11 @@ public class CloudyBookFragment extends Fragment {
         mCallback.onCloudyBookInit(true);
         return view;
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        LogUtils.debug(TAG, "++onDestroy()");
+    }
 }

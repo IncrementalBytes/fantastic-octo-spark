@@ -23,7 +23,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -70,7 +69,6 @@ import java.io.FileReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -90,10 +88,8 @@ public class MainActivity extends BaseActivity implements
 
     private QueryFragment mQueryFragment;
 
-    private FloatingActionButton mAddButton;
     private DrawerLayout mDrawerLayout;
     private ProgressBar mProgressBar;
-    private FloatingActionButton mSyncButton;
 
     private ArrayList<UserBook> mUserBookList;
     private User mUser;
@@ -121,14 +117,11 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
 
         LogUtils.debug(TAG, "++onCreate(Bundle)");
-        LogUtils.debug(TAG, "Run Milliseconds: %d", Calendar.getInstance().getTimeInMillis());
         setContentView(R.layout.activity_main);
 
-        mAddButton = findViewById(R.id.main_fab_add);
         mDrawerLayout = findViewById(R.id.main_drawer_layout);
         mProgressBar = findViewById(R.id.main_progress);
         mProgressBar.setIndeterminate(true);
-        mSyncButton = findViewById(R.id.main_fab_sync);
 
         Toolbar toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
@@ -169,6 +162,13 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        LogUtils.debug(TAG, "++onDestroy()");
+    }
+
+    @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
         LogUtils.debug(TAG, "++onNavigationItemSelected(%s)", item.getTitle());
@@ -178,8 +178,6 @@ public class MainActivity extends BaseActivity implements
                 break;
             case R.id.navigation_menu_add:
                 mProgressBar.setIndeterminate(false);
-                mAddButton.hide();
-                mSyncButton.hide();
                 mQueryFragment = QueryFragment.newInstance(mUserBookList);
                 replaceFragment(mQueryFragment);
                 break;
@@ -261,8 +259,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCloudyBookListItemSelected(%s)", cloudyBook.toString());
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBook.VolumeId);
         FirebaseFirestore.getInstance().document(queryPath).set(cloudyBook, SetOptions.merge())
             .addOnCompleteListener(task -> {
@@ -285,8 +281,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCloudyBookListPopulated(%d)", size);
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         if (size > 0) {
             setTitle(R.string.select_a_book);
         }
@@ -297,8 +291,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryCancelled()");
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
     }
 
     @Override
@@ -306,8 +298,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryFailure(String)");
         mProgressBar.setIndeterminate(false);
-        mAddButton.show();
-        mSyncButton.show();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             message,
@@ -320,8 +310,6 @@ public class MainActivity extends BaseActivity implements
     public void onQueryFeatureNotAvailable(String message) {
         LogUtils.debug(TAG, "++onQueryFeatureNotAvailable(String)");
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             message,
@@ -333,8 +321,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudBook.toString());
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudBook));
     }
 
@@ -343,8 +329,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryFoundMultipleBooks(%d)", cloudyBooks.size());
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         replaceFragment(CloudyBookListFragment.newInstance(cloudyBooks));
     }
 
@@ -353,8 +337,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryFoundUserBook(%s)", userBook.toString());
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         replaceFragment(UserBookFragment.newInstance(userBook));
     }
 
@@ -363,8 +345,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryInit(%s)", String.valueOf(isSuccessful));
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
     }
 
     @Override
@@ -372,8 +352,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryNoBarcode()");
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             String.format(Locale.US, "%s: %s", getString(R.string.no_bar_codes), message),
@@ -388,8 +366,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryNoResultsFound()");
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             getString(R.string.no_results),
@@ -404,8 +380,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryStarted()");
         mProgressBar.setIndeterminate(true);
-        mAddButton.hide();
-        mSyncButton.hide();
     }
 
     @Override
@@ -445,8 +419,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onScanResultsPopulated(%d)", size);
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
     }
 
     @Override
@@ -486,8 +458,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onUserBookAddedToLibraryFail()");
         mProgressBar.setIndeterminate(false);
-        mAddButton.show();
-        mSyncButton.show();
         Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             getString(R.string.err_add_book_fail),
@@ -501,8 +471,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onUserBookInit(%s)", String.valueOf(isSuccessful));
         mProgressBar.setIndeterminate(false);
-        mAddButton.hide();
-        mSyncButton.hide();
     }
 
     @Override
@@ -582,11 +550,17 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onUserBookListAddBook() {
+
+        LogUtils.debug(TAG, "++onUserBookListAddBook()");
+        mQueryFragment = QueryFragment.newInstance(mUserBookList);
+        replaceFragment(mQueryFragment);
+    }
+
+    @Override
     public void onUserBookListItemSelected(UserBook userBook) {
 
         LogUtils.debug(TAG, "++onUserBookListItemSelected(%s)", userBook.toString());
-        mAddButton.hide();
-        mSyncButton.hide();
         replaceFragment(UserBookFragment.newInstance(userBook));
     }
 
@@ -595,8 +569,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onMainListPopulated(%d)", size);
         mProgressBar.setIndeterminate(false);
-        mAddButton.show();
-        mSyncButton.show();
         if (size == 0) {
             Snackbar.make(
                 findViewById(R.id.main_drawer_layout),
@@ -610,6 +582,13 @@ public class MainActivity extends BaseActivity implements
                     })
                 .show();
         }
+    }
+
+    @Override
+    public void onUserBookListSynchronize() {
+
+        LogUtils.debug(TAG, "++onUserBookListSynchronize()");
+        readServerLibrary();
     }
 
     /*
@@ -704,22 +683,12 @@ public class MainActivity extends BaseActivity implements
             LogUtils.warn(TAG, "Exception when reading local library data.");
             Crashlytics.logException(e);
             mProgressBar.setIndeterminate(false);
-            mAddButton.show();
-            mSyncButton.show();
         } finally {
             if (mUserBookList == null || mUserBookList.size() == 0) {
                 readServerLibrary(); // attempt to get user's book library from cloud
             } else {
                 mUserBookList.sort(new SortUtils.ByBookName());
                 mProgressBar.setIndeterminate(false);
-                mAddButton.show();
-                mAddButton.setOnClickListener(pickView -> {
-                    mQueryFragment = QueryFragment.newInstance(mUserBookList);
-                    replaceFragment(mQueryFragment);
-                });
-                mSyncButton.show();
-                mSyncButton.setOnClickListener(pickView -> readServerLibrary());
-                replaceFragment(UserBookListFragment.newInstance(mUserBookList));
             }
         }
     }
@@ -745,15 +714,6 @@ public class MainActivity extends BaseActivity implements
 
                     mUserBookList.sort(new SortUtils.ByBookName());
                     new WriteToLocalLibraryTask(this, mUserBookList).execute();
-                    mProgressBar.setIndeterminate(false);
-                    mAddButton.show();
-                    mAddButton.setOnClickListener(pickView -> {
-                        mQueryFragment = QueryFragment.newInstance(mUserBookList);
-                        replaceFragment(mQueryFragment);
-                    });
-                    mSyncButton.show();
-                    mSyncButton.setOnClickListener(pickView -> readServerLibrary());
-                    replaceFragment(UserBookListFragment.newInstance(mUserBookList));
                 } else {
                     LogUtils.debug(TAG, "Could not get user book list: %s", queryPath);
                 }
@@ -762,8 +722,7 @@ public class MainActivity extends BaseActivity implements
 
     private void replaceFragment(Fragment fragment) {
 
-        LogUtils.debug(TAG, "++replaceFragment()");
-        updateTitleAndDrawer(fragment);
+        LogUtils.debug(TAG, "++replaceFragment(%s)", fragment.getClass().getName());
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.main_fragment_container, fragment);
@@ -772,10 +731,8 @@ public class MainActivity extends BaseActivity implements
 
     private void updateTitleAndDrawer(Fragment fragment) {
 
-        LogUtils.debug(TAG, "++updateTitleAndDrawer(Fragment)");
+        LogUtils.debug(TAG, "++updateTitleAndDrawer(%s)", fragment.getClass().getName());
         String fragmentClassName = fragment.getClass().getName();
-        mAddButton.hide();
-        mSyncButton.hide();
         if (fragmentClassName.equals(CloudyBookFragment.class.getName())) {
             setTitle(getString(R.string.fragment_cloudybook));
         } else if (fragmentClassName.equals(CloudyBookListFragment.class.getName())) {
@@ -785,12 +742,8 @@ public class MainActivity extends BaseActivity implements
         } else if (fragmentClassName.equals(UserBookFragment.class.getName())) {
             setTitle(getString(R.string.fragment_userbook));
         } else if (fragmentClassName.equals(UserBookListFragment.class.getName())) {
-            mAddButton.show();
-            mSyncButton.show();
             setTitle(getString(R.string.fragment_userbooklist));
         } else {
-            mAddButton.show();
-            mSyncButton.show();
             setTitle(getString(R.string.app_name));
         }
     }
@@ -798,7 +751,9 @@ public class MainActivity extends BaseActivity implements
     private void writeComplete(ArrayList<UserBook> userBookList) {
 
         LogUtils.debug(TAG, "++writeComplete(%d)", userBookList.size());
+        mProgressBar.setIndeterminate(false);
         mUserBookList = userBookList;
+        replaceFragment(UserBookListFragment.newInstance(mUserBookList));
     }
 
     static class WriteToLocalLibraryTask extends AsyncTask<Void, Void, ArrayList<UserBook>> {

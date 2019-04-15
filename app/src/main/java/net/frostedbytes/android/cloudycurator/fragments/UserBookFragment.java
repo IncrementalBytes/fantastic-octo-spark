@@ -112,4 +112,11 @@ public class UserBookFragment extends Fragment {
         mCallback.onUserBookInit(true);
         return view;
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        LogUtils.debug(TAG, "++onDestroy()");
+    }
 }

@@ -17,4 +17,28 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/book_item" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/user_book_fab_sync"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/default_view_margin"
+        android:clickable="true"
+        android:elevation="5dp"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/user_book_fab_add"
+        app:srcCompat="@drawable/ic_sync_dark"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/user_book_fab_add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/default_view_margin"
+        android:clickable="true"
+        android:elevation="5dp"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_add_dark"/>
+
 </android.support.constraint.ConstraintLayout>

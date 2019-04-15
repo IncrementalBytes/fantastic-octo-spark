@@ -184,7 +184,7 @@ public class CloudyBookListFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++BookHolder::onClick(View)");
+            LogUtils.debug(TAG, "++CloudyBookHolder::onClick(View)");
             mCallback.onCloudyBookListItemSelected(mCloudyBook);
         }
     }

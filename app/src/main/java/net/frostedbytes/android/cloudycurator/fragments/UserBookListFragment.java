@@ -3,6 +3,7 @@ package net.frostedbytes.android.cloudycurator.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -28,9 +29,13 @@ public class UserBookListFragment extends Fragment {
 
     public interface OnUserBookListListener {
 
-        void onUserBookListPopulated(int size);
+        void onUserBookListAddBook();
 
         void onUserBookListItemSelected(UserBook userBook);
+
+        void onUserBookListPopulated(int size);
+
+        void onUserBookListSynchronize();
     }
 
     private OnUserBookListListener mCallback;
@@ -78,10 +83,17 @@ public class UserBookListFragment extends Fragment {
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_user_book_list, container, false);
 
+        FloatingActionButton mAddButton = view.findViewById(R.id.user_book_fab_add);
         mRecyclerView = view.findViewById(R.id.user_book_list_view);
+        FloatingActionButton mSyncButton = view.findViewById(R.id.user_book_fab_sync);
 
         final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(manager);
+
+        mAddButton.show();
+        mAddButton.setOnClickListener(pickView -> mCallback.onUserBookListAddBook());
+        mSyncButton.show();
+        mSyncButton.setOnClickListener(pickView -> mCallback.onUserBookListSynchronize());
 
         updateUI();
         return view;
@@ -184,7 +196,7 @@ public class UserBookListFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++BookHolder::onClick(View)");
+            LogUtils.debug(TAG, "++UserBookHolder::onClick(View)");
             mCallback.onUserBookListItemSelected(mUserBook);
         }
     }

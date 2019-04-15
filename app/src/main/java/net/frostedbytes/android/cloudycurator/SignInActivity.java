@@ -50,6 +50,9 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     private FirebaseAuth mAuth;
     private GoogleApiClient mGoogleApiClient;
 
+    /*
+        Activity Override(s)
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,10 +91,20 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
 
         LogUtils.debug(TAG, "++onStart()");
         if (mAuth.getCurrentUser() != null) {
-            onAuthenticateSuccess(mAuth.getCurrentUser());
+            authenticateSuccess(mAuth.getCurrentUser());
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        LogUtils.debug(TAG, "++onDestroy()");
+    }
+
+    /*
+        View Override(s)
+     */
     @Override
     public void onClick(View view) {
 
@@ -135,6 +148,21 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         }
     }
 
+    /*
+        Private Method(s)
+     */
+    private void authenticateSuccess(FirebaseUser user) {
+
+        LogUtils.debug(TAG, "++onAuthenticateSuccess(%1s)", user.getDisplayName());
+        Crashlytics.setUserIdentifier(user.getUid());
+        Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+        intent.putExtra(BaseActivity.ARG_USER_ID, user.getUid());
+        intent.putExtra(BaseActivity.ARG_USER_NAME, user.getDisplayName());
+        intent.putExtra(BaseActivity.ARG_EMAIL, user.getEmail());
+        startActivity(intent);
+        finish();
+    }
+
     private void firebaseAuthenticateWithGoogle(GoogleSignInAccount acct) {
 
         LogUtils.debug(TAG, "++firebaseAuthWithGoogle(%1s)", acct.getId());
@@ -144,7 +172,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         mAuth.signInWithCredential(credential)
             .addOnCompleteListener(this, task -> {
                 if (task.isSuccessful() && mAuth.getCurrentUser() != null) {
-                    onAuthenticateSuccess(mAuth.getCurrentUser());
+                    authenticateSuccess(mAuth.getCurrentUser());
                 } else {
                     Crashlytics.logException(task.getException());
                     String message = "Authenticating with Google account failed.";
@@ -161,17 +189,5 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         LogUtils.debug(TAG, "++signInWithGoogle()");
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    private void onAuthenticateSuccess(FirebaseUser user) {
-
-        LogUtils.debug(TAG, "++onAuthenticateSuccess(%1s)", user.getDisplayName());
-        Crashlytics.setUserIdentifier(user.getUid());
-        Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-        intent.putExtra(BaseActivity.ARG_USER_ID, user.getUid());
-        intent.putExtra(BaseActivity.ARG_USER_NAME, user.getDisplayName());
-        intent.putExtra(BaseActivity.ARG_EMAIL, user.getEmail());
-        startActivity(intent);
-        finish();
     }
 }
