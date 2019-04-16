@@ -89,8 +89,14 @@ public class CloudyBookFragment extends Fragment {
         TextView titleText = view.findViewById(R.id.book_text_title_value);
         titleText.setText(mCloudyBook.Title);
         TextView authorText = view.findViewById(R.id.book_text_author_value);
-        if (mCloudyBook.Authors.size() > 0) {
-            authorText.setText(mCloudyBook.Authors.get(0)); // TODO: update control to multiline
+        StringBuilder authorList = new StringBuilder();
+        for (String author : mCloudyBook.Authors) {
+            authorList.append(author);
+            authorList.append("\r\n");
+        }
+
+        if (!authorList.toString().isEmpty()) {
+            authorText.setText(authorList.deleteCharAt(authorList.length() - 2));
         }
 
         TextView isbnText = view.findViewById(R.id.book_text_isbn_value);
@@ -106,6 +112,19 @@ public class CloudyBookFragment extends Fragment {
         Button addToLibraryButton = view.findViewById(R.id.book_button_add);
         addToLibraryButton.setOnClickListener(v -> {
 
+            // add book to both general collection and user's specific library
+            String cloudyBookQueryPath = PathUtils.combine(CloudyBook.ROOT, mCloudyBook.VolumeId);
+            FirebaseFirestore.getInstance().document(cloudyBookQueryPath).set(mCloudyBook, SetOptions.merge())
+                .addOnCompleteListener(task -> {
+
+                    if (!task.isSuccessful()) {
+                        LogUtils.error(TAG, "Failed to add cloudy book to main library: %s", cloudyBookQueryPath);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+                    }
+            });
+
             UserBook updatedBook = new UserBook();
             updatedBook.AddedDate = Calendar.getInstance().getTimeInMillis();
             updatedBook.Authors.addAll(mCloudyBook.Authors);
@@ -116,30 +135,24 @@ public class CloudyBookFragment extends Fragment {
             updatedBook.Title = titleText.getText().toString();
             updatedBook.VolumeId = mCloudyBook.VolumeId;
 
-            String queryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.VolumeId);
-            FirebaseFirestore.getInstance().document(queryPath).set(updatedBook, SetOptions.merge()).addOnCompleteListener(task -> {
+            String userBookQueryPath = PathUtils.combine(User.ROOT, mUserId, UserBook.ROOT, updatedBook.VolumeId);
+            FirebaseFirestore.getInstance().document(userBookQueryPath).set(updatedBook, SetOptions.merge())
+                .addOnCompleteListener(task -> {
 
-                if (task.isSuccessful()) {
-                    mCallback.onUserBookAddedToLibrary(updatedBook);
-                } else {
-                    LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", queryPath);
-                    if (task.getException() != null) {
-                        Crashlytics.logException(task.getException());
+                    if (task.isSuccessful()) {
+                        mCallback.onUserBookAddedToLibrary(updatedBook);
+                    } else {
+                        LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", userBookQueryPath);
+                        if (task.getException() != null) {
+                            Crashlytics.logException(task.getException());
+                        }
+
+                        mCallback.onUserBookAddedToLibraryFail();
                     }
-
-                    mCallback.onUserBookAddedToLibraryFail();
-                }
             });
         });
 
         mCallback.onCloudyBookInit(true);
         return view;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LogUtils.debug(TAG, "++onDestroy()");
     }
 }

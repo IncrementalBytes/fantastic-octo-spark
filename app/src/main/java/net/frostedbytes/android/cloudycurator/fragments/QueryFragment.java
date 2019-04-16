@@ -31,7 +31,6 @@ import com.google.api.services.books.model.Volumes;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
@@ -46,7 +45,6 @@ import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
-import net.frostedbytes.android.cloudycurator.utils.PathUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -72,23 +70,11 @@ public class QueryFragment extends Fragment {
 
     public interface OnQueryListener {
 
-        void onQueryCancelled();
-
-        void onQueryFailure(String message);
-
-        void onQueryFeatureNotAvailable(String message);
-
-        void onQueryFoundBook(CloudyBook cloudyBook);
+        void onQueryActionComplete(String message);
 
         void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks);
 
         void onQueryFoundUserBook(UserBook userBook);
-
-        void onQueryInit(boolean isSuccessful);
-
-        void onQueryNoBarcode(String message);
-
-        void onQueryNoResultsFound();
 
         void onQueryStarted();
 
@@ -132,8 +118,9 @@ public class QueryFragment extends Fragment {
         if (arguments != null) {
             mUserBookList = arguments.getParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST);
         } else {
-            LogUtils.warn(TAG, "Arguments were null.");
-            mCallback.onQueryInit(false);
+            String message = "Arguments were null.";
+            LogUtils.warn(TAG, message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -156,13 +143,13 @@ public class QueryFragment extends Fragment {
             String message = "Camera not detected.";
             LogUtils.warn(TAG, message);
             scanCard.setEnabled(false);
-            mCallback.onQueryFeatureNotAvailable(message);
+            mCallback.onQueryActionComplete(message);
         }
 
         CardView manualCard = view.findViewById(R.id.query_card_manual);
         manualCard.setOnClickListener(v -> showManualDialog());
 
-        mCallback.onQueryInit(true);
+        mCallback.onQueryActionComplete("");
         return view;
     }
 
@@ -216,17 +203,17 @@ public class QueryFragment extends Fragment {
                 } else {
                     String message = "Image was empty.";
                     LogUtils.warn(TAG, message);
-                    mCallback.onQueryNoBarcode(message);
+                    mCallback.onQueryActionComplete(message);
                 }
             } else {
-                String message = "Bitmap was null.";
+                String message = "Image does not exist.";
                 LogUtils.warn(TAG, message);
-                mCallback.onQueryNoBarcode(message);
+                mCallback.onQueryActionComplete(message);
             }
         } else {
-            String message = "Unexpected data from camera intent.";
+            String message = "Unexpected data from camera.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryNoBarcode(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -265,6 +252,7 @@ public class QueryFragment extends Fragment {
     public void takePictureIntent() {
 
         LogUtils.debug(TAG, "++takePictureIntent()");
+        mCallback.onQueryStarted();
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (getActivity() != null) {
             if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
@@ -285,17 +273,17 @@ public class QueryFragment extends Fragment {
                 } else {
                     String message = "Failed to get file for photo.";
                     LogUtils.warn(TAG, message);
-                    mCallback.onQueryFailure(message);
+                    mCallback.onQueryActionComplete(message);
                 }
             } else {
                 String message = "Unable to create camera intent.";
                 LogUtils.warn(TAG, message);
-                mCallback.onQueryFailure(message);
+                mCallback.onQueryActionComplete(message);
             }
         } else {
             String message = "Could not get activity object.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryFailure(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -320,26 +308,10 @@ public class QueryFragment extends Fragment {
     private void parseFeed(ArrayList<CloudyBook> cloudyBooks) {
 
         LogUtils.debug(TAG, "++parseFeed(%d)", cloudyBooks.size());
-        if (cloudyBooks.size() == 1) {
-            String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBooks.get(0).VolumeId);
-            FirebaseFirestore.getInstance().document(queryPath).set(cloudyBooks.get(0), SetOptions.merge())
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        LogUtils.debug(TAG, "Successfully added: %s", cloudyBooks.get(0).toString());
-                        mCallback.onQueryFoundBook(cloudyBooks.get(0));
-                    } else {
-                        LogUtils.warn(TAG, "Failed to added: %s", cloudyBooks.get(0).toString());
-                        if (task.getException() != null) {
-                            Crashlytics.logException(task.getException());
-                        }
-                    }
-
-                    // TODO: add empty object in cloud for manual import?
-                });
-        } else if (cloudyBooks.size() > 1) {
+        if (cloudyBooks.size() > 0) {
             mCallback.onQueryFoundMultipleBooks(cloudyBooks);
         } else {
-            mCallback.onQueryNoResultsFound();
+            mCallback.onQueryActionComplete("No results found.");
         }
     }
 
@@ -351,20 +323,20 @@ public class QueryFragment extends Fragment {
                 .addOnCompleteListener(task -> {
 
                     if (task.isSuccessful() && task.getResult() != null) {
-                        CloudyBook cloudyBook = null;
+                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
                         for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            cloudyBook = document.toObject(CloudyBook.class);
+                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
                             if (cloudyBook != null) {
                                 cloudyBook.VolumeId = document.getId();
-
-                                // TODO: handle multiple documents
-                                mCallback.onQueryFoundBook(cloudyBook);
+                                cloudyBooks.add(cloudyBook);
                             }
                         }
 
-                        if (cloudyBook == null) {
+                        if (cloudyBooks.size() == 0) {
                             LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
                             queryGoogleBookService(bookQueryFor);
+                        } else {
+                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
                         }
                     } else {
                         String message = String.format(
@@ -377,7 +349,7 @@ public class QueryFragment extends Fragment {
                             Crashlytics.logException(task.getException());
                         }
 
-                        mCallback.onQueryFailure(message);
+                        mCallback.onQueryActionComplete(message);
                     }
                 });
         } else if (!bookQueryFor.ISBN_8.contains(BaseActivity.DEFAULT_ISBN_8)) {
@@ -385,20 +357,20 @@ public class QueryFragment extends Fragment {
                 .addOnCompleteListener(task -> {
 
                     if (task.isSuccessful() && task.getResult() != null) {
-                        CloudyBook cloudyBook = null;
+                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
                         for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            cloudyBook = document.toObject(CloudyBook.class);
+                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
                             if (cloudyBook != null) {
                                 cloudyBook.VolumeId = document.getId();
-
-                                // TODO: handle multiple documents
-                                mCallback.onQueryFoundBook(cloudyBook);
+                                cloudyBooks.add(cloudyBook);
                             }
                         }
 
-                        if (cloudyBook == null) {
+                        if (cloudyBooks.size() == 0) {
                             LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
                             queryGoogleBookService(bookQueryFor);
+                        } else {
+                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
                         }
                     } else {
                         String message = String.format(
@@ -411,7 +383,7 @@ public class QueryFragment extends Fragment {
                             Crashlytics.logException(task.getException());
                         }
 
-                        mCallback.onQueryFailure(message);
+                        mCallback.onQueryActionComplete(message);
                     }
                 });
         } else if (!bookQueryFor.ISBN_13.contains(BaseActivity.DEFAULT_ISBN_13)) {
@@ -419,20 +391,20 @@ public class QueryFragment extends Fragment {
                 .addOnCompleteListener(task -> {
 
                     if (task.isSuccessful() && task.getResult() != null) {
-                        CloudyBook cloudyBook = null;
+                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
                         for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            cloudyBook = document.toObject(CloudyBook.class);
+                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
                             if (cloudyBook != null) {
                                 cloudyBook.VolumeId = document.getId();
-
-                                // TODO: handle multiple documents
-                                mCallback.onQueryFoundBook(cloudyBook);
+                                cloudyBooks.add(cloudyBook);
                             }
                         }
 
-                        if (cloudyBook == null) {
+                        if (cloudyBooks.size() == 0) {
                             LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
                             queryGoogleBookService(bookQueryFor);
+                        } else {
+                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
                         }
                     } else {
                         String message = String.format(
@@ -445,7 +417,7 @@ public class QueryFragment extends Fragment {
                             Crashlytics.logException(task.getException());
                         }
 
-                        mCallback.onQueryFailure(message);
+                        mCallback.onQueryActionComplete(message);
                     }
                 });
         } else if (!bookQueryFor.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
@@ -453,18 +425,20 @@ public class QueryFragment extends Fragment {
                 .addOnCompleteListener(task -> {
 
                     if (task.isSuccessful() && task.getResult() != null) {
-                        CloudyBook cloudyBook = null;
+                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
                         for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            cloudyBook = document.toObject(CloudyBook.class);
+                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
                             if (cloudyBook != null) {
                                 cloudyBook.VolumeId = document.getId();
-                                mCallback.onQueryFoundBook(cloudyBook);
+                                cloudyBooks.add(cloudyBook);
                             }
                         }
 
-                        if (cloudyBook == null) {
+                        if (cloudyBooks.size() == 0) {
                             LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
                             queryGoogleBookService(bookQueryFor);
+                        } else {
+                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
                         }
                     } else {
                         String message = String.format(
@@ -477,13 +451,13 @@ public class QueryFragment extends Fragment {
                             Crashlytics.logException(task.getException());
                         }
 
-                        mCallback.onQueryFailure(message);
+                        mCallback.onQueryActionComplete(message);
                     }
                 });
         } else {
             String message = String.format(Locale.US, "Cannot search; unexpected book: %s", bookQueryFor.toString());
             LogUtils.error(TAG, message);
-            mCallback.onQueryFailure(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -496,7 +470,7 @@ public class QueryFragment extends Fragment {
             cloudyBook.Title.isEmpty()) {
             String message = "Invalid search criteria.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryFailure(message);
+            mCallback.onQueryActionComplete(message);
         } else {
             if (getActivity() != null) {
                 new RetrieveBookDataTask(
@@ -507,7 +481,7 @@ public class QueryFragment extends Fragment {
             } else {
                 String message = "Could not get activity's content resolver.";
                 LogUtils.warn(TAG, message);
-                mCallback.onQueryFailure(message);
+                mCallback.onQueryActionComplete(message);
             }
         }
     }
@@ -561,13 +535,13 @@ public class QueryFragment extends Fragment {
                     } else {
                         String message = "Bar code detection task failed.";
                         LogUtils.warn(TAG, message);
-                        mCallback.onQueryFailure(message);
+                        mCallback.onQueryActionComplete(message);
                     }
                 });
         } else {
             String message = "Image not loaded.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryNoBarcode(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -575,12 +549,6 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++scanImageForText()");
         if (mImageBitmap != null) {
-            FirebaseVisionBarcodeDetectorOptions options =
-                new FirebaseVisionBarcodeDetectorOptions.Builder()
-                    .setBarcodeFormats(
-                        FirebaseVisionBarcode.FORMAT_EAN_8,
-                        FirebaseVisionBarcode.FORMAT_EAN_13)
-                    .build();
             FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mImageBitmap);
             FirebaseVisionTextRecognizer detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
             com.google.android.gms.tasks.Task<FirebaseVisionText> result = detector.processImage(image).addOnCompleteListener(task -> {
@@ -595,13 +563,13 @@ public class QueryFragment extends Fragment {
                 } else {
                     String message = "Text detection task failed.";
                     LogUtils.warn(TAG, message);
-                    mCallback.onQueryFailure(message);
+                    mCallback.onQueryActionComplete(message);
                 }
             });
         } else {
             String message = "Image not loaded.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryNoBarcode(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -634,7 +602,7 @@ public class QueryFragment extends Fragment {
                                 queryInUserBooks(cloudyBook);
                             } else {
                                 String message = "Invalid ISBN value.";
-                                mCallback.onQueryFailure(message);
+                                mCallback.onQueryActionComplete(message);
                             }
 
                             break;
@@ -648,7 +616,7 @@ public class QueryFragment extends Fragment {
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {
-                    mCallback.onQueryCancelled();
+                    mCallback.onQueryActionComplete("");
                     dialog.cancel();
                 });
 
@@ -657,7 +625,7 @@ public class QueryFragment extends Fragment {
         } else {
             String message = "Could not get activity object.";
             LogUtils.warn(TAG, message);
-            mCallback.onQueryFailure(message);
+            mCallback.onQueryActionComplete(message);
         }
     }
 

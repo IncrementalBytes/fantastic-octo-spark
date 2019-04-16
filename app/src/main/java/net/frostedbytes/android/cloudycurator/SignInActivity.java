@@ -95,13 +95,6 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LogUtils.debug(TAG, "++onDestroy()");
-    }
-
     /*
         View Override(s)
      */

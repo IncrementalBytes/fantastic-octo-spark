@@ -259,21 +259,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCloudyBookListItemSelected(%s)", cloudyBook.toString());
         mProgressBar.setIndeterminate(false);
-        String queryPath = PathUtils.combine(CloudyBook.ROOT, cloudyBook.VolumeId);
-        FirebaseFirestore.getInstance().document(queryPath).set(cloudyBook, SetOptions.merge())
-            .addOnCompleteListener(task -> {
-
-                if (task.isSuccessful()) {
-                    LogUtils.debug(TAG, "Successfully added: %s", cloudyBook.toString());
-                    replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
-                } else {
-                    LogUtils.warn(TAG, "Failed to added: %s", cloudyBook.toString());
-                    if (task.getException() != null) {
-                        Crashlytics.logException(task.getException());
-                    }
-                    // TODO: add empty object in cloud for manual import?
-                }
-            });
+        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
     }
 
     @Override
@@ -281,47 +267,25 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCloudyBookListPopulated(%d)", size);
         mProgressBar.setIndeterminate(false);
-        if (size > 0) {
+        if (size > 1) {
             setTitle(R.string.select_a_book);
         }
     }
 
     @Override
-    public void onQueryCancelled() {
+    public void onQueryActionComplete(String message) {
 
-        LogUtils.debug(TAG, "++onQueryCancelled()");
+        LogUtils.debug(TAG, "++onQueryActionComplete(%s)", message);
         mProgressBar.setIndeterminate(false);
-    }
-
-    @Override
-    public void onQueryFailure(String message) {
-
-        LogUtils.debug(TAG, "++onQueryFailure(String)");
-        mProgressBar.setIndeterminate(false);
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            message,
-            Snackbar.LENGTH_LONG)
-            .show();
-        replaceFragment(UserBookListFragment.newInstance(mUserBookList));
-    }
-
-    @Override
-    public void onQueryFeatureNotAvailable(String message) {
-        LogUtils.debug(TAG, "++onQueryFeatureNotAvailable(String)");
-        mProgressBar.setIndeterminate(false);
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            message,
-            Snackbar.LENGTH_LONG)
-            .show();    }
-
-    @Override
-    public void onQueryFoundBook(CloudyBook cloudBook) {
-
-        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudBook.toString());
-        mProgressBar.setIndeterminate(false);
-        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudBook));
+        if (!message.isEmpty()) {
+            Snackbar.make(
+                findViewById(R.id.main_drawer_layout),
+                message,
+                Snackbar.LENGTH_LONG)
+                .show();
+            mQueryFragment = QueryFragment.newInstance(mUserBookList);
+            replaceFragment(mQueryFragment);
+        }
     }
 
     @Override
@@ -329,7 +293,19 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryFoundMultipleBooks(%d)", cloudyBooks.size());
         mProgressBar.setIndeterminate(false);
-        replaceFragment(CloudyBookListFragment.newInstance(cloudyBooks));
+        if (cloudyBooks.size() == 0) {
+            Snackbar.make(
+                findViewById(R.id.main_drawer_layout),
+                getString(R.string.no_results),
+                Snackbar.LENGTH_LONG)
+                .show();
+            mQueryFragment = QueryFragment.newInstance(mUserBookList);
+            replaceFragment(mQueryFragment);
+        } else if (cloudyBooks.size() == 1) {
+            replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBooks.get(0)));
+        } else {
+            replaceFragment(CloudyBookListFragment.newInstance(cloudyBooks));
+        }
     }
 
     @Override
@@ -338,41 +314,6 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "++onQueryFoundUserBook(%s)", userBook.toString());
         mProgressBar.setIndeterminate(false);
         replaceFragment(UserBookFragment.newInstance(userBook));
-    }
-
-    @Override
-    public void onQueryInit(boolean isSuccessful) {
-
-        LogUtils.debug(TAG, "++onQueryInit(%s)", String.valueOf(isSuccessful));
-        mProgressBar.setIndeterminate(false);
-    }
-
-    @Override
-    public void onQueryNoBarcode(String message) {
-
-        LogUtils.debug(TAG, "++onQueryNoBarcode()");
-        mProgressBar.setIndeterminate(false);
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            String.format(Locale.US, "%s: %s", getString(R.string.no_bar_codes), message),
-            Snackbar.LENGTH_LONG)
-            .show();
-        mQueryFragment = QueryFragment.newInstance(mUserBookList);
-        replaceFragment(mQueryFragment);
-    }
-
-    @Override
-    public void onQueryNoResultsFound() {
-
-        LogUtils.debug(TAG, "++onQueryNoResultsFound()");
-        mProgressBar.setIndeterminate(false);
-        Snackbar.make(
-            findViewById(R.id.main_drawer_layout),
-            getString(R.string.no_results),
-            Snackbar.LENGTH_LONG)
-            .show();
-        mQueryFragment = QueryFragment.newInstance(mUserBookList);
-        replaceFragment(mQueryFragment);
     }
 
     @Override
@@ -624,7 +565,6 @@ public class MainActivity extends BaseActivity implements
                     break;
                 case CAMERA_PERMISSIONS_REQUEST:
                     if (mQueryFragment != null) {
-                        mProgressBar.setIndeterminate(true);
                         mQueryFragment.takePictureIntent();
                     }
 
@@ -689,6 +629,7 @@ public class MainActivity extends BaseActivity implements
             } else {
                 mUserBookList.sort(new SortUtils.ByBookName());
                 mProgressBar.setIndeterminate(false);
+                replaceFragment(UserBookListFragment.newInstance(mUserBookList));
             }
         }
     }

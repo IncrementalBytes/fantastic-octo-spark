@@ -13,7 +13,8 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/book_text_author_value"/>
 
     <TextView
         android:id="@+id/book_text_title_value"
@@ -33,18 +34,21 @@
         android:text="@string/author"
         android:textSize="24sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/book_text_author_value"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_text_title" />
+        app:layout_constraintTop_toTopOf="@+id/book_text_author_value" />
 
     <TextView
         android:id="@+id/book_text_author_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
+        android:gravity="center_vertical|end"
         android:text="@string/placeholder"
-        app:layout_constraintBottom_toBottomOf="@id/book_text_author"
+        android:textAlignment="gravity"
+        app:layout_constraintBottom_toTopOf="@+id/book_text_isbn_value"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/book_text_author" />
+        app:layout_constraintTop_toBottomOf="@id/book_text_title_value" />
 
     <TextView
         android:id="@+id/book_text_isbn"
@@ -55,7 +59,8 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/book_text_author" />
+        app:layout_constraintTop_toBottomOf="@id/book_text_author_value"
+        app:layout_constraintBottom_toTopOf="@id/book_toggle_read"/>
 
     <TextView
         android:id="@+id/book_text_isbn_value"

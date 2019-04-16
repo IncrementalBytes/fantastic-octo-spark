@@ -79,8 +79,14 @@ public class UserBookFragment extends Fragment {
         TextView titleText = view.findViewById(R.id.userbook_text_title_value);
         titleText.setText(mUserBook.Title);
         TextView authorText = view.findViewById(R.id.userbook_text_author_value);
-        if (mUserBook.Authors.size() > 0) {
-            authorText.setText(mUserBook.Authors.get(0)); // TODO: update control to multiline
+        StringBuilder authorList = new StringBuilder();
+        for (String author : mUserBook.Authors) {
+            authorList.append(author);
+            authorList.append("\r\n");
+        }
+
+        if (!authorList.toString().isEmpty()) {
+            authorText.setText(authorList.deleteCharAt(authorList.length() - 2));
         }
 
         TextView isbnText = view.findViewById(R.id.userbook_text_isbn_value);
@@ -97,7 +103,6 @@ public class UserBookFragment extends Fragment {
         Button updateLibraryButton = view.findViewById(R.id.userbook_button_update);
         Button removeFromLibraryButton = view.findViewById(R.id.userbook_button_remove);
 
-        // TODO: enable updateLibraryButton only if content has changed
         updateLibraryButton.setOnClickListener(v -> {
 
             UserBook updatedBook = new UserBook(mUserBook);

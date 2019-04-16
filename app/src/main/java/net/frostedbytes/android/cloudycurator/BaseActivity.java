@@ -16,10 +16,7 @@
 
 package net.frostedbytes.android.cloudycurator;
 
-import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-
-import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -39,19 +36,4 @@ public class BaseActivity extends AppCompatActivity {
     public static final String DEFAULT_LIBRARY_FILE = "localLibrary.txt";
 
     public static final String BASE_TAG = "CloudyCurator::";
-    private static final String TAG = BASE_TAG + BaseActivity.class.getSimpleName();
-
-    @Override
-    public void onCreate(Bundle saved) {
-        super.onCreate(saved);
-
-        LogUtils.debug(TAG, "++onCreate(Bundle)");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LogUtils.debug(TAG, "++onDestroy()");
-    }
 }

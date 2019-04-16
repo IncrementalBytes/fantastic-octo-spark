@@ -13,7 +13,8 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/userbook_text_author_value"/>
 
     <TextView
         android:id="@+id/userbook_text_title_value"
@@ -33,18 +34,22 @@
         android:text="@string/author"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/userbook_text_title"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/userbook_text_author_value"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/userbook_text_author_value" />
 
     <TextView
         android:id="@+id/userbook_text_author_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
+        android:gravity="center_vertical|end"
+        android:singleLine="false"
         android:text="@string/placeholder"
+        android:textAlignment="gravity"
+        app:layout_constraintBottom_toTopOf="@id/userbook_text_isbn_value"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/userbook_text_author"
-        app:layout_constraintBottom_toBottomOf="@+id/userbook_text_author" />
+        app:layout_constraintTop_toBottomOf="@+id/userbook_text_title_value" />
 
     <TextView
         android:id="@+id/userbook_text_isbn"
@@ -54,8 +59,9 @@
         android:text="@string/isbn"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/userbook_text_author"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/userbook_text_author_value"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/userbook_toggle_read"/>
 
     <TextView
         android:id="@+id/userbook_text_isbn_value"
