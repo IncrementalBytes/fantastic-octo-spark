@@ -25,7 +25,7 @@ public class User {
 
     public long LastLibrarySync;
 
-    public List<UserBook> UserBooks;
+    public List<CloudyBook> CloudyBooks;
 
     public User() {
 
@@ -34,7 +34,7 @@ public class User {
         Id = BaseActivity.DEFAULT_ID;
         LastCloudySync = 0;
         LastLibrarySync = 0;
-        UserBooks = new ArrayList<>();
+        CloudyBooks = new ArrayList<>();
     }
 
     @Override

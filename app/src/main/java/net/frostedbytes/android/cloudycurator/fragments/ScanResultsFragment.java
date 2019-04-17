@@ -77,7 +77,7 @@ public class ScanResultsFragment extends Fragment {
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_scan_results, container, false);
 
-        mRecyclerView = view.findViewById(R.id.results_list_view);
+        mRecyclerView = view.findViewById(R.id.scan_list_view);
 
         final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(manager);

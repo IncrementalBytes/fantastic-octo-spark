@@ -29,8 +29,6 @@ import com.google.api.services.books.BooksRequestInitializer;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
@@ -43,7 +41,6 @@ import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.BuildConfig;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.models.UserBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
 import java.io.File;
@@ -55,7 +52,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -74,7 +70,7 @@ public class QueryFragment extends Fragment {
 
         void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks);
 
-        void onQueryFoundUserBook(UserBook userBook);
+        void onQueryFoundBook(CloudyBook cloudyBook);
 
         void onQueryStarted();
 
@@ -87,14 +83,14 @@ public class QueryFragment extends Fragment {
 
     private String mCurrentPhotoPath;
     private Bitmap mImageBitmap;
-    private ArrayList<UserBook> mUserBookList;
+    private ArrayList<CloudyBook> mCloudyBookList;
 
-    public static QueryFragment newInstance(ArrayList<UserBook> userBookList) {
+    public static QueryFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
         LogUtils.debug(TAG, "++newInstance()");
         QueryFragment fragment = new QueryFragment();
         Bundle args = new Bundle();
-        args.putParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST, userBookList);
+        args.putParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST, cloudyBookList);
         fragment.setArguments(args);
         return fragment;
     }
@@ -116,7 +112,7 @@ public class QueryFragment extends Fragment {
 
         Bundle arguments = getArguments();
         if (arguments != null) {
-            mUserBookList = arguments.getParcelableArrayList(BaseActivity.ARG_USER_BOOK_LIST);
+            mCloudyBookList = arguments.getParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST);
         } else {
             String message = "Arguments were null.";
             LogUtils.warn(TAG, message);
@@ -136,7 +132,9 @@ public class QueryFragment extends Fragment {
             if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
                 scanCard.setOnClickListener(v -> mCallback.onQueryTakePicture());
             } else {
-                LogUtils.warn(TAG, "Camera feature is not available; disabling camera.");
+                String message = "Camera feature is not available; disabling camera.";
+                LogUtils.warn(TAG, message);
+                mCallback.onQueryActionComplete(message);
                 scanCard.setEnabled(false);
             }
         } else {
@@ -158,7 +156,7 @@ public class QueryFragment extends Fragment {
         super.onDestroy();
 
         LogUtils.debug(TAG, "++onDestroy()");
-        mUserBookList = null;
+        mCloudyBookList = null;
         if (mCurrentPhotoPath != null) {
             File file = new File(mCurrentPhotoPath);
             if (file.exists()) {
@@ -227,22 +225,19 @@ public class QueryFragment extends Fragment {
     public void queryInUserBooks(CloudyBook cloudyBook) {
 
         LogUtils.debug(TAG, "++queryInUserBooks(%s)", cloudyBook.toString());
-        UserBook foundBook = null;
-        for (UserBook userBook : mUserBookList) {
-            if (userBook.Title.equals(cloudyBook.Title) ||
-                (!userBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) && userBook.ISBN_8.equals(cloudyBook.ISBN_8)) ||
-                (!userBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) && userBook.ISBN_13.equals(cloudyBook.ISBN_13)) ||
-                (!userBook.LCCN.equals(BaseActivity.DEFAULT_LCCN) && userBook.LCCN.equals(cloudyBook.LCCN))) {
-                foundBook = userBook;
+        CloudyBook foundBook = null;
+        for (CloudyBook book : mCloudyBookList) {
+            if (book.isPartiallyEqual(cloudyBook)) {
+                foundBook = book;
                 break;
             }
         }
 
         if (foundBook != null) {
-            mCallback.onQueryFoundUserBook(foundBook);
+            mCallback.onQueryFoundBook(foundBook);
         } else {
             LogUtils.debug(TAG, "Did not find %s in user's book list.", cloudyBook.toString());
-            queryInCloudyBooks(cloudyBook);
+            queryGoogleBookService(cloudyBook);
         }
     }
 
@@ -312,152 +307,6 @@ public class QueryFragment extends Fragment {
             mCallback.onQueryFoundMultipleBooks(cloudyBooks);
         } else {
             mCallback.onQueryActionComplete("No results found.");
-        }
-    }
-
-    private void queryInCloudyBooks(CloudyBook bookQueryFor) {
-
-        LogUtils.debug(TAG, "++queryInCloudyBooks(%s)", bookQueryFor.toString());
-        if (!bookQueryFor.Title.isEmpty()) {
-            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("Title", bookQueryFor.Title).get()
-                .addOnCompleteListener(task -> {
-
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
-                            if (cloudyBook != null) {
-                                cloudyBook.VolumeId = document.getId();
-                                cloudyBooks.add(cloudyBook);
-                            }
-                        }
-
-                        if (cloudyBooks.size() == 0) {
-                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
-                            queryGoogleBookService(bookQueryFor);
-                        } else {
-                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
-                        }
-                    } else {
-                        String message = String.format(
-                            Locale.US,
-                            "Query failed: %s where Title == %s",
-                            CloudyBook.ROOT,
-                            bookQueryFor.Title);
-                        LogUtils.warn(TAG, message);
-                        if (task.getException() != null) {
-                            Crashlytics.logException(task.getException());
-                        }
-
-                        mCallback.onQueryActionComplete(message);
-                    }
-                });
-        } else if (!bookQueryFor.ISBN_8.contains(BaseActivity.DEFAULT_ISBN_8)) {
-            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("ISBN_8", bookQueryFor.ISBN_8).get()
-                .addOnCompleteListener(task -> {
-
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
-                            if (cloudyBook != null) {
-                                cloudyBook.VolumeId = document.getId();
-                                cloudyBooks.add(cloudyBook);
-                            }
-                        }
-
-                        if (cloudyBooks.size() == 0) {
-                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
-                            queryGoogleBookService(bookQueryFor);
-                        } else {
-                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
-                        }
-                    } else {
-                        String message = String.format(
-                            Locale.US,
-                            "Query failed: %s where ISBN_8 == %s",
-                            CloudyBook.ROOT,
-                            bookQueryFor.ISBN_8);
-                        LogUtils.warn(TAG, message);
-                        if (task.getException() != null) {
-                            Crashlytics.logException(task.getException());
-                        }
-
-                        mCallback.onQueryActionComplete(message);
-                    }
-                });
-        } else if (!bookQueryFor.ISBN_13.contains(BaseActivity.DEFAULT_ISBN_13)) {
-            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("ISBN_13", bookQueryFor.ISBN_13).get()
-                .addOnCompleteListener(task -> {
-
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
-                            if (cloudyBook != null) {
-                                cloudyBook.VolumeId = document.getId();
-                                cloudyBooks.add(cloudyBook);
-                            }
-                        }
-
-                        if (cloudyBooks.size() == 0) {
-                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
-                            queryGoogleBookService(bookQueryFor);
-                        } else {
-                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
-                        }
-                    } else {
-                        String message = String.format(
-                            Locale.US,
-                            "Query failed: %s where ISBN_13 == %s",
-                            CloudyBook.ROOT,
-                            bookQueryFor.ISBN_13);
-                        LogUtils.warn(TAG, message);
-                        if (task.getException() != null) {
-                            Crashlytics.logException(task.getException());
-                        }
-
-                        mCallback.onQueryActionComplete(message);
-                    }
-                });
-        } else if (!bookQueryFor.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
-            FirebaseFirestore.getInstance().collection(CloudyBook.ROOT).whereEqualTo("LCCN", bookQueryFor.LCCN).get()
-                .addOnCompleteListener(task -> {
-
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            CloudyBook cloudyBook = document.toObject(CloudyBook.class);
-                            if (cloudyBook != null) {
-                                cloudyBook.VolumeId = document.getId();
-                                cloudyBooks.add(cloudyBook);
-                            }
-                        }
-
-                        if (cloudyBooks.size() == 0) {
-                            LogUtils.warn(TAG, "No matches found: %s", bookQueryFor.toString());
-                            queryGoogleBookService(bookQueryFor);
-                        } else {
-                            mCallback.onQueryFoundMultipleBooks(cloudyBooks);
-                        }
-                    } else {
-                        String message = String.format(
-                            Locale.US,
-                            "Query failed: %s where LCCN == %s",
-                            CloudyBook.ROOT,
-                            bookQueryFor.LCCN);
-                        LogUtils.warn(TAG, message);
-                        if (task.getException() != null) {
-                            Crashlytics.logException(task.getException());
-                        }
-
-                        mCallback.onQueryActionComplete(message);
-                    }
-                });
-        } else {
-            String message = String.format(Locale.US, "Cannot search; unexpected book: %s", bookQueryFor.toString());
-            LogUtils.error(TAG, message);
-            mCallback.onQueryActionComplete(message);
         }
     }
 
@@ -683,8 +532,13 @@ public class QueryFragment extends Fragment {
                     if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
                         LogUtils.debug(TAG, "No matches found.");
                     } else {
+                        // TODO: what if a search returns multiple copies, but some data is missing (e.g. Authors blank)?
                         for (Volume volume : volumes.getItems()) {
                             Volume.VolumeInfo volumeInfo = volume.getVolumeInfo();
+                            if (!volumeInfo.getPrintType().equals("BOOK")) {
+                                continue;
+                            }
+
                             CloudyBook cloudyBook = new CloudyBook();
                             cloudyBook.Title = volumeInfo.getTitle();
                             java.util.List<String> authors = volumeInfo.getAuthors();
@@ -697,8 +551,8 @@ public class QueryFragment extends Fragment {
                                 cloudyBook.Categories.addAll(categories);
                             }
 
-                            cloudyBook.CreatedDate = Calendar.getInstance().getTimeInMillis();
                             cloudyBook.PublishedDate = volumeInfo.getPublishedDate();
+                            cloudyBook.Publisher = volumeInfo.getPublisher();
                             for (Volume.VolumeInfo.IndustryIdentifiers isbn : volumeInfo.getIndustryIdentifiers()) {
                                 if (isbn.getType().equalsIgnoreCase("ISBN_10")) {
                                     cloudyBook.ISBN_8 = isbn.getIdentifier();

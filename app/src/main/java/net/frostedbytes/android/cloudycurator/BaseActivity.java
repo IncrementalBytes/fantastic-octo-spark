@@ -20,20 +20,21 @@ import android.support.v7.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 
-    public static final String ARG_CLOUDY_BOOK = "book";
+    public static final String ARG_CLOUDY_BOOK = "cloudy_book";
     public static final String ARG_CLOUDY_BOOK_LIST = "cloudy_book_list";
     public static final String ARG_EMAIL = "email";
     public static final String ARG_SCAN_RESULTS = "scan_results";
-    public static final String ARG_USER_BOOK = "user_book";
-    public static final String ARG_USER_BOOK_LIST = "user_book_list";
     public static final String ARG_USER_ID = "user_id";
     public static final String ARG_USER_NAME = "user_name";
 
     public static final String DEFAULT_ISBN_8 = "00000000";
     public static final String DEFAULT_ISBN_13 = "0000000000000";
-    public static final String DEFAULT_ID = "000000000-0000-0000-0000-000000000000";
+    public static final String DEFAULT_ID = "0000000000000000000000000000";
     public static final String DEFAULT_LCCN = "0000000000";
     public static final String DEFAULT_LIBRARY_FILE = "localLibrary.txt";
+    public static final String DEFAULT_VOLUME_ID = "000000000000";
+
+    public static final int MAX_RESULTS = 10;
 
     public static final String BASE_TAG = "CloudyCurator::";
 }
