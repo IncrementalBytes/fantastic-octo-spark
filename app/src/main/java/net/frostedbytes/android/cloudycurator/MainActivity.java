@@ -685,6 +685,10 @@ public class MainActivity extends BaseActivity implements
             setTitle(getString(R.string.fragment_cloudy_book_list));
         } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
             setTitle(getString(R.string.fragment_query));
+        } else if (fragmentClassName.equals(ResultListFragment.class.getName())) {
+            setTitle(R.string.select_book);
+        } else if (fragmentClassName.equals(ScanResultsFragment.class.getName())) {
+            setTitle(R.string.select_text_search);
         } else {
             setTitle(getString(R.string.app_name));
         }

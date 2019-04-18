@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
@@ -170,6 +171,10 @@ public class ResultListFragment extends Fragment {
             mPublishedTextView = itemView.findViewById(R.id.cloudy_book_item_published);
             mPublisherTextView = itemView.findViewById(R.id.cloudy_book_item_publisher);
             mTitleTextView = itemView.findViewById(R.id.cloudy_book_item_title);
+            ImageView readImage = itemView.findViewById(R.id.cloudy_book_image_read);
+            readImage.setVisibility(View.GONE);
+            ImageView ownImage = itemView.findViewById(R.id.cloudy_book_image_own);
+            ownImage.setVisibility(View.GONE);
 
             itemView.setOnClickListener(this);
         }

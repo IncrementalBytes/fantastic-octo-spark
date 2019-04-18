@@ -11,7 +11,7 @@ public class DateUtils {
      * Returns a user-friendly readable string of the date.
      *
      * @param date - Date; in ticks
-     * @return - User-friendly readable string of the date; formatted YYYY/MM/dd @ HH:mm:ss
+     * @return - User-friendly readable string of the date; formatted YYYY-MM-dd
      */
     public static String formatDateForDisplay(long date) {
 

@@ -10,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
@@ -162,8 +163,10 @@ public class CloudyBookListFragment extends Fragment {
         private final TextView mAuthorsTextView;
         private final TextView mCategoriesTextView;
         private final TextView mISBNTextView;
+        private final ImageView mOwnImage;
         private final TextView mPublishedTextView;
         private final TextView mPublisherTextView;
+        private final ImageView mReadImage;
         private final TextView mTitleTextView;
 
         private CloudyBook mCloudyBook;
@@ -174,8 +177,10 @@ public class CloudyBookListFragment extends Fragment {
             mAuthorsTextView = itemView.findViewById(R.id.cloudy_book_item_authors);
             mCategoriesTextView = itemView.findViewById(R.id.cloudy_book_item_categories);
             mISBNTextView = itemView.findViewById(R.id.cloudy_book_item_isbn);
+            mOwnImage = itemView.findViewById(R.id.cloudy_book_image_own);
             mPublishedTextView = itemView.findViewById(R.id.cloudy_book_item_published);
             mPublisherTextView = itemView.findViewById(R.id.cloudy_book_item_publisher);
+            mReadImage = itemView.findViewById(R.id.cloudy_book_image_read);
             mTitleTextView = itemView.findViewById(R.id.cloudy_book_item_title);
 
             itemView.setOnClickListener(this);
@@ -192,8 +197,10 @@ public class CloudyBookListFragment extends Fragment {
                     Locale.US,
                     getString(R.string.isbn_format),
                     mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mCloudyBook.ISBN_8 : mCloudyBook.ISBN_13));
+            mOwnImage.setVisibility(mCloudyBook.IsOwned ? View.VISIBLE : View.INVISIBLE);
             mPublishedTextView.setVisibility(View.GONE);
             mPublisherTextView.setVisibility(View.GONE);
+            mReadImage.setVisibility(mCloudyBook.HasRead ? View.VISIBLE : View.INVISIBLE);
             mTitleTextView.setText(mCloudyBook.Title);
         }
 

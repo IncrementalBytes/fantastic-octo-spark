@@ -7,6 +7,4 @@
     <dimen name="nav_header_height">136dp</dimen>
     <dimen name="image_height_thumbnail">@android:dimen/thumbnail_height</dimen>
     <dimen name="image_width_thumbnail">@android:dimen/thumbnail_width</dimen>
-    <dimen name="image_height_minimum">1px</dimen>
-    <dimen name="image_width_minimum">1px</dimen>
 </resources>

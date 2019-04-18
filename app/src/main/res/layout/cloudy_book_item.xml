@@ -70,6 +70,28 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cloudy_book_item_publisher" />
 
+    <ImageView
+        android:id="@+id/cloudy_book_image_read"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/default_view_margin"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cloudy_book_item_categories"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:src="@drawable/ic_read_dark"
+        android:contentDescription="@string/user_has_read_this_book" />
+
+    <ImageView
+        android:id="@+id/cloudy_book_image_own"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/default_view_margin"
+        app:layout_constraintStart_toEndOf="@id/cloudy_book_image_read"
+        app:layout_constraintTop_toBottomOf="@id/cloudy_book_item_categories"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:src="@drawable/ic_owned_dark"
+        android:contentDescription="@string/user_owns_this_book" />
+
     <TextView
         android:id="@+id/cloudy_book_item_isbn"
         android:layout_width="0dp"
