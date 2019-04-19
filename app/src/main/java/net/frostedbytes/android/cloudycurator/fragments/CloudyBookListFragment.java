@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -197,7 +198,12 @@ public class CloudyBookListFragment extends Fragment {
                     Locale.US,
                     getString(R.string.isbn_format),
                     mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mCloudyBook.ISBN_8 : mCloudyBook.ISBN_13));
-            mOwnImage.setVisibility(mCloudyBook.IsOwned ? View.VISIBLE : View.INVISIBLE);
+            if (mCloudyBook.IsOwned) {
+                mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_owned_dark, null));
+            } else {
+                mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_not_owned_dark, null));
+            }
+
             mPublishedTextView.setVisibility(View.GONE);
             mPublisherTextView.setVisibility(View.GONE);
             mReadImage.setVisibility(mCloudyBook.HasRead ? View.VISIBLE : View.INVISIBLE);

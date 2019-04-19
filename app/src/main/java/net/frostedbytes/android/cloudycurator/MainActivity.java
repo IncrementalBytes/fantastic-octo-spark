@@ -20,6 +20,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -35,8 +36,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -86,6 +89,7 @@ public class MainActivity extends BaseActivity implements
     private QueryFragment mQueryFragment;
 
     private DrawerLayout mDrawerLayout;
+    private NavigationView mNavigationView;
     private ProgressBar mProgressBar;
     private Snackbar mSnackbar;
 
@@ -145,7 +149,7 @@ public class MainActivity extends BaseActivity implements
         mUser.FullName = getIntent().getStringExtra(BaseActivity.ARG_USER_NAME);
 
         // update the navigation header
-        NavigationView mNavigationView = findViewById(R.id.main_navigation_view);
+        mNavigationView = findViewById(R.id.main_navigation_view);
         mNavigationView.setNavigationItemSelectedListener(this);
         View navigationHeaderView = mNavigationView.inflateHeaderView(R.layout.main_navigation_header);
         TextView navigationFullName = navigationHeaderView.findViewById(R.id.navigation_text_full_name);
@@ -155,8 +159,8 @@ public class MainActivity extends BaseActivity implements
         TextView navigationVersion = navigationHeaderView.findViewById(R.id.navigation_text_version);
         navigationVersion.setText(BuildConfig.VERSION_NAME);
 
-        // get user's book library
-        checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
+        // get user's permissions
+        getUserPermissions();
     }
 
     @Override
@@ -448,6 +452,30 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onQueryNoBarCodesDetected(Bitmap bitmapData) {
+
+        LogUtils.debug(TAG, "++onQueryNoBarCodesDetected(%d)", bitmapData.getByteCount());
+        mProgressBar.setIndeterminate(false);
+        if (mUser.IsLibrarian) {
+            LayoutInflater layoutInflater = LayoutInflater.from(this);
+            View promptView = layoutInflater.inflate(R.layout.dialog_image_view, null);
+            ImageView image = promptView.findViewById(R.id.image_view_image);
+            image.setImageBitmap(bitmapData);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setView(promptView);
+            alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK", (dialog, id) -> {
+                })
+                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
+        }
+
+        String message = "Did not find any bar codes in image.";
+        LogUtils.warn(TAG, message);
+    }
+
+    @Override
     public void onQueryStarted() {
 
         LogUtils.debug(TAG, "++onQueryStarted()");
@@ -459,7 +487,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onQueryTakePicture()");
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
+            checkDevicePermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
         } else {
             Snackbar.make(
                 findViewById(R.id.main_drawer_layout),
@@ -536,9 +564,9 @@ public class MainActivity extends BaseActivity implements
     /*
         Private Method(s)
      */
-    private void checkPermission(String permission, int permissionCode) {
+    private void checkDevicePermission(String permission, int permissionCode) {
 
-        LogUtils.debug(TAG, "++checkPermission()");
+        LogUtils.debug(TAG, "++checkDevicePermission()");
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
                 Snackbar.make(
@@ -572,6 +600,33 @@ public class MainActivity extends BaseActivity implements
                     break;
             }
         }
+    }
+
+    private void getUserPermissions() {
+
+        LogUtils.debug(TAG, "++getUserPermissions()");
+        String queryPath = PathUtils.combine(User.ROOT, mUser.Id);
+        FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
+
+            if (task.isSuccessful() && task.getResult() != null) {
+                User user = task.getResult().toObject(User.class);
+                if (user != null) {
+                    mUser.IsLibrarian = user.IsLibrarian;
+                }
+            }
+
+            // enable options if user has permissions
+            if (mUser.IsLibrarian) {
+                // TODO: add access to debug (image from camera, etc.)
+                MenuItem librarianMenu = mNavigationView.getMenu().findItem(R.id.navigation_menu_librarian);
+                if (librarianMenu != null) {
+                    librarianMenu.setVisible(true);
+                }
+            }
+
+            // regardless of result, get user's book library
+            checkDevicePermission(Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
+        });
     }
 
     private void readLocalLibrary() {

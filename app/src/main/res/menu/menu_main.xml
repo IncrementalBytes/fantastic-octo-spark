@@ -10,6 +10,11 @@
             android:id="@+id/navigation_menu_add"
             android:icon="@drawable/ic_add_dark"
             android:title="@string/menu_add" />
+        <item
+            android:id="@+id/navigation_menu_librarian"
+            android:icon="@drawable/ic_librarian_dark"
+            android:title="@string/librarian"
+            android:visible="false" />
     </group>
 
     <group>

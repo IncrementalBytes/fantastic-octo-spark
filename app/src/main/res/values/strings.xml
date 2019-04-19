@@ -57,4 +57,7 @@
     <string name="user_owns_this_book">User owns this book.</string>
     <string name="select_book">Select a Book</string>
     <string name="select_text_search">Select Text to Search With</string>
+    <string name="librarian">Librarian</string>
+    <string name="scan_isbn">Scan ISBN</string>
+    <string name="scan_text">Scan Text</string>
 </resources>

@@ -72,6 +72,8 @@ public class QueryFragment extends Fragment {
 
         void onQueryFoundBook(CloudyBook cloudyBook);
 
+        void onQueryNoBarCodesDetected(Bitmap bitmapData);
+
         void onQueryStarted();
 
         void onQueryTakePicture();
@@ -81,9 +83,10 @@ public class QueryFragment extends Fragment {
 
     private OnQueryListener mCallback;
 
+    private ArrayList<CloudyBook> mCloudyBookList;
     private String mCurrentPhotoPath;
     private Bitmap mImageBitmap;
-    private ArrayList<CloudyBook> mCloudyBookList;
+    private int mScanType;
 
     public static QueryFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
@@ -126,22 +129,33 @@ public class QueryFragment extends Fragment {
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         View view = inflater.inflate(R.layout.fragment_book_query, container, false);
 
-        CardView scanCard = view.findViewById(R.id.query_card_image);
+        CardView scanISBNCard = view.findViewById(R.id.query_card_isbn);
+        CardView scanTitleCard = view.findViewById(R.id.query_card_text);
         if (getActivity() != null) {
             PackageManager packageManager = getActivity().getPackageManager();
             if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-                scanCard.setOnClickListener(v -> mCallback.onQueryTakePicture());
+                scanISBNCard.setOnClickListener(v -> {
+                    mScanType = BaseActivity.SCAN_ISBN;
+                    mCallback.onQueryTakePicture();
+                });
+
+                scanTitleCard.setOnClickListener(v -> {
+                    mScanType = BaseActivity.SCAN_TEXT;
+                    mCallback.onQueryTakePicture();
+                });
             } else {
                 String message = "Camera feature is not available; disabling camera.";
                 LogUtils.warn(TAG, message);
                 mCallback.onQueryActionComplete(message);
-                scanCard.setEnabled(false);
+                scanISBNCard.setEnabled(false);
+                scanTitleCard.setEnabled(false);
             }
         } else {
             String message = "Camera not detected.";
             LogUtils.warn(TAG, message);
-            scanCard.setEnabled(false);
             mCallback.onQueryActionComplete(message);
+            scanISBNCard.setEnabled(false);
+            scanTitleCard.setEnabled(false);
         }
 
         CardView manualCard = view.findViewById(R.id.query_card_manual);
@@ -176,7 +190,7 @@ public class QueryFragment extends Fragment {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             if (BuildConfig.DEBUG) {
                 // File f = new File(getString(R.string.debug_path), "20190413_094436.jpg");
-                File f = new File(getString(R.string.debug_path), "20190408_233337.jpg");
+                File f = new File(getString(R.string.debug_path), "20190413_094436.jpg");
                 try {
                     mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
                 } catch (FileNotFoundException e) {
@@ -197,7 +211,15 @@ public class QueryFragment extends Fragment {
                     mImageBitmap.getHeight(),
                     mImageBitmap.getConfig());
                 if (!mImageBitmap.sameAs(emptyBitmap)) {
-                    scanImageForISBN();
+                    if (mScanType == BaseActivity.SCAN_ISBN) {
+                        scanImageForISBN();
+                    } else if (mScanType == BaseActivity.SCAN_TEXT){
+                        scanImageForText();
+                    } else {
+                        String message = String.format(Locale.US, "Unknown scan type: %s", mScanType);
+                        LogUtils.warn(TAG, message);
+                        mCallback.onQueryActionComplete(message);
+                    }
                 } else {
                     String message = "Image was empty.";
                     LogUtils.warn(TAG, message);
@@ -351,35 +373,27 @@ public class QueryFragment extends Fragment {
             com.google.android.gms.tasks.Task<java.util.List<FirebaseVisionBarcode>> result = detector.detectInImage(image)
                 .addOnCompleteListener(task -> {
 
-                    if (task.isSuccessful()) {
-                        if (task.getResult() != null) {
-                            CloudyBook cloudyBook = new CloudyBook();
-                            for (FirebaseVisionBarcode barcode : task.getResult()) {
-                                switch (barcode.getValueType()) {
-                                    case FirebaseVisionBarcode.TYPE_ISBN:
-                                        String barcodeValue = barcode.getDisplayValue();
-                                        LogUtils.debug(TAG, "Found a bar code: %s", barcodeValue);
-                                        if (barcodeValue != null && barcodeValue.length() == 8) {
-                                            cloudyBook.ISBN_8 = barcodeValue;
-                                        } else if (barcodeValue != null && barcodeValue.length() == 13) {
-                                            cloudyBook.ISBN_13 = barcodeValue;
-                                        }
-
-                                        break;
-                                    default:
-                                        LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
-                                        break;
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        CloudyBook cloudyBook = new CloudyBook();
+                        for (FirebaseVisionBarcode barcode : task.getResult()) {
+                            if (barcode.getValueType() == FirebaseVisionBarcode.TYPE_ISBN) {
+                                String barcodeValue = barcode.getDisplayValue();
+                                LogUtils.debug(TAG, "Found a bar code: %s", barcodeValue);
+                                if (barcodeValue != null && barcodeValue.length() == 8) {
+                                    cloudyBook.ISBN_8 = barcodeValue;
+                                } else if (barcodeValue != null && barcodeValue.length() == 13) {
+                                    cloudyBook.ISBN_13 = barcodeValue;
                                 }
-                            }
-
-                            if (!cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
-                                !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
-                                queryInUserBooks(cloudyBook);
                             } else {
-                                scanImageForText();
+                                LogUtils.warn(TAG, "Unexpected bar code: %s", barcode.getDisplayValue());
                             }
+                        }
+
+                        if (!cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
+                            !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                            queryInUserBooks(cloudyBook);
                         } else {
-                            scanImageForText();
+                            mCallback.onQueryNoBarCodesDetected(mImageBitmap);
                         }
                     } else {
                         String message = "Bar code detection task failed.";
