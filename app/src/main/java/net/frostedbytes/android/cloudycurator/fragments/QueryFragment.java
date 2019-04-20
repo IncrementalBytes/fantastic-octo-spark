@@ -389,8 +389,8 @@ public class QueryFragment extends Fragment {
                             }
                         }
 
-                        if (!cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
-                            !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                        if ((!cloudyBook.ISBN_8.isEmpty() && !cloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) ||
+                            (!cloudyBook.ISBN_13.isEmpty() && !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13))) {
                             queryInUserBooks(cloudyBook);
                         } else {
                             mCallback.onQueryNoBarCodesDetected(mImageBitmap);
@@ -540,7 +540,7 @@ public class QueryFragment extends Fragment {
                 }
 
                 if (searchParam != null && !searchParam.isEmpty()) {
-                    LogUtils.debug(TAG, "Query: [%s]", searchParam);
+                    LogUtils.debug(TAG, "Query: %s", searchParam);
                     Books.Volumes.List volumesList = books.volumes().list(searchParam);
                     Volumes volumes = volumesList.execute();
                     if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {

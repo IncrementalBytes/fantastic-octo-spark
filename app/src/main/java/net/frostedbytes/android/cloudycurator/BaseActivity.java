@@ -37,6 +37,7 @@ public class BaseActivity extends AppCompatActivity {
     public static final int MAX_RESULTS = 10;
     public static final int SCAN_ISBN = 1;
     public static final int SCAN_TEXT = 2;
+    public static final int SCHEMA_FIELDS = 13;
 
     public static final String BASE_TAG = "CloudyCurator::";
 }

@@ -30,7 +30,7 @@
     <string name="fragment_cloudy_book">Your Book</string>
     <string name="fragment_cloudy_book_list">In Your Library</string>
     <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
-    <string name="err_no_camera_detected">No camera was detected.</string>
+    <string name="err_no_camera_detected">Camera was not detected.</string>
     <string name="remove_from_library">Remove from Library</string>
     <string name="remove_book_message">Remove \'%s\' from your library?</string>
     <string name="err_remove_cloudy_book">Unable to remove book from library, please try again later.</string>
@@ -60,4 +60,6 @@
     <string name="librarian">Librarian</string>
     <string name="scan_isbn">Scan ISBN</string>
     <string name="scan_text">Scan Text</string>
+    <string name="check_back_later">Check back later!</string>
+    <string name="librarian_fragment">Break Room</string>
 </resources>

@@ -54,6 +54,7 @@ import com.google.firebase.firestore.SetOptions;
 
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookListFragment;
+import net.frostedbytes.android.cloudycurator.fragments.LibrarianFragment;
 import net.frostedbytes.android.cloudycurator.fragments.QueryFragment;
 import net.frostedbytes.android.cloudycurator.fragments.ResultListFragment;
 import net.frostedbytes.android.cloudycurator.fragments.ScanResultsFragment;
@@ -183,6 +184,9 @@ public class MainActivity extends BaseActivity implements
                 mProgressBar.setIndeterminate(false);
                 mQueryFragment = QueryFragment.newInstance(mCloudyBookList);
                 replaceFragment(mQueryFragment);
+                break;
+            case R.id.navigation_menu_librarian:
+                replaceFragment(LibrarianFragment.newInstance());
                 break;
             case R.id.navigation_menu_logout:
                 AlertDialog dialog = new AlertDialog.Builder(this)
@@ -473,6 +477,11 @@ public class MainActivity extends BaseActivity implements
 
         String message = "Did not find any bar codes in image.";
         LogUtils.warn(TAG, message);
+        Snackbar.make(
+            findViewById(R.id.main_drawer_layout),
+            message,
+            Snackbar.LENGTH_LONG)
+            .show();
     }
 
     @Override
@@ -556,8 +565,11 @@ public class MainActivity extends BaseActivity implements
         LogUtils.debug(TAG, "++onScanResultsItemSelected(%s)", searchText);
         CloudyBook cloudyBook = new CloudyBook();
         cloudyBook.Title = searchText;
-        mQueryFragment = QueryFragment.newInstance(mCloudyBookList);
-        replaceFragment(mQueryFragment);
+        if (mQueryFragment == null) {
+            mQueryFragment = QueryFragment.newInstance(mCloudyBookList);
+            replaceFragment(mQueryFragment);
+        }
+
         mQueryFragment.queryInUserBooks(cloudyBook);
     }
 
@@ -646,6 +658,15 @@ public class MainActivity extends BaseActivity implements
                     }
 
                     List<String> elements = new ArrayList<>(Arrays.asList(parsableString.split("\\|")));
+                    if (elements.size() != BaseActivity.SCHEMA_FIELDS) {
+                        LogUtils.debug(
+                            TAG,
+                            "Local library schema mismatch. Got: %d Expected: %d",
+                            elements.size(),
+                            BaseActivity.SCHEMA_FIELDS);
+                        continue;
+                    }
+
                     CloudyBook cloudyBook = new CloudyBook();
                     cloudyBook.VolumeId = elements.remove(0);
                     cloudyBook.ISBN_8 = elements.remove(0);
@@ -744,6 +765,8 @@ public class MainActivity extends BaseActivity implements
             setTitle(R.string.select_book);
         } else if (fragmentClassName.equals(ScanResultsFragment.class.getName())) {
             setTitle(R.string.select_text_search);
+        } else if (fragmentClassName.equals(LibrarianFragment.class.getName())) {
+            setTitle(getString(R.string.librarian_fragment));
         } else {
             setTitle(getString(R.string.app_name));
         }
