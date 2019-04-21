@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_view_margin"
         android:text="@string/placeholder"
-        android:textColor="@color/colorAccent"
+        android:textColor="@android:color/white"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

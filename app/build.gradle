@@ -65,6 +65,7 @@ android {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE-FIREBASE.txt'
         exclude 'META-INF/NOTICE'
+        exclude 'META-INF/DEPENDENCIES'
     }
     testOptions {
         unitTests {
@@ -88,7 +89,10 @@ dependencies {
 
     // Google
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
+    implementation 'com.google.api-client:google-api-client:1.25.0'
+    implementation 'com.google.api-client:google-api-client-android:1.23.0'
     implementation 'com.google.apis:google-api-services-books:v1-rev106-1.25.0' exclude module: 'httpclient'
+
     // Firebase
     implementation 'com.google.firebase:firebase-auth:16.2.1'
     implementation 'com.google.firebase:firebase-core:16.0.8'
@@ -96,6 +100,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore:18.2.0'
     implementation 'com.google.firebase:firebase-ml-vision:19.0.3'
 
+    // Test
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

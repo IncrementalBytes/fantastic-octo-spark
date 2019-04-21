@@ -25,6 +25,7 @@ import android.widget.ProgressBar;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
@@ -32,7 +33,6 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
@@ -46,7 +46,9 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     private static final int RC_SIGN_IN = 4701;
 
     private ProgressBar mProgressBar;
+    private Snackbar mSnackbar;
 
+    private GoogleSignInAccount mAccount;
     private FirebaseAuth mAuth;
     private GoogleApiClient mGoogleApiClient;
 
@@ -67,6 +69,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         mProgressBar.setVisibility(View.INVISIBLE);
 
         mAuth = FirebaseAuth.getInstance();
+        mAccount = GoogleSignIn.getLastSignedInAccount(this);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             //.requestIdToken(getString(R.string.default_web_client_id))
@@ -78,8 +81,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
             .enableAutoManage(this, connectionResult -> {
                 LogUtils.debug(TAG, "++onConnectionFailed(ConnectionResult)");
                 String message = String.format(Locale.US, "Connection result was null: %s", connectionResult.getErrorMessage());
-                LogUtils.debug(TAG, message);
-                Snackbar.make(findViewById(R.id.activity_sign_in), message, Snackbar.LENGTH_LONG).show();
+                showErrorInSnackBar(message);
             })
             .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
             .build();
@@ -90,8 +92,8 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
         super.onStart();
 
         LogUtils.debug(TAG, "++onStart()");
-        if (mAuth.getCurrentUser() != null) {
-            authenticateSuccess(mAuth.getCurrentUser());
+        if (mAuth.getCurrentUser() != null && mAccount != null) {
+            authenticateSuccess();
         }
     }
 
@@ -102,10 +104,8 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     public void onClick(View view) {
 
         LogUtils.debug(TAG, "++onClick()");
-        switch (view.getId()) {
-            case R.id.sign_in_button_google:
-                signInWithGoogle();
-                break;
+        if (view.getId() == R.id.sign_in_button_google) {
+            signInWithGoogle();
         }
     }
 
@@ -113,21 +113,20 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        LogUtils.debug(TAG, "++onActivityResult(%1d, %2d, Intent)", requestCode, resultCode);
+        LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             if (result.isSuccess()) {
-                GoogleSignInAccount account = result.getSignInAccount();
-                if (account != null) {
-                    firebaseAuthenticateWithGoogle(account);
+                mAccount = result.getSignInAccount();
+                if (mAccount  != null) {
+                    firebaseAuthenticateWithGoogle(mAccount );
                 } else {
                     String message = String.format(
                         Locale.US,
                         "Could not get sign-in account: %d - %s",
                         result.getStatus().getStatusCode(),
                         result.getStatus().getStatusMessage());
-                    LogUtils.error(TAG, message);
-                    Snackbar.make(findViewById(R.id.activity_sign_in), message, Snackbar.LENGTH_LONG).show();
+                    showErrorInSnackBar(message);
                 }
             } else {
                 String message = String.format(
@@ -135,8 +134,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
                     "Getting task result failed: %d - %s",
                     result.getStatus().getStatusCode(),
                     result.getStatus().getStatusMessage());
-                LogUtils.error(TAG, message);
-                Snackbar.make(findViewById(R.id.activity_sign_in), message, Snackbar.LENGTH_LONG).show();
+                showErrorInSnackBar(message);
             }
         }
     }
@@ -144,37 +142,52 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     /*
         Private Method(s)
      */
-    private void authenticateSuccess(FirebaseUser user) {
+    private void authenticateSuccess() {
 
-        LogUtils.debug(TAG, "++onAuthenticateSuccess(%1s)", user.getDisplayName());
-        Crashlytics.setUserIdentifier(user.getUid());
-        Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-        intent.putExtra(BaseActivity.ARG_USER_ID, user.getUid());
-        intent.putExtra(BaseActivity.ARG_USER_NAME, user.getDisplayName());
-        intent.putExtra(BaseActivity.ARG_EMAIL, user.getEmail());
-        startActivity(intent);
-        finish();
+        if (mAuth.getCurrentUser() != null && mAccount != null) {
+            LogUtils.debug(TAG, "++onAuthenticateSuccess(%s)", mAuth.getCurrentUser().getDisplayName());
+            Crashlytics.setUserIdentifier(mAuth.getCurrentUser().getUid());
+            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+            intent.putExtra(BaseActivity.ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
+            intent.putExtra(BaseActivity.ARG_USER_NAME, mAuth.getCurrentUser().getDisplayName());
+            intent.putExtra(BaseActivity.ARG_EMAIL, mAuth.getCurrentUser().getEmail());
+            startActivity(intent);
+            finish();
+        } else {
+            String message = "Authentication did not return expected account information; please try again.";
+            showErrorInSnackBar(message);
+        }
     }
 
     private void firebaseAuthenticateWithGoogle(GoogleSignInAccount acct) {
 
-        LogUtils.debug(TAG, "++firebaseAuthWithGoogle(%1s)", acct.getId());
+        LogUtils.debug(TAG, "++firebaseAuthWithGoogle(%s)", acct.getId());
         mProgressBar.setVisibility(View.VISIBLE);
         mProgressBar.setIndeterminate(true);
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        mAuth.signInWithCredential(credential)
-            .addOnCompleteListener(this, task -> {
+        mAuth.signInWithCredential(credential).addOnCompleteListener(this, task -> {
+
                 if (task.isSuccessful() && mAuth.getCurrentUser() != null) {
-                    authenticateSuccess(mAuth.getCurrentUser());
+                    authenticateSuccess();
                 } else {
                     Crashlytics.logException(task.getException());
                     String message = "Authenticating with Google account failed.";
-                    LogUtils.error(TAG, message);
-                    Snackbar.make(findViewById(R.id.activity_sign_in), message, Snackbar.LENGTH_LONG).show();
+                    showErrorInSnackBar(message);
                 }
 
                 mProgressBar.setIndeterminate(false);
             });
+    }
+
+    private void showErrorInSnackBar(String message) {
+
+        LogUtils.error(TAG, message);
+        mSnackbar = Snackbar.make(
+            findViewById(R.id.activity_sign_in),
+            message,
+            Snackbar.LENGTH_INDEFINITE);
+        mSnackbar.setAction(R.string.dismiss, v -> mSnackbar.dismiss());
+        mSnackbar.show();
     }
 
     private void signInWithGoogle() {

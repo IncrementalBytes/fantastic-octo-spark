@@ -145,7 +145,7 @@ public class MainActivity extends BaseActivity implements
         toggle.syncState();
 
         mUser = new User();
-        mUser.Id = getIntent().getStringExtra(BaseActivity.ARG_USER_ID);
+        mUser.Id = getIntent().getStringExtra(BaseActivity.ARG_FIREBASE_USER_ID);
         mUser.Email = getIntent().getStringExtra(BaseActivity.ARG_EMAIL);
         mUser.FullName = getIntent().getStringExtra(BaseActivity.ARG_USER_NAME);
 
@@ -372,6 +372,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCloudyBookListItemSelected(%s)", cloudyBook.toString());
         mProgressBar.setIndeterminate(false);
+        setTitle(getString(R.string.fragment_cloudy_book));
         replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
     }
 
@@ -419,6 +420,14 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void onQueryFoundBook(CloudyBook cloudyBook) {
+
+        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudyBook.toString());
+        mProgressBar.setIndeterminate(false);
+        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
+    }
+
+    @Override
     public void onQueryFoundMultipleBooks(ArrayList<CloudyBook> cloudyBooks) {
 
         LogUtils.debug(TAG, "++onQueryFoundMultipleBooks(%d)", cloudyBooks.size());
@@ -432,6 +441,7 @@ public class MainActivity extends BaseActivity implements
             mQueryFragment = QueryFragment.newInstance(mCloudyBookList);
             replaceFragment(mQueryFragment);
         } else if (cloudyBooks.size() == 1) {
+            setTitle(getString(R.string.fragment_cloudy_book_add));
             replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBooks.get(0)));
         } else {
             if (cloudyBooks.size() == BaseActivity.MAX_RESULTS) {
@@ -445,14 +455,6 @@ public class MainActivity extends BaseActivity implements
 
             replaceFragment(ResultListFragment.newInstance(cloudyBooks));
         }
-    }
-
-    @Override
-    public void onQueryFoundBook(CloudyBook cloudyBook) {
-
-        LogUtils.debug(TAG, "++onQueryFoundBook(%s)", cloudyBook.toString());
-        mProgressBar.setIndeterminate(false);
-        replaceFragment(CloudyBookFragment.newInstance(mUser.Id, cloudyBook));
     }
 
     @Override
@@ -541,7 +543,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onResultListPopulated(%d)", size);
         if (size > 1) {
-            setTitle(R.string.select_a_book);
+            setTitle(R.string.select_book);
         }
     }
 
@@ -755,9 +757,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++updateTitleAndDrawer(%s)", fragment.getClass().getName());
         String fragmentClassName = fragment.getClass().getName();
-        if (fragmentClassName.equals(CloudyBookFragment.class.getName())) {
-            setTitle(getString(R.string.fragment_cloudy_book));
-        } else if (fragmentClassName.equals(CloudyBookListFragment.class.getName())) {
+        if (fragmentClassName.equals(CloudyBookListFragment.class.getName())) {
             setTitle(getString(R.string.fragment_cloudy_book_list));
         } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
             setTitle(getString(R.string.fragment_query));
@@ -767,8 +767,6 @@ public class MainActivity extends BaseActivity implements
             setTitle(R.string.select_text_search);
         } else if (fragmentClassName.equals(LibrarianFragment.class.getName())) {
             setTitle(getString(R.string.librarian_fragment));
-        } else {
-            setTitle(getString(R.string.app_name));
         }
     }
 

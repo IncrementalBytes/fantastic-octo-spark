@@ -57,7 +57,7 @@ public class CloudyBookFragment extends Fragment {
         LogUtils.debug(TAG, "++newInstance()");
         CloudyBookFragment fragment = new CloudyBookFragment();
         Bundle args = new Bundle();
-        args.putString(BaseActivity.ARG_USER_ID, userId);
+        args.putString(BaseActivity.ARG_FIREBASE_USER_ID, userId);
         args.putParcelable(BaseActivity.ARG_CLOUDY_BOOK, cloudyBook);
         fragment.setArguments(args);
         return fragment;
@@ -81,7 +81,7 @@ public class CloudyBookFragment extends Fragment {
         Bundle arguments = getArguments();
         if (arguments != null) {
             mCloudyBook = arguments.getParcelable(BaseActivity.ARG_CLOUDY_BOOK);
-            mUserId = arguments.getString(BaseActivity.ARG_USER_ID);
+            mUserId = arguments.getString(BaseActivity.ARG_FIREBASE_USER_ID);
         } else {
             LogUtils.error(TAG, "Arguments were null.");
         }

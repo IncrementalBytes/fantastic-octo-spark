@@ -3,7 +3,6 @@ package net.frostedbytes.android.cloudycurator.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -23,12 +22,6 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.books.Books;
-import com.google.api.services.books.BooksRequestInitializer;
-import com.google.api.services.books.model.Volume;
-import com.google.api.services.books.model.Volumes;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
@@ -43,15 +36,22 @@ import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.utils.LogUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -248,10 +248,12 @@ public class QueryFragment extends Fragment {
 
         LogUtils.debug(TAG, "++queryInUserBooks(%s)", cloudyBook.toString());
         CloudyBook foundBook = null;
-        for (CloudyBook book : mCloudyBookList) {
-            if (book.isPartiallyEqual(cloudyBook)) {
-                foundBook = book;
-                break;
+        if (mCloudyBookList != null) {
+            for (CloudyBook book : mCloudyBookList) {
+                if (book.isPartiallyEqual(cloudyBook)) {
+                    foundBook = book;
+                    break;
+                }
             }
         }
 
@@ -344,11 +346,7 @@ public class QueryFragment extends Fragment {
             mCallback.onQueryActionComplete(message);
         } else {
             if (getActivity() != null) {
-                new RetrieveBookDataTask(
-                    this,
-                    cloudyBook,
-                    getActivity().getApplicationContext().getPackageManager(),
-                    getString(R.string.google_books_key)).execute();
+                new RetrieveBookDataTask(this, cloudyBook).execute();
             } else {
                 String message = "Could not get activity's content resolver.";
                 LogUtils.warn(TAG, message);
@@ -497,98 +495,143 @@ public class QueryFragment extends Fragment {
      */
     static class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
 
-        private String mAPIKey;
-        private CloudyBook mCloudyBook;
-        private ArrayList<CloudyBook> mCloudyBooks;
         private WeakReference<QueryFragment> mFragmentWeakReference;
-        private PackageManager mPackageManager;
+        private CloudyBook mQueryForBook;
 
-        RetrieveBookDataTask(QueryFragment context, CloudyBook cloudyBook, PackageManager packageManager, String apiKey) {
+        RetrieveBookDataTask(QueryFragment context, CloudyBook queryForBook) {
 
-            mAPIKey = apiKey;
-            mCloudyBook = cloudyBook;
-            mCloudyBooks = new ArrayList<>();
             mFragmentWeakReference = new WeakReference<>(context);
-            mPackageManager = packageManager;
+            mQueryForBook = queryForBook;
         }
 
         protected ArrayList<CloudyBook> doInBackground(Void... params) {
 
+            ArrayList<CloudyBook> cloudyBooks = new ArrayList<>();
+            String searchParam = null;
+            if (!mQueryForBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) {
+                searchParam = String.format(Locale.US, "isbn:%s", mQueryForBook.ISBN_8);
+            } else if (!mQueryForBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+                searchParam = String.format(Locale.US, "isbn:%s", mQueryForBook.ISBN_13);
+            } else if (!mQueryForBook.Title.isEmpty()) {
+                searchParam = "intitle:" + "\"" + mQueryForBook.Title + "\"";
+            } else if (!mQueryForBook.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
+                searchParam = String.format(Locale.US, "lccn:%s", mQueryForBook.LCCN);
+            }
+
+            if (searchParam == null) {
+                LogUtils.error(TAG, "Missing search parameter; cannot continue.");
+                return cloudyBooks;
+            }
+
+            String urlString = String.format(
+                Locale.US,
+                "https://www.googleapis.com/books/v1/volumes?q=%s&printType=books",
+                searchParam);
+
+            // add fields to urlString
+            urlString = String.format(
+                Locale.US,
+                "%s&fields=items(id,volumeInfo/title,volumeInfo/authors,volumeInfo/publisher,volumeInfo/publishedDate,volumeInfo/industryIdentifiers,volumeInfo/categories)",
+                urlString);
+
+            LogUtils.debug(TAG, "Query: %s", urlString);
+            HttpURLConnection connection = null;
+            StringBuilder builder = new StringBuilder();
             try {
-                final Books books = new Books.Builder(
-                    new com.google.api.client.http.javanet.NetHttpTransport(),
-                    JacksonFactory.getDefaultInstance(),
-                    request -> {
+                URL url = new URL(urlString);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setReadTimeout(20000); // 5 seconds
+                connection.setConnectTimeout(20000); // 5 seconds
 
-                        String SHA1 = getSHA1();
-                        request.getHeaders().set("X-Android-Package", BuildConfig.APPLICATION_ID);
-                        request.getHeaders().set("X-Android-Cert", SHA1);
-                    })
-                    .setApplicationName(BuildConfig.APPLICATION_ID)
-                    .setGoogleClientRequestInitializer(new BooksRequestInitializer(mAPIKey))
-                    .build();
-
-                String searchParam = null;
-                if (!mCloudyBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) {
-                    searchParam = String.format(Locale.US, "isbn:%s", mCloudyBook.ISBN_8);
-                } else if (!mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
-                    searchParam = String.format(Locale.US, "isbn:%s", mCloudyBook.ISBN_13);
-                } else if (!mCloudyBook.Title.isEmpty()){
-                    searchParam = "intitle:" + "\"" + mCloudyBook.Title + "\"";
-                } else if (!mCloudyBook.LCCN.equals(BaseActivity.DEFAULT_LCCN)) {
-                    searchParam = String.format(Locale.US, "lccn:%s", mCloudyBook.LCCN);
+                int responseCode = connection.getResponseCode();
+                if (responseCode != 200) {
+                    LogUtils.error(TAG, "GoogleBooksAPI request failed. Response Code: " + responseCode);
+                    connection.disconnect();
+                    return cloudyBooks;
                 }
 
-                if (searchParam != null && !searchParam.isEmpty()) {
-                    LogUtils.debug(TAG, "Query: %s", searchParam);
-                    Books.Volumes.List volumesList = books.volumes().list(searchParam);
-                    Volumes volumes = volumesList.execute();
-                    if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
-                        LogUtils.debug(TAG, "No matches found.");
-                    } else {
-                        // TODO: what if a search returns multiple copies, but some data is missing (e.g. Authors blank)?
-                        for (Volume volume : volumes.getItems()) {
-                            Volume.VolumeInfo volumeInfo = volume.getVolumeInfo();
-                            if (!volumeInfo.getPrintType().equals("BOOK")) {
-                                continue;
-                            }
+                BufferedReader responseReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = responseReader.readLine();
+                while (line != null) {
+                    builder.append(line);
+                    line = responseReader.readLine();
+                }
+            } catch (IOException e) {
+                if (connection != null) {
+                    connection.disconnect();
+                }
 
-                            CloudyBook cloudyBook = new CloudyBook();
-                            cloudyBook.Title = volumeInfo.getTitle();
-                            java.util.List<String> authors = volumeInfo.getAuthors();
-                            if (authors != null && !authors.isEmpty()) {
-                                cloudyBook.Authors.addAll(authors);
-                            }
+                return cloudyBooks;
+            }
 
-                            java.util.List<String> categories = volumeInfo.getCategories();
-                            if (categories != null && !categories.isEmpty()) {
-                                cloudyBook.Categories.addAll(categories);
-                            }
+            JSONArray items;
+            try {
+                JSONObject responseJson = new JSONObject(builder.toString());
+                items = (JSONArray) responseJson.get("items");
+            } catch (JSONException e) {
+                connection.disconnect();
+                return cloudyBooks;
+            }
 
-                            cloudyBook.PublishedDate = volumeInfo.getPublishedDate();
-                            cloudyBook.Publisher = volumeInfo.getPublisher();
-                            for (Volume.VolumeInfo.IndustryIdentifiers isbn : volumeInfo.getIndustryIdentifiers()) {
-                                if (isbn.getType().equalsIgnoreCase("ISBN_10")) {
-                                    cloudyBook.ISBN_8 = isbn.getIdentifier();
-                                } else if (isbn.getType().equalsIgnoreCase("ISBN_13")) {
-                                    cloudyBook.ISBN_13 = isbn.getIdentifier();
+            if (items != null) {
+                for (int index = 0; index < items.length(); index++) {
+                    try { // errors parsing items should not prevent further parsing
+                        JSONObject item = (JSONObject) items.get(index);
+                        JSONObject volumeInfo = item.getJSONObject("volumeInfo");
+
+                        CloudyBook cloudyBook = new CloudyBook();
+                        if (volumeInfo.has("authors")) {
+                            JSONArray infoArray = volumeInfo.getJSONArray("authors");
+                            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+                                cloudyBook.Authors.add((String) infoArray.get(subIndex));
+                            }
+                        }
+
+                        if (volumeInfo.has("categories")) {
+                            JSONArray infoArray = volumeInfo.getJSONArray("categories");
+                            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+                                cloudyBook.Categories.add((String) infoArray.get(subIndex));
+                            }
+                        }
+
+                        if (volumeInfo.has("industryIdentifiers")) {
+                            JSONArray infoArray = volumeInfo.getJSONArray("industryIdentifiers");
+                            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+                                JSONObject identifiers = infoArray.getJSONObject(subIndex);
+                                if (identifiers.getString("type").equals("ISBN_13")) {
+                                    cloudyBook.ISBN_13 = identifiers.getString("identifier");
+                                } else if (identifiers.getString("type").equals("ISBN_10")) {
+                                    cloudyBook.ISBN_8 = identifiers.getString("identifier");
                                 }
                             }
-
-                            cloudyBook.VolumeId = volume.getId();
-                            mCloudyBooks.add(cloudyBook);
                         }
-                    }
-                } else {
-                    LogUtils.error(TAG, "Unexpected search parameters.");
-                }
 
-                return mCloudyBooks;
-            } catch (Exception e) {
-                LogUtils.warn(TAG, "Exception when querying Book API service.");
-                Crashlytics.logException(e);
-                return new ArrayList<>();
+                        if (volumeInfo.has("publishedDate")) {
+                            cloudyBook.PublishedDate = volumeInfo.getString("publishedDate");
+                        }
+
+                        if (volumeInfo.has("publisher")) {
+                            cloudyBook.Publisher = volumeInfo.getString("publisher");
+                        }
+
+                        // if title or id are missing, allow exception to be thrown to skip
+                        cloudyBook.Title = volumeInfo.getString("title");
+                        cloudyBook.VolumeId = item.getString("id");
+
+                        // TODO: should we validate before adding?
+                        cloudyBooks.add(cloudyBook);
+                    } catch (JSONException e) {
+                        LogUtils.debug(TAG, "Failed to parse JSON object.");
+                        Crashlytics.logException(e);
+                    }
+                }
+            } else {
+                LogUtils.warn(TAG, "No expected items where found in response.");
             }
+
+            connection.disconnect();
+            return cloudyBooks;
         }
 
         protected void onPostExecute(ArrayList<CloudyBook> cloudyBooks) {
@@ -601,27 +644,6 @@ public class QueryFragment extends Fragment {
             }
 
             fragment.parseFeed(cloudyBooks);
-        }
-
-        private String getSHA1() {
-
-            try {
-                Signature[] signatures = mPackageManager.getPackageInfo(
-                    BuildConfig.APPLICATION_ID,
-                    PackageManager.GET_SIGNATURES).signatures;
-                if (signatures.length > 0) {
-                    MessageDigest md;
-                    md = MessageDigest.getInstance("SHA-1");
-                    md.update(signatures[0].toByteArray());
-                    return BaseEncoding.base16().encode(md.digest());
-                }
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-
-            return null;
         }
     }
 }

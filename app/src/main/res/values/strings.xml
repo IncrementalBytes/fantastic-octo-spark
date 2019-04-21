@@ -25,9 +25,9 @@
     <string name="search">Search</string>
     <string name="search_hint">Search term</string>
     <string name="no_results">No results found.</string>
-    <string name="select_a_book">Select a book to add</string>
     <string name="fragment_query">Search for Book</string>
     <string name="fragment_cloudy_book">Your Book</string>
+    <string name="fragment_cloudy_book_add">Add Book to Library</string>
     <string name="fragment_cloudy_book_list">In Your Library</string>
     <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
     <string name="err_no_camera_detected">Camera was not detected.</string>
@@ -35,8 +35,7 @@
     <string name="remove_book_message">Remove \'%s\' from your library?</string>
     <string name="err_remove_cloudy_book">Unable to remove book from library, please try again later.</string>
     <string name="err_update_cloudy_book">Failed to update book, please try again later.</string>
-    <string name="search_by_image">Search by image</string>
-    <string name="search_manual">Search by text</string>
+    <string name="search_manual">Manual Search</string>
     <string name="type_of_search">Search by:</string>
     <string name="search_type_title">Title</string>
     <string name="search_type_isbn">ISBN</string>
@@ -55,7 +54,7 @@
     <string name="categories_format">Categories: %s</string>
     <string name="user_has_read_this_book">User has read this book.</string>
     <string name="user_owns_this_book">User owns this book.</string>
-    <string name="select_book">Select a Book</string>
+    <string name="select_book">Select a Book to Add</string>
     <string name="select_text_search">Select Text to Search With</string>
     <string name="librarian">Librarian</string>
     <string name="scan_isbn">Scan ISBN</string>
