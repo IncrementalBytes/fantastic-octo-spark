@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Ryan Ward
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package net.frostedbytes.android.cloudycurator.fragments;
 
 import android.content.Context;
@@ -20,8 +36,8 @@ import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
 import net.frostedbytes.android.cloudycurator.models.User;
-import net.frostedbytes.android.cloudycurator.utils.LogUtils;
-import net.frostedbytes.android.cloudycurator.utils.PathUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.utils.PathUtil;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -54,7 +70,7 @@ public class CloudyBookFragment extends Fragment {
 
     public static CloudyBookFragment newInstance(String userId, CloudyBook cloudyBook) {
 
-        LogUtils.debug(TAG, "++newInstance()");
+        LogUtil.debug(TAG, "++newInstance()");
         CloudyBookFragment fragment = new CloudyBookFragment();
         Bundle args = new Bundle();
         args.putString(BaseActivity.ARG_FIREBASE_USER_ID, userId);
@@ -70,7 +86,7 @@ public class CloudyBookFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtils.debug(TAG, "++onAttach(Context)");
+        LogUtil.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnCloudyBookListener) context;
         } catch (ClassCastException e) {
@@ -83,14 +99,14 @@ public class CloudyBookFragment extends Fragment {
             mCloudyBook = arguments.getParcelable(BaseActivity.ARG_CLOUDY_BOOK);
             mUserId = arguments.getString(BaseActivity.ARG_FIREBASE_USER_ID);
         } else {
-            LogUtils.error(TAG, "Arguments were null.");
+            LogUtil.error(TAG, "Arguments were null.");
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_cloudy_book, container, false);
         TextView titleText = view.findViewById(R.id.cloudy_book_text_title_value);
         titleText.setText(mCloudyBook.Title);
@@ -158,14 +174,14 @@ public class CloudyBookFragment extends Fragment {
                 updatedBook.Title = titleText.getText().toString();
                 updatedBook.VolumeId = mCloudyBook.VolumeId;
 
-                String cloudyBookQueryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.VolumeId);
+                String cloudyBookQueryPath = PathUtil.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.VolumeId);
                 FirebaseFirestore.getInstance().document(cloudyBookQueryPath).set(updatedBook, SetOptions.merge())
                     .addOnCompleteListener(task -> {
 
                         if (task.isSuccessful()) {
                             mCallback.onCloudyBookAddedToLibrary(updatedBook);
                         } else {
-                            LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", cloudyBookQueryPath);
+                            LogUtil.error(TAG, "Failed to add cloudy book to user's library: %s", cloudyBookQueryPath);
                             if (task.getException() != null) {
                                 Crashlytics.logException(task.getException());
                             }
@@ -184,14 +200,14 @@ public class CloudyBookFragment extends Fragment {
                 updatedBook.HasRead = read.isChecked();
                 updatedBook.IsOwned = owned.isChecked();
                 updatedBook.UpdatedDate = Calendar.getInstance().getTimeInMillis();
-                String cloudyBookQueryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.VolumeId);
+                String cloudyBookQueryPath = PathUtil.combine(User.ROOT, mUserId, CloudyBook.ROOT, updatedBook.VolumeId);
                 FirebaseFirestore.getInstance().document(cloudyBookQueryPath).set(updatedBook, SetOptions.merge())
                     .addOnCompleteListener(task -> {
 
                         if (task.isSuccessful()) {
                             mCallback.onCloudyBookUpdated(updatedBook);
                         } else {
-                            LogUtils.error(TAG, "Failed to add cloudy book to user's library: %s", cloudyBookQueryPath);
+                            LogUtil.error(TAG, "Failed to add cloudy book to user's library: %s", cloudyBookQueryPath);
                             if (task.getException() != null) {
                                 Crashlytics.logException(task.getException());
                             }
@@ -214,13 +230,13 @@ public class CloudyBookFragment extends Fragment {
                         .setMessage(message)
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
 
-                            String queryPath = PathUtils.combine(User.ROOT, mUserId, CloudyBook.ROOT, mCloudyBook.VolumeId);
+                            String queryPath = PathUtil.combine(User.ROOT, mUserId, CloudyBook.ROOT, mCloudyBook.VolumeId);
                             FirebaseFirestore.getInstance().document(queryPath).delete().addOnCompleteListener(task -> {
 
                                 if (task.isSuccessful()) {
                                     mCallback.onCloudyBookRemoved(mCloudyBook);
                                 } else {
-                                    LogUtils.error(TAG, "Failed to remove book from user's library: %s", queryPath);
+                                    LogUtil.error(TAG, "Failed to remove book from user's library: %s", queryPath);
                                     if (task.getException() != null) {
                                         Crashlytics.logException(task.getException());
                                     }
@@ -234,7 +250,7 @@ public class CloudyBookFragment extends Fragment {
                     removeBookDialog.show();
                 } else {
                     String message = "Unable to get activity; cannot remove book.";
-                    LogUtils.debug(TAG, message);
+                    LogUtil.debug(TAG, message);
                     mCallback.onCloudyBookActionComplete(message);
                 }
             });

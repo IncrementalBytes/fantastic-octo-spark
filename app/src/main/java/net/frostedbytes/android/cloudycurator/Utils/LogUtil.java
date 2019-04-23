@@ -26,7 +26,7 @@ import net.frostedbytes.android.cloudycurator.BuildConfig;
 /**
  * Wrapper class for logging to help remove from non-debug builds.
  */
-public class LogUtils {
+public class LogUtil {
 
     public static void debug(final String tag, String message) {
 

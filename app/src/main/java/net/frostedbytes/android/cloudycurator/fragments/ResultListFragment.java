@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Ryan Ward
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package net.frostedbytes.android.cloudycurator.fragments;
 
 import android.content.Context;
@@ -15,7 +31,7 @@ import android.widget.TextView;
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.utils.LogUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +60,7 @@ public class ResultListFragment extends Fragment {
 
     public static ResultListFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
-        LogUtils.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
+        LogUtil.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
         ResultListFragment fragment = new ResultListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST, cloudyBookList);
@@ -59,7 +75,7 @@ public class ResultListFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtils.debug(TAG, "++onAttach(Context)");
+        LogUtil.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnResultListListener) context;
         } catch (ClassCastException e) {
@@ -72,7 +88,7 @@ public class ResultListFragment extends Fragment {
             mCloudyBookList = arguments.getParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST);
         } else {
             String message = "Arguments were null.";
-            LogUtils.error(TAG, message);
+            LogUtil.error(TAG, message);
             mCallback.onResultListActionComplete(message);
         }
     }
@@ -80,7 +96,7 @@ public class ResultListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_result_list, container, false);
 
         mRecyclerView = view.findViewById(R.id.result_list_view);
@@ -96,7 +112,7 @@ public class ResultListFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        LogUtils.debug(TAG, "++onDestroy()");
+        LogUtil.debug(TAG, "++onDestroy()");
         mCloudyBookList = null;
     }
 
@@ -108,7 +124,7 @@ public class ResultListFragment extends Fragment {
         if (mCloudyBookList == null || mCloudyBookList.size() == 0) {
             mCallback.onResultListPopulated(0);
         } else {
-            LogUtils.debug(TAG, "++updateUI()");
+            LogUtil.debug(TAG, "++updateUI()");
             ResultAdapter resultAdapter = new ResultAdapter(mCloudyBookList);
             mRecyclerView.setAdapter(resultAdapter);
             mCallback.onResultListPopulated(resultAdapter.getItemCount());
@@ -207,7 +223,7 @@ public class ResultListFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++ResultHolder::onClick(View)");
+            LogUtil.debug(TAG, "++ResultHolder::onClick(View)");
             mCallback.onResultListItemSelected(mCloudyBook);
         }
     }

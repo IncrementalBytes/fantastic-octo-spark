@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Ryan Ward
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package net.frostedbytes.android.cloudycurator.fragments;
 
 import android.content.Context;
@@ -13,7 +29,7 @@ import android.widget.TextView;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.utils.LogUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +56,7 @@ public class ScanResultsFragment extends Fragment {
 
     public static ScanResultsFragment newInstance(ArrayList<String> scanResults) {
 
-        LogUtils.debug(TAG, "++newInstance(ArrayList<>)");
+        LogUtil.debug(TAG, "++newInstance(ArrayList<>)");
         ScanResultsFragment fragment = new ScanResultsFragment();
         Bundle args = new Bundle();
         args.putStringArrayList(BaseActivity.ARG_SCAN_RESULTS, scanResults);
@@ -55,7 +71,7 @@ public class ScanResultsFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtils.debug(TAG, "++onAttach(Context)");
+        LogUtil.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnScanResultsListener) context;
         } catch (ClassCastException e) {
@@ -67,14 +83,14 @@ public class ScanResultsFragment extends Fragment {
         if (arguments != null) {
             mScanResults = arguments.getStringArrayList(BaseActivity.ARG_SCAN_RESULTS);
         } else {
-            LogUtils.error(TAG, "Arguments were null.");
+            LogUtil.error(TAG, "Arguments were null.");
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_scan_results, container, false);
 
         mRecyclerView = view.findViewById(R.id.scan_list_view);
@@ -91,7 +107,7 @@ public class ScanResultsFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        LogUtils.debug(TAG, "++onDestroy()");
+        LogUtil.debug(TAG, "++onDestroy()");
         mScanResults = null;
     }
 
@@ -99,7 +115,7 @@ public class ScanResultsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        LogUtils.debug(TAG, "++onResume()");
+        LogUtil.debug(TAG, "++onResume()");
         //updateUI();
     }
 
@@ -109,7 +125,7 @@ public class ScanResultsFragment extends Fragment {
     private void updateUI() {
 
         if (mScanResults != null && mScanResults.size() > 0) {
-            LogUtils.debug(TAG, "++updateUI()");
+            LogUtil.debug(TAG, "++updateUI()");
             ScanResultsAdapter scanResultsAdapter = new ScanResultsAdapter(mScanResults);
             mRecyclerView.setAdapter(scanResultsAdapter);
             mCallback.onScanResultsPopulated(scanResultsAdapter.getItemCount());
@@ -176,7 +192,7 @@ public class ScanResultsFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++ScanResultsHolder::onClick(View)");
+            LogUtil.debug(TAG, "++ScanResultsHolder::onClick(View)");
             mCallback.onScanResultsItemSelected(mScanResult);
         }
     }

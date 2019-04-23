@@ -35,7 +35,7 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import net.frostedbytes.android.cloudycurator.utils.LogUtils;
+import net.frostedbytes.android.cloudycurator.utils.LogUtil;
 
 import java.util.Locale;
 
@@ -59,7 +59,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LogUtils.debug(TAG, "++onCreate(Bundle)");
+        LogUtil.debug(TAG, "++onCreate(Bundle)");
         setContentView(R.layout.activity_sign_in);
 
         SignInButton signInWithGoogleButton = findViewById(R.id.sign_in_button_google);
@@ -79,7 +79,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
             .enableAutoManage(this, connectionResult -> {
-                LogUtils.debug(TAG, "++onConnectionFailed(ConnectionResult)");
+                LogUtil.debug(TAG, "++onConnectionFailed(ConnectionResult)");
                 String message = String.format(Locale.US, "Connection result was null: %s", connectionResult.getErrorMessage());
                 showErrorInSnackBar(message);
             })
@@ -91,7 +91,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     public void onStart() {
         super.onStart();
 
-        LogUtils.debug(TAG, "++onStart()");
+        LogUtil.debug(TAG, "++onStart()");
         if (mAuth.getCurrentUser() != null && mAccount != null) {
             authenticateSuccess();
         }
@@ -103,7 +103,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     @Override
     public void onClick(View view) {
 
-        LogUtils.debug(TAG, "++onClick()");
+        LogUtil.debug(TAG, "++onClick()");
         if (view.getId() == R.id.sign_in_button_google) {
             signInWithGoogle();
         }
@@ -113,7 +113,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
+        LogUtil.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             if (result.isSuccess()) {
@@ -145,7 +145,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
     private void authenticateSuccess() {
 
         if (mAuth.getCurrentUser() != null && mAccount != null) {
-            LogUtils.debug(TAG, "++onAuthenticateSuccess(%s)", mAuth.getCurrentUser().getDisplayName());
+            LogUtil.debug(TAG, "++onAuthenticateSuccess(%s)", mAuth.getCurrentUser().getDisplayName());
             Crashlytics.setUserIdentifier(mAuth.getCurrentUser().getUid());
             Intent intent = new Intent(SignInActivity.this, MainActivity.class);
             intent.putExtra(BaseActivity.ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
@@ -161,7 +161,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
 
     private void firebaseAuthenticateWithGoogle(GoogleSignInAccount acct) {
 
-        LogUtils.debug(TAG, "++firebaseAuthWithGoogle(%s)", acct.getId());
+        LogUtil.debug(TAG, "++firebaseAuthWithGoogle(%s)", acct.getId());
         mProgressBar.setVisibility(View.VISIBLE);
         mProgressBar.setIndeterminate(true);
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
@@ -181,7 +181,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
 
     private void showErrorInSnackBar(String message) {
 
-        LogUtils.error(TAG, message);
+        LogUtil.error(TAG, message);
         mSnackbar = Snackbar.make(
             findViewById(R.id.activity_sign_in),
             message,
@@ -192,7 +192,7 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
 
     private void signInWithGoogle() {
 
-        LogUtils.debug(TAG, "++signInWithGoogle()");
+        LogUtil.debug(TAG, "++signInWithGoogle()");
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
