@@ -25,7 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 
 import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
 
@@ -35,7 +35,7 @@ public class LibrarianFragment extends Fragment {
 
     public static LibrarianFragment newInstance() {
 
-        LogUtil.debug(TAG, "++newInstance()");
+        LogUtils.debug(TAG, "++newInstance()");
         return new LibrarianFragment();
     }
 
@@ -46,13 +46,13 @@ public class LibrarianFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         return inflater.inflate(R.layout.fragment_librarian, container, false);
     }
 }

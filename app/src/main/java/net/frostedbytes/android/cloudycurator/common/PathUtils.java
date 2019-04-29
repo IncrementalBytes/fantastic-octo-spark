@@ -14,25 +14,24 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.utils;
+package net.frostedbytes.android.cloudycurator.common;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
-public class DateUtil {
+public class PathUtils {
 
-    /**
-     * Returns a user-friendly readable string of the date.
-     *
-     * @param date - Date; in ticks
-     * @return - User-friendly readable string of the date; formatted YYYY-MM-dd
-     */
-    public static String formatDateForDisplay(long date) {
+    public static String combine(Object... paths) {
 
-        Date temp = new Date(date);
-        DateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd", Locale.US);
-        return dateFormat.format(temp);
+        String finalPath = "";
+        for (Object path : paths) {
+            String format = "%s/%s";
+            if (path.getClass() == Integer.class) {
+                format = "%s/%d";
+            }
+
+            finalPath = String.format(Locale.US, format, finalPath, path);
+        }
+
+        return finalPath;
     }
 }

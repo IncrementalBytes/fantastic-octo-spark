@@ -33,7 +33,7 @@ import android.widget.TextView;
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ public class CloudyBookListFragment extends Fragment {
 
     public static CloudyBookListFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
-        LogUtil.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
+        LogUtils.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
         CloudyBookListFragment fragment = new CloudyBookListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST, cloudyBookList);
@@ -79,7 +79,7 @@ public class CloudyBookListFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnCloudyBookListListener) context;
         } catch (ClassCastException e) {
@@ -91,14 +91,14 @@ public class CloudyBookListFragment extends Fragment {
         if (arguments != null) {
             mCloudyBookList = arguments.getParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST);
         } else {
-            LogUtil.error(TAG, "Arguments were null.");
+            LogUtils.error(TAG, "Arguments were null.");
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_cloudy_book_list, container, false);
 
         FloatingActionButton mAddButton = view.findViewById(R.id.cloudy_book_fab_add);
@@ -120,7 +120,7 @@ public class CloudyBookListFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        LogUtil.debug(TAG, "++onDestroy()");
+        LogUtils.debug(TAG, "++onDestroy()");
         mCloudyBookList = null;
     }
 
@@ -132,7 +132,7 @@ public class CloudyBookListFragment extends Fragment {
         if (mCloudyBookList == null || mCloudyBookList.size() == 0) {
             mCallback.onCloudyBookListPopulated(0);
         } else {
-            LogUtil.debug(TAG, "++updateUI()");
+            LogUtils.debug(TAG, "++updateUI()");
             CloudyBookAdapter cloudyBookAdapter = new CloudyBookAdapter(mCloudyBookList);
             mRecyclerView.setAdapter(cloudyBookAdapter);
             mCallback.onCloudyBookListPopulated(cloudyBookAdapter.getItemCount());
@@ -229,7 +229,7 @@ public class CloudyBookListFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtil.debug(TAG, "++CloudyBookHolder::onClick(View)");
+            LogUtils.debug(TAG, "++CloudyBookHolder::onClick(View)");
             mCallback.onCloudyBookListItemSelected(mCloudyBook);
         }
     }

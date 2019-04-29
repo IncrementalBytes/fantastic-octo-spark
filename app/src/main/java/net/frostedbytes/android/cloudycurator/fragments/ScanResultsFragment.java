@@ -29,7 +29,7 @@ import android.widget.TextView;
 
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +56,7 @@ public class ScanResultsFragment extends Fragment {
 
     public static ScanResultsFragment newInstance(ArrayList<String> scanResults) {
 
-        LogUtil.debug(TAG, "++newInstance(ArrayList<>)");
+        LogUtils.debug(TAG, "++newInstance(ArrayList<>)");
         ScanResultsFragment fragment = new ScanResultsFragment();
         Bundle args = new Bundle();
         args.putStringArrayList(BaseActivity.ARG_SCAN_RESULTS, scanResults);
@@ -71,7 +71,7 @@ public class ScanResultsFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnScanResultsListener) context;
         } catch (ClassCastException e) {
@@ -83,14 +83,14 @@ public class ScanResultsFragment extends Fragment {
         if (arguments != null) {
             mScanResults = arguments.getStringArrayList(BaseActivity.ARG_SCAN_RESULTS);
         } else {
-            LogUtil.error(TAG, "Arguments were null.");
+            LogUtils.error(TAG, "Arguments were null.");
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_scan_results, container, false);
 
         mRecyclerView = view.findViewById(R.id.scan_list_view);
@@ -107,7 +107,7 @@ public class ScanResultsFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        LogUtil.debug(TAG, "++onDestroy()");
+        LogUtils.debug(TAG, "++onDestroy()");
         mScanResults = null;
     }
 
@@ -115,7 +115,7 @@ public class ScanResultsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        LogUtil.debug(TAG, "++onResume()");
+        LogUtils.debug(TAG, "++onResume()");
         //updateUI();
     }
 
@@ -125,7 +125,7 @@ public class ScanResultsFragment extends Fragment {
     private void updateUI() {
 
         if (mScanResults != null && mScanResults.size() > 0) {
-            LogUtil.debug(TAG, "++updateUI()");
+            LogUtils.debug(TAG, "++updateUI()");
             ScanResultsAdapter scanResultsAdapter = new ScanResultsAdapter(mScanResults);
             mRecyclerView.setAdapter(scanResultsAdapter);
             mCallback.onScanResultsPopulated(scanResultsAdapter.getItemCount());
@@ -192,7 +192,7 @@ public class ScanResultsFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtil.debug(TAG, "++ScanResultsHolder::onClick(View)");
+            LogUtils.debug(TAG, "++ScanResultsHolder::onClick(View)");
             mCallback.onScanResultsItemSelected(mScanResult);
         }
     }

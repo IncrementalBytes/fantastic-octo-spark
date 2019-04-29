@@ -14,15 +14,16 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator;
+package net.frostedbytes.android.cloudycurator.common;
 
 import android.content.Context;
 import android.os.AsyncTask;
 
 import com.crashlytics.android.Crashlytics;
 
+import net.frostedbytes.android.cloudycurator.BaseActivity;
+import net.frostedbytes.android.cloudycurator.MainActivity;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
 
 import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
@@ -38,7 +39,7 @@ public class WriteToLocalLibraryTask extends AsyncTask<Void, Void, ArrayList<Clo
     private WeakReference<MainActivity> mFragmentWeakReference;
     private ArrayList<CloudyBook> mCloudyBooks;
 
-    WriteToLocalLibraryTask(MainActivity context, ArrayList<CloudyBook> cloudyBookList) {
+    public WriteToLocalLibraryTask(MainActivity context, ArrayList<CloudyBook> cloudyBookList) {
 
         mFragmentWeakReference = new WeakReference<>(context);
         mCloudyBooks = cloudyBookList;
@@ -73,7 +74,7 @@ public class WriteToLocalLibraryTask extends AsyncTask<Void, Void, ArrayList<Clo
                 booksWritten.add(cloudyBook);
             }
         } catch (Exception e) {
-            LogUtil.warn(TAG, "Exception when writing local library.");
+            LogUtils.warn(TAG, "Exception when writing local library.");
             Crashlytics.logException(e);
         }
 
@@ -82,10 +83,10 @@ public class WriteToLocalLibraryTask extends AsyncTask<Void, Void, ArrayList<Clo
 
     protected void onPostExecute(ArrayList<CloudyBook> cloudyBookList) {
 
-        LogUtil.debug(TAG, "++onPostExecute(%d)", cloudyBookList.size());
+        LogUtils.debug(TAG, "++onPostExecute(%d)", cloudyBookList.size());
         MainActivity activity = mFragmentWeakReference.get();
         if (activity == null) {
-            LogUtil.error(TAG, "Activity is null.");
+            LogUtils.error(TAG, "Activity is null.");
             return;
         }
 

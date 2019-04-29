@@ -5,14 +5,14 @@
     android:layout_height="match_parent">
 
     <android.support.v7.widget.CardView
-        android:id="@+id/query_card_isbn"
+        android:id="@+id/query_card_photo"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="@dimen/default_view_margin"
         android:clickable="true"
         android:focusable="true"
         card_view:cardCornerRadius="4dp"
-        card_view:layout_constraintEnd_toStartOf="@id/query_card_text"
+        card_view:layout_constraintEnd_toEndOf="parent"
         card_view:layout_constraintStart_toStartOf="parent"
         card_view:layout_constraintTop_toTopOf="parent"
         card_view:layout_constraintBottom_toTopOf="@id/query_card_manual">
@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/default_view_margin"
-            android:text="@string/scan_isbn"
+            android:text="@string/scan_photo"
             android:textAlignment="center"
             android:textSize="18sp" />
 
@@ -30,53 +30,23 @@
             android:layout_height="@dimen/image_height_thumbnail"
             android:layout_gravity="center"
             android:layout_margin="@dimen/default_view_margin"
-            android:contentDescription="@string/scan_isbn"
+            android:contentDescription="@string/scan_photo"
             card_view:srcCompat="@drawable/ic_camera_dark" />
-
-    </android.support.v7.widget.CardView>
-
-    <android.support.v7.widget.CardView
-        android:id="@+id/query_card_text"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="@dimen/default_view_margin"
-        android:clickable="true"
-        android:focusable="true"
-        card_view:cardCornerRadius="4dp"
-        card_view:layout_constraintEnd_toEndOf="parent"
-        card_view:layout_constraintStart_toEndOf="@id/query_card_isbn"
-        card_view:layout_constraintTop_toTopOf="parent"
-        card_view:layout_constraintBottom_toTopOf="@id/query_card_manual">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/default_view_margin"
-            android:text="@string/scan_text"
-            android:textAlignment="center"
-            android:textSize="18sp" />
-
-        <ImageView
-            android:layout_width="@dimen/image_width_thumbnail"
-            android:layout_height="@dimen/image_height_thumbnail"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/default_view_margin"
-            android:contentDescription="@string/scan_text"
-            card_view:srcCompat="@drawable/ic_text_dark" />
 
     </android.support.v7.widget.CardView>
 
     <android.support.v7.widget.CardView
         android:id="@+id/query_card_manual"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:clickable="true"
         android:focusable="true"
         card_view:cardCornerRadius="4dp"
         android:layout_margin="@dimen/default_view_margin"
         card_view:layout_constraintEnd_toEndOf="parent"
         card_view:layout_constraintStart_toStartOf="parent"
-        card_view:layout_constraintBottom_toBottomOf="parent">
+        card_view:layout_constraintBottom_toBottomOf="parent"
+        card_view:layout_constraintTop_toBottomOf="@id/query_card_photo">
 
         <TextView
             android:layout_width="match_parent"

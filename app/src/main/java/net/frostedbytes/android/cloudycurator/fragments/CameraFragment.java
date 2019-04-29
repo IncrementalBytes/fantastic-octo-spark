@@ -44,6 +44,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -62,7 +63,7 @@ import android.view.ViewGroup;
 import com.crashlytics.android.Crashlytics;
 
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 import net.frostedbytes.android.cloudycurator.views.AutoFitTextureView;
 
 import java.io.File;
@@ -375,7 +376,7 @@ public class CameraFragment extends Fragment implements
 
     public static CameraFragment newInstance() {
 
-        LogUtil.debug(TAG, "++newInstance()");
+        LogUtils.debug(TAG, "++newInstance()");
         return new CameraFragment();
     }
 
@@ -386,7 +387,7 @@ public class CameraFragment extends Fragment implements
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnCameraListener) context;
         } catch (ClassCastException e) {
@@ -398,14 +399,14 @@ public class CameraFragment extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onViewCreated(View, Bundle)");
+        LogUtils.debug(TAG, "++onViewCreated(View, Bundle)");
         view.findViewById(R.id.camera_image_photo).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.camera_texture_main);
     }
@@ -414,16 +415,17 @@ public class CameraFragment extends Fragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        LogUtil.debug(TAG, "++onActivityCreated(Bundle)");
+        LogUtils.debug(TAG, "++onActivityCreated(Bundle)");
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         if (getActivity() != null) {
             try {
-                mFile = File.createTempFile(imageFileName, ".jpg", getActivity().getCacheDir());
+                File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                mFile = File.createTempFile(imageFileName, ".jpg", storageDir);
                 mCallback.onCameraInit(true);
             } catch (IOException e) {
-                LogUtil.error(TAG, "Failed to create a file for the camera.");
+                LogUtils.error(TAG, "Failed to create a file for the camera.");
                 mCallback.onCameraInit(false);
             }
         }
@@ -433,7 +435,7 @@ public class CameraFragment extends Fragment implements
     public void onResume() {
         super.onResume();
 
-        LogUtil.debug(TAG, "++onResume()");
+        LogUtils.debug(TAG, "++onResume()");
         startBackgroundThread();
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
@@ -445,7 +447,7 @@ public class CameraFragment extends Fragment implements
     @Override
     public void onPause() {
 
-        LogUtil.debug(TAG, "++onPause()");
+        LogUtils.debug(TAG, "++onPause()");
         closeCamera();
         stopBackgroundThread();
         super.onPause();
@@ -454,10 +456,10 @@ public class CameraFragment extends Fragment implements
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
-        LogUtil.debug(TAG, "++onRequestPermissionsResult(%d, String[], int[])", requestCode);
+        LogUtils.debug(TAG, "++onRequestPermissionsResult(%d, String[], int[])", requestCode);
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                ErrorDialog.newInstance(getString(R.string.request_permission))
+                ErrorDialog.newInstance(getString(R.string.permission_denied_explanation))
                     .show(getChildFragmentManager(), FRAGMENT_DIALOG);
             }
         } else {
@@ -471,7 +473,7 @@ public class CameraFragment extends Fragment implements
     @Override
     public void onClick(View view) {
 
-        LogUtil.debug(TAG, "++onClick(View)");
+        LogUtils.debug(TAG, "++onClick(View)");
         if (view.getId() == R.id.camera_image_photo) {
             takePicture();
         }
@@ -486,7 +488,7 @@ public class CameraFragment extends Fragment implements
      */
     private void captureStillPicture() {
 
-        LogUtil.debug(TAG, "++captureStillPicture()");
+        LogUtils.debug(TAG, "++captureStillPicture()");
         try {
             final Activity activity = getActivity();
             if (null == activity || null == mCameraDevice) {
@@ -512,7 +514,7 @@ public class CameraFragment extends Fragment implements
                                                @NonNull CaptureRequest request,
                                                @NonNull TotalCaptureResult result) {
 
-                    LogUtil.debug(TAG, "Saved: %s", mFile.toString());
+                    LogUtils.debug(TAG, "Saved: %s", mFile.toString());
                     unlockFocus();
                 }
             };
@@ -549,7 +551,7 @@ public class CameraFragment extends Fragment implements
         int maxHeight,
         Size aspectRatio) {
 
-        LogUtil.debug(
+        LogUtils.debug(
             TAG,
             "++chooseOptimalSize(Size[], %d, %d, %d, %d, Size)",
             textureViewWidth,
@@ -582,7 +584,7 @@ public class CameraFragment extends Fragment implements
         } else if (notBigEnough.size() > 0) {
             return Collections.max(notBigEnough, new CompareSizesByArea());
         } else {
-            LogUtil.error(TAG, "Couldn't find any suitable preview size");
+            LogUtils.error(TAG, "Couldn't find any suitable preview size");
             return choices[0];
         }
     }
@@ -592,7 +594,7 @@ public class CameraFragment extends Fragment implements
      */
     private void closeCamera() {
 
-        LogUtil.debug(TAG, "++closeCamera()");
+        LogUtils.debug(TAG, "++closeCamera()");
         try {
             mCameraOpenCloseLock.acquire();
             if (null != mCaptureSession) {
@@ -626,7 +628,7 @@ public class CameraFragment extends Fragment implements
      */
     private void configureTransform(int viewWidth, int viewHeight) {
 
-        LogUtil.debug(TAG, "++configureTransform(%d, %d)", viewWidth, viewHeight);
+        LogUtils.debug(TAG, "++configureTransform(%d, %d)", viewWidth, viewHeight);
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {
             return;
@@ -658,7 +660,7 @@ public class CameraFragment extends Fragment implements
      */
     private void createCameraPreviewSession() {
 
-        LogUtil.debug(TAG, "++createCameraPreviewSession()");
+        LogUtils.debug(TAG, "++createCameraPreviewSession()");
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
             assert texture != null;
@@ -682,7 +684,7 @@ public class CameraFragment extends Fragment implements
                     public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
 
                         if (null == mCameraDevice) {
-                            LogUtil.warn(TAG, "Camera is already closed.");
+                            LogUtils.warn(TAG, "Camera is already closed.");
                             return;
                         }
 
@@ -706,7 +708,7 @@ public class CameraFragment extends Fragment implements
                     @Override
                     public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
 
-                        LogUtil.error(TAG, "Failed to configure camera capture session.");
+                        LogUtils.error(TAG, "Failed to configure camera capture session.");
                     }
 
                 },
@@ -724,7 +726,7 @@ public class CameraFragment extends Fragment implements
      */
     private int getOrientation(int rotation) {
 
-        LogUtil.debug(TAG, "++getOrientation(%d)", rotation);
+        LogUtils.debug(TAG, "++getOrientation(%d)", rotation);
 
         // sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X), rotate JPEG properly
         // for devices with orientation of 90, simply return mapping from ORIENTATIONS
@@ -737,7 +739,7 @@ public class CameraFragment extends Fragment implements
      */
     private void lockFocus() {
 
-        LogUtil.debug(TAG, "++lockFocus()");
+        LogUtils.debug(TAG, "++lockFocus()");
         try {
             // tell the camera to lock focus
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
@@ -755,7 +757,7 @@ public class CameraFragment extends Fragment implements
      */
     private void openCamera(int width, int height) {
 
-        LogUtil.debug(TAG, "++openCamera(%d, %d)", width, height);
+        LogUtils.debug(TAG, "++openCamera(%d, %d)", width, height);
         if (getActivity() != null) {
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 requestCameraPermission();
@@ -763,7 +765,7 @@ public class CameraFragment extends Fragment implements
             }
         } else {
             String message = "Activity object is null.";
-            LogUtil.error(TAG, message);
+            LogUtils.error(TAG, message);
             mCallback.onCameraInit(false);
             return;
         }
@@ -800,7 +802,7 @@ public class CameraFragment extends Fragment implements
      */
     private void runPrecaptureSequence() {
 
-        LogUtil.debug(TAG, "++runPrecaptureSequence()");
+        LogUtils.debug(TAG, "++runPrecaptureSequence()");
         try {
             // this is how to tell the camera to trigger
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -815,7 +817,7 @@ public class CameraFragment extends Fragment implements
 
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
 
-        LogUtil.debug(TAG, "++setAutoFlash(CaptureRequest.Builder)");
+        LogUtils.debug(TAG, "++setAutoFlash(CaptureRequest.Builder)");
         if (mFlashSupported) {
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
@@ -830,7 +832,7 @@ public class CameraFragment extends Fragment implements
     @SuppressWarnings("SuspiciousNameCombination")
     private void setUpCameraOutputs(int width, int height) {
 
-        LogUtil.debug(TAG, "++setUpCameraOutput(%d, %d)", width, height);
+        LogUtils.debug(TAG, "++setUpCameraOutput(%d, %d)", width, height);
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -875,7 +877,7 @@ public class CameraFragment extends Fragment implements
 
                         break;
                     default:
-                        LogUtil.error(TAG, "Display rotation is invalid: %d", displayRotation);
+                        LogUtils.error(TAG, "Display rotation is invalid: %d", displayRotation);
                 }
 
                 Point displaySize = new Point();
@@ -927,7 +929,7 @@ public class CameraFragment extends Fragment implements
         } catch (CameraAccessException e) {
             Crashlytics.logException(e);
         } catch (NullPointerException e) {
-            LogUtil.warn(TAG, "Camera may not be supported by device.");
+            LogUtils.warn(TAG, "Camera may not be supported by device.");
             Crashlytics.logException(e);
         }
     }
@@ -937,7 +939,7 @@ public class CameraFragment extends Fragment implements
      */
     private void startBackgroundThread() {
 
-        LogUtil.debug(TAG, "++startBackgroundThread()");
+        LogUtils.debug(TAG, "++startBackgroundThread()");
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
@@ -948,7 +950,7 @@ public class CameraFragment extends Fragment implements
      */
     private void stopBackgroundThread() {
 
-        LogUtil.debug(TAG, "++stopBackgroundThread()");
+        LogUtils.debug(TAG, "++stopBackgroundThread()");
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
@@ -964,17 +966,16 @@ public class CameraFragment extends Fragment implements
      */
     private void takePicture() {
 
-        LogUtil.debug(TAG, "++takePicture()");
+        LogUtils.debug(TAG, "++takePicture()");
         lockFocus();
     }
 
     /**
-     * Unlock the focus. This method should be called when still image capture sequence is
-     * finished.
+     * Unlock the focus. This method should be called when still image capture sequence is finished.
      */
     private void unlockFocus() {
 
-        LogUtil.debug(TAG, "++unlockFocus()");
+        LogUtils.debug(TAG, "++unlockFocus()");
         try {
             // reset the auto-focus trigger
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
@@ -1086,7 +1087,7 @@ public class CameraFragment extends Fragment implements
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                .setMessage(R.string.request_permission)
+                .setMessage(R.string.permission_denied_explanation)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> parent.requestPermissions(new String[]{Manifest.permission.CAMERA},
                     REQUEST_CAMERA_PERMISSION))
                 .setNegativeButton(android.R.string.cancel,

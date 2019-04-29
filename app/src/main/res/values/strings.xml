@@ -57,16 +57,12 @@
     <string name="select_book">Select a Book to Add</string>
     <string name="select_text_search">Select Text</string>
     <string name="librarian">Librarian</string>
-    <string name="scan_isbn">Scan ISBN</string>
-    <string name="scan_text">Scan Text</string>
+    <string name="scan_photo">Scan Photo</string>
     <string name="check_back_later">Check back later!</string>
     <string name="librarian_fragment">Break Room</string>
-    <string name="debug_file">20190419_074519.jpg</string>
+    <string name="debug_file">20190419_131840.jpg</string>
     <string name="picture">Click!</string>
-    <string name="request_permission">Gimme Permission!</string>
-    <string name="camera_error">Camera Sad!</string>
-    <string name="intro_message">Yo Yo Yo</string>
-    <string name="snap_photo">Snap Photo!</string>
+    <string name="snap_photo">Take Picture!</string>
     <string name="err_camera">Unable to open camera.</string>
     <string name="dbg_image_view">Image taken.</string>
 </resources>

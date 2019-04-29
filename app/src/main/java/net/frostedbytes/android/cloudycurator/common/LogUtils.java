@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.utils;
+package net.frostedbytes.android.cloudycurator.common;
 
 import android.util.Log;
 
@@ -26,7 +26,7 @@ import net.frostedbytes.android.cloudycurator.BuildConfig;
 /**
  * Wrapper class for logging to help remove from non-debug builds.
  */
-public class LogUtil {
+public class LogUtils {
 
     public static void debug(final String tag, String message) {
 

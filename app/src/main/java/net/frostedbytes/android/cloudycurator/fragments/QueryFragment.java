@@ -26,9 +26,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 
 import java.util.Locale;
 
@@ -44,14 +43,14 @@ public class QueryFragment extends Fragment {
 
         void onQueryShowManualDialog();
 
-        void onQueryTakePicture(int scanType);
+        void onQueryTakePicture();
     }
 
     private OnQueryListener mCallback;
 
     public static QueryFragment newInstance() {
 
-        LogUtil.debug(TAG, "++newInstance()");
+        LogUtils.debug(TAG, "++newInstance()");
         return new QueryFragment();
     }
 
@@ -62,7 +61,7 @@ public class QueryFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnQueryListener) context;
         } catch (ClassCastException e) {
@@ -74,30 +73,25 @@ public class QueryFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         View view = inflater.inflate(R.layout.fragment_book_query, container, false);
 
-        CardView scanISBNCard = view.findViewById(R.id.query_card_isbn);
-        CardView scanTitleCard = view.findViewById(R.id.query_card_text);
+        CardView scanPhotoCard = view.findViewById(R.id.query_card_photo);
         if (getActivity() != null) {
             PackageManager packageManager = getActivity().getPackageManager();
             if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-                scanISBNCard.setOnClickListener(v -> mCallback.onQueryTakePicture(BaseActivity.SCAN_ISBN));
-
-                scanTitleCard.setOnClickListener(v -> mCallback.onQueryTakePicture(BaseActivity.SCAN_TEXT));
+                scanPhotoCard.setOnClickListener(v -> mCallback.onQueryTakePicture());
             } else {
                 String message = "Camera feature is not available; disabling camera.";
-                LogUtil.warn(TAG, message);
+                LogUtils.warn(TAG, message);
                 mCallback.onQueryActionComplete(message);
-                scanISBNCard.setEnabled(false);
-                scanTitleCard.setEnabled(false);
+                scanPhotoCard.setEnabled(false);
             }
         } else {
             String message = "Camera not detected.";
-            LogUtil.warn(TAG, message);
+            LogUtils.warn(TAG, message);
             mCallback.onQueryActionComplete(message);
-            scanISBNCard.setEnabled(false);
-            scanTitleCard.setEnabled(false);
+            scanPhotoCard.setEnabled(false);
         }
 
         CardView manualCard = view.findViewById(R.id.query_card_manual);

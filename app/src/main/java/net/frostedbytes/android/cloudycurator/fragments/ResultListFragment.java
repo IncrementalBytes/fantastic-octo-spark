@@ -31,7 +31,7 @@ import android.widget.TextView;
 import net.frostedbytes.android.cloudycurator.BaseActivity;
 import net.frostedbytes.android.cloudycurator.R;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
+import net.frostedbytes.android.cloudycurator.common.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +60,7 @@ public class ResultListFragment extends Fragment {
 
     public static ResultListFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
-        LogUtil.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
+        LogUtils.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
         ResultListFragment fragment = new ResultListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST, cloudyBookList);
@@ -75,7 +75,7 @@ public class ResultListFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        LogUtil.debug(TAG, "++onAttach(Context)");
+        LogUtils.debug(TAG, "++onAttach(Context)");
         try {
             mCallback = (OnResultListListener) context;
         } catch (ClassCastException e) {
@@ -88,7 +88,7 @@ public class ResultListFragment extends Fragment {
             mCloudyBookList = arguments.getParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST);
         } else {
             String message = "Arguments were null.";
-            LogUtil.error(TAG, message);
+            LogUtils.error(TAG, message);
             mCallback.onResultListActionComplete(message);
         }
     }
@@ -96,7 +96,7 @@ public class ResultListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtil.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
         final View view = inflater.inflate(R.layout.fragment_result_list, container, false);
 
         mRecyclerView = view.findViewById(R.id.result_list_view);
@@ -112,7 +112,7 @@ public class ResultListFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        LogUtil.debug(TAG, "++onDestroy()");
+        LogUtils.debug(TAG, "++onDestroy()");
         mCloudyBookList = null;
     }
 
@@ -124,7 +124,7 @@ public class ResultListFragment extends Fragment {
         if (mCloudyBookList == null || mCloudyBookList.size() == 0) {
             mCallback.onResultListPopulated(0);
         } else {
-            LogUtil.debug(TAG, "++updateUI()");
+            LogUtils.debug(TAG, "++updateUI()");
             ResultAdapter resultAdapter = new ResultAdapter(mCloudyBookList);
             mRecyclerView.setAdapter(resultAdapter);
             mCallback.onResultListPopulated(resultAdapter.getItemCount());
@@ -223,7 +223,7 @@ public class ResultListFragment extends Fragment {
         @Override
         public void onClick(View view) {
 
-            LogUtil.debug(TAG, "++ResultHolder::onClick(View)");
+            LogUtils.debug(TAG, "++ResultHolder::onClick(View)");
             mCallback.onResultListItemSelected(mCloudyBook);
         }
     }

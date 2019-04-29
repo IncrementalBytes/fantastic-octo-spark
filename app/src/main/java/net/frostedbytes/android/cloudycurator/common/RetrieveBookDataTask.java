@@ -14,14 +14,15 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator;
+package net.frostedbytes.android.cloudycurator.common;
 
 import android.os.AsyncTask;
 
 import com.crashlytics.android.Crashlytics;
 
+import net.frostedbytes.android.cloudycurator.BaseActivity;
+import net.frostedbytes.android.cloudycurator.MainActivity;
 import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.utils.LogUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,7 +49,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
     private WeakReference<MainActivity> mActivityWeakReference;
     private CloudyBook mQueryForBook;
 
-    RetrieveBookDataTask(MainActivity context, CloudyBook queryForBook) {
+    public RetrieveBookDataTask(MainActivity context, CloudyBook queryForBook) {
 
         mActivityWeakReference = new WeakReference<>(context);
         mQueryForBook = queryForBook;
@@ -69,7 +70,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
         }
 
         if (searchParam == null) {
-            LogUtil.error(TAG, "Missing search parameter; cannot continue.");
+            LogUtils.error(TAG, "Missing search parameter; cannot continue.");
             return cloudyBooks;
         }
 
@@ -84,7 +85,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
             "%s&fields=items(id,volumeInfo/title,volumeInfo/authors,volumeInfo/publisher,volumeInfo/publishedDate,volumeInfo/industryIdentifiers,volumeInfo/categories)",
             urlString);
 
-        LogUtil.debug(TAG, "Query: %s", urlString);
+        LogUtils.debug(TAG, "Query: %s", urlString);
         HttpURLConnection connection = null;
         StringBuilder builder = new StringBuilder();
         try {
@@ -96,7 +97,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
 
             int responseCode = connection.getResponseCode();
             if (responseCode != 200) {
-                LogUtil.error(TAG, "GoogleBooksAPI request failed. Response Code: " + responseCode);
+                LogUtils.error(TAG, "GoogleBooksAPI request failed. Response Code: " + responseCode);
                 connection.disconnect();
                 return cloudyBooks;
             }
@@ -172,12 +173,12 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
                     // TODO: should we validate before adding?
                     cloudyBooks.add(cloudyBook);
                 } catch (JSONException e) {
-                    LogUtil.debug(TAG, "Failed to parse JSON object.");
+                    LogUtils.debug(TAG, "Failed to parse JSON object.");
                     Crashlytics.logException(e);
                 }
             }
         } else {
-            LogUtil.warn(TAG, "No expected items where found in response.");
+            LogUtils.warn(TAG, "No expected items where found in response.");
         }
 
         connection.disconnect();
@@ -186,10 +187,10 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<Cloudy
 
     protected void onPostExecute(ArrayList<CloudyBook> cloudyBooks) {
 
-        LogUtil.debug(TAG, "++onPostExecute(%d)", cloudyBooks.size());
+        LogUtils.debug(TAG, "++onPostExecute(%d)", cloudyBooks.size());
         MainActivity activity = mActivityWeakReference.get();
         if (activity == null) {
-            LogUtil.error(TAG, "MainActivity is null or detached.");
+            LogUtils.error(TAG, "MainActivity is null or detached.");
             return;
         }
 
