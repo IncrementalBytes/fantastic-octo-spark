@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Cloudy Curator</string>
-    <string name="ok">OK</string>
     <string name="permission_denied_explanation">Permissions needed for full app functionality.</string>
     <string name="desc_book_list">Book List</string>
     <string name="placeholder">TBD</string>
@@ -41,7 +40,6 @@
     <string name="search_type_isbn">ISBN</string>
     <string name="search_type_lccn">Library of Congress Control Number</string>
     <string name="desc_text_list">List of results from text scan.</string>
-    <string name="err_no_text_detected">No text detected in image, please try again.</string>
     <string name="search_for">Search for:</string>
     <string name="max_results">Showing only 10 results, try a more specific query if book is not listed.</string>
     <string name="published_date_format">Published: %s</string>
@@ -60,9 +58,18 @@
     <string name="scan_photo">Scan Photo</string>
     <string name="check_back_later">Check back later!</string>
     <string name="librarian_fragment">Break Room</string>
-    <string name="debug_file">20190419_131840.jpg</string>
-    <string name="picture">Click!</string>
-    <string name="snap_photo">Take Picture!</string>
-    <string name="err_camera">Unable to open camera.</string>
-    <string name="dbg_image_view">Image taken.</string>
+    <string name="debug_file_name">20190419_131840.jpg</string>
+    <string name="err_image_not_loaded">Image not loaded.</string>
+    <string name="err_bar_code_task">Bar code detection task failed.</string>
+    <string name="err_no_bar_code_or_text">Did not find any bar codes/text in image.</string>
+    <string name="err_image_empty">Image was empty.</string>
+    <string name="err_image_not_found">Image does not exist.</string>
+    <string name="err_camera_data_unexpected">Unexpected data from camera.</string>
+    <string name="err_invalid_isbn">Invalid ISBN value.</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="err_photo_file_not_found">Failed to get file for photo.</string>
+    <string name="err_camera_intent_failed">Unable to create camera intent.</string>
+    <string name="err_search_criteria">Invalid search criteria.</string>
+    <string name="err_text_detection_task">Text detection task failed.</string>
 </resources>

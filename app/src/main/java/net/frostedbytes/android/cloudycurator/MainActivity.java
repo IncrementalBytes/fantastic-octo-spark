@@ -23,7 +23,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -32,6 +35,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -64,7 +68,6 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import net.frostedbytes.android.cloudycurator.common.RetrieveBookDataTask;
 import net.frostedbytes.android.cloudycurator.common.WriteToLocalLibraryTask;
-import net.frostedbytes.android.cloudycurator.fragments.CameraFragment;
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
 import net.frostedbytes.android.cloudycurator.fragments.CloudyBookListFragment;
 import net.frostedbytes.android.cloudycurator.fragments.LibrarianFragment;
@@ -82,13 +85,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements
-    CameraFragment.OnCameraListener,
     CloudyBookFragment.OnCloudyBookListener,
     CloudyBookListFragment.OnCloudyBookListListener,
     NavigationView.OnNavigationItemSelectedListener,
@@ -98,14 +103,15 @@ public class MainActivity extends BaseActivity implements
 
     private static final String TAG = BASE_TAG + MainActivity.class.getSimpleName();
 
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    static final int CAMERA_PERMISSIONS_REQUEST = 11;
     static final int WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST = 12;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
     private ProgressBar mProgressBar;
     private Snackbar mSnackbar;
-
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     private ArrayList<CloudyBook> mCloudyBookList;
     private File mCurrentImageFile;
@@ -137,8 +143,6 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++onCreate(Bundle)");
         setContentView(R.layout.activity_main);
-
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         mDrawerLayout = findViewById(R.id.main_drawer_layout);
         mProgressBar = findViewById(R.id.main_progress);
@@ -187,6 +191,7 @@ public class MainActivity extends BaseActivity implements
         super.onDestroy();
 
         LogUtils.debug(TAG, "++onDestroy()");
+        deleteImageFile();
         mCloudyBookList = null;
     }
 
@@ -195,6 +200,38 @@ public class MainActivity extends BaseActivity implements
         super.onActivityResult(requestCode, resultCode, data);
 
         LogUtils.debug(TAG, "++onActivityResult(%d, %d, Intent)", requestCode, resultCode);
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            if (BuildConfig.DEBUG) {
+                File f = new File(getString(R.string.debug_path), getString(R.string.debug_file_name));
+                try {
+                    mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+                } catch (FileNotFoundException e) {
+                    Crashlytics.logException(e);
+                }
+            } else {
+                try {
+                    mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(mCurrentImageFile));
+                } catch (FileNotFoundException e) {
+                    Crashlytics.logException(e);
+                }
+            }
+
+            if (mImageBitmap != null) {
+                Bitmap emptyBitmap = Bitmap.createBitmap(
+                    mImageBitmap.getWidth(),
+                    mImageBitmap.getHeight(),
+                    mImageBitmap.getConfig());
+                if (!mImageBitmap.sameAs(emptyBitmap)) {
+                    scanImageForISBN();
+                } else {
+                    showDismissableSnackbar(getString(R.string.err_image_empty));
+                }
+            } else {
+                showDismissableSnackbar(getString(R.string.err_image_not_found));
+            }
+        } else {
+            showDismissableSnackbar(getString(R.string.err_camera_data_unexpected));
+        }
     }
 
     @Override
@@ -248,75 +285,34 @@ public class MainActivity extends BaseActivity implements
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         LogUtils.debug(TAG, "++onRequestPermissionResult(int, String[], int[])");
-        if (requestCode == WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                LogUtils.debug(TAG, "WRITE_EXTERNAL_STORAGE permission granted.");
-                readLocalLibrary();
-            } else {
-                LogUtils.debug(TAG, "WRITE_EXTERNAL_STORAGE permission denied.");
-            }
-        } else {
-            LogUtils.debug(TAG, "Unknown request code: %d", requestCode);
+        switch (requestCode) {
+            case WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    LogUtils.debug(TAG, "WRITE_EXTERNAL_STORAGE permission granted.");
+                    readLocalLibrary();
+                } else {
+                    LogUtils.debug(TAG, "WRITE_EXTERNAL_STORAGE permission denied.");
+                }
+
+                break;
+            case CAMERA_PERMISSIONS_REQUEST:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    LogUtils.debug(TAG, "CAMERA_PERMISSIONS_REQUEST permission granted.");
+                    takePictureIntent();
+                } else {
+                    LogUtils.debug(TAG, "CAMERA_PERMISSIONS_REQUEST permission denied.");
+                }
+
+                break;
+            default:
+                LogUtils.debug(TAG, "Unknown request code: %d", requestCode);
+                break;
         }
     }
 
     /*
         Fragment Override(s)
      */
-    @Override
-    public void onCameraImageAvailable(File imageFile) {
-
-        LogUtils.debug(TAG, "++onCameraImageAvailable(%s)", imageFile.getAbsoluteFile());
-        mCurrentImageFile = imageFile;
-        if (BuildConfig.DEBUG) {
-            File f = new File(getString(R.string.debug_path), getString(R.string.debug_file));
-            try {
-                mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        } else {
-            try {
-                mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(mCurrentImageFile));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (mImageBitmap != null) {
-            Bitmap emptyBitmap = Bitmap.createBitmap(
-                mImageBitmap.getWidth(),
-                mImageBitmap.getHeight(),
-                mImageBitmap.getConfig());
-            if (!mImageBitmap.sameAs(emptyBitmap)) {
-                scanImageForISBN();
-            } else {
-                String message = "Image was empty.";
-                LogUtils.warn(TAG, message);
-                replaceFragment(QueryFragment.newInstance());
-                showDismissableSnackbar(message);
-            }
-        } else {
-            String message = "Image does not exist.";
-            if (mUser.IsLibrarian) {
-                message = String.format(Locale.US, "%s %s", message, imageFile.getName());
-            }
-
-            LogUtils.warn(TAG, message);
-            replaceFragment(QueryFragment.newInstance());
-            showDismissableSnackbar(message);
-        }
-    }
-
-    @Override
-    public void onCameraInit(boolean isSuccessful) {
-
-        LogUtils.debug(TAG, "++onCloudyBookActionComplete(%s)", String.valueOf(isSuccessful));
-        if (!isSuccessful) {
-            showDismissableSnackbar(getString(R.string.err_camera));
-        }
-    }
-
     @Override
     public void onCloudyBookActionComplete(String message) {
 
@@ -332,10 +328,6 @@ public class MainActivity extends BaseActivity implements
             showDismissableSnackbar(getString(R.string.err_add_cloudy_book));
         } else {
             LogUtils.debug(TAG, "++onUserBookAddedToLibrary(%s)", cloudyBook.toString());
-            Bundle params = new Bundle();
-            params.putString("action", "added");
-            params.putString("cloudy_book", cloudyBook.toString());
-            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, params);
             mCloudyBookList.add(cloudyBook);
             new WriteToLocalLibraryTask(this, mCloudyBookList).execute();
         }
@@ -357,10 +349,6 @@ public class MainActivity extends BaseActivity implements
             showDismissableSnackbar(getString(R.string.err_remove_cloudy_book));
         } else {
             LogUtils.debug(TAG, "++onCloudyBookRemoved(%s)", cloudyBook.toString());
-            Bundle params = new Bundle();
-            params.putString("action", "removed");
-            params.putString("cloudy_book", cloudyBook.toString());
-            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, params);
             mCloudyBookList.remove(cloudyBook);
             new WriteToLocalLibraryTask(this, mCloudyBookList).execute();
             replaceFragment(CloudyBookListFragment.newInstance(mCloudyBookList));
@@ -383,10 +371,6 @@ public class MainActivity extends BaseActivity implements
             showDismissableSnackbar(getString(R.string.err_update_cloudy_book));
         } else {
             LogUtils.debug(TAG, "++onCloudyBookUpdated(%s)", updatedCloudyBook.toString());
-            Bundle params = new Bundle();
-            params.putString("action", "update");
-            params.putString("cloudy_book", updatedCloudyBook.toString());
-            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, params);
             ArrayList<CloudyBook> updatedCloudyBookList = new ArrayList<>();
             for (CloudyBook cloudyBook : mCloudyBookList) {
                 if (cloudyBook.VolumeId.equals(updatedCloudyBook.VolumeId)) {
@@ -463,7 +447,7 @@ public class MainActivity extends BaseActivity implements
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setView(promptView);
         alertDialogBuilder.setCancelable(false)
-            .setPositiveButton("OK", (dialog, id) -> {
+            .setPositiveButton(R.string.ok, (dialog, id) -> {
 
                 CloudyBook cloudyBook = new CloudyBook();
                 switch (radioGroup.getCheckedRadioButtonId()) {
@@ -479,8 +463,7 @@ public class MainActivity extends BaseActivity implements
                             !cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
                             queryInUserBooks(cloudyBook);
                         } else {
-                            String message = "Invalid ISBN value.";
-                            showDismissableSnackbar(message);
+                            showDismissableSnackbar(getString(R.string.err_invalid_isbn));
                         }
 
                         break;
@@ -493,7 +476,7 @@ public class MainActivity extends BaseActivity implements
                         queryInUserBooks(cloudyBook);
                 }
             })
-            .setNegativeButton("Cancel", (dialog, id) -> {
+            .setNegativeButton(R.string.cancel, (dialog, id) -> {
                 mProgressBar.setIndeterminate(false);
                 dialog.cancel();
             });
@@ -506,23 +489,8 @@ public class MainActivity extends BaseActivity implements
     public void onQueryTakePicture() {
 
         LogUtils.debug(TAG, "++onQueryTakePicture()");
-        if (mCurrentImageFile != null && mCurrentImageFile.exists()) {
-            Bundle params = new Bundle();
-            params.putString("action", "deleted");
-            params.putString("image_path", mCurrentImageFile.getAbsolutePath());
-            if (mCurrentImageFile.delete()) {
-                params.putBoolean("deleted_in_image_available", true);
-                LogUtils.debug(TAG, "Removed processed image: %s", mCurrentImageFile.getName());
-            } else {
-                params.putBoolean("deleted_in_image_available", false);
-                LogUtils.warn(TAG, "Unable to remove processed image: %s", mCurrentImageFile.getName());
-            }
-
-            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, params);
-        }
-
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            replaceFragment(CameraFragment.newInstance());
+            checkDevicePermission(Manifest.permission.CAMERA, CAMERA_PERMISSIONS_REQUEST);
         } else {
             showDismissableSnackbar(getString(R.string.err_no_camera_detected));
         }
@@ -601,11 +569,11 @@ public class MainActivity extends BaseActivity implements
     /*
         Private Method(s)
      */
-    private void checkDevicePermission() {
+    private void checkDevicePermission(String permission, int permissionCode) {
 
-        LogUtils.debug(TAG, "++checkDevicePermission()");
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        LogUtils.debug(TAG, "++checkDevicePermission(%s, %d)", permission, permissionCode);
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
                 Snackbar.make(
                     findViewById(R.id.main_drawer_layout),
                     getString(R.string.permission_denied_explanation),
@@ -614,18 +582,44 @@ public class MainActivity extends BaseActivity implements
                         getString(R.string.ok),
                         view -> ActivityCompat.requestPermissions(
                             MainActivity.this,
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST))
+                            new String[]{permission},
+                            permissionCode))
                     .show();
             } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
+                ActivityCompat.requestPermissions(this, new String[]{permission}, permissionCode);
             }
         } else {
-            LogUtils.debug(TAG, "%s permission granted.", Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            readLocalLibrary();
+            switch (permissionCode) {
+                case WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST:
+                    LogUtils.debug(TAG, "%s permission granted.", permission);
+                    readLocalLibrary();
+                    break;
+                case CAMERA_PERMISSIONS_REQUEST:
+                    LogUtils.debug(TAG, "%s permission granted.", permission);
+                    takePictureIntent();
+                    break;
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+
+        LogUtils.debug(TAG, "++createImageFile()");
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(imageFileName, ".jpg", storageDir);
+    }
+
+    private void deleteImageFile() {
+
+        LogUtils.debug(TAG, "++deleteImageFile()");
+        if (mCurrentImageFile != null && mCurrentImageFile.exists()) {
+            if (mCurrentImageFile.delete()) {
+                LogUtils.debug(TAG, "Removed processed image: %s", mCurrentImageFile.getName());
+            } else {
+                LogUtils.warn(TAG, "Unable to remove processed image: %s", mCurrentImageFile.getName());
+            }
         }
     }
 
@@ -652,7 +646,7 @@ public class MainActivity extends BaseActivity implements
             }
 
             // regardless of result, get user's book library
-            checkDevicePermission();
+            checkDevicePermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE_PERMISSIONS_REQUEST);
         });
     }
 
@@ -663,9 +657,7 @@ public class MainActivity extends BaseActivity implements
             cloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) &&
             cloudyBook.LCCN.equals(BaseActivity.DEFAULT_LCCN) &&
             cloudyBook.Title.isEmpty()) {
-            String message = "Invalid search criteria.";
-            LogUtils.warn(TAG, message);
-            showDismissableSnackbar(message);
+            showDismissableSnackbar(getString(R.string.err_search_criteria));
         } else {
             new RetrieveBookDataTask(this, cloudyBook).execute();
         }
@@ -808,6 +800,7 @@ public class MainActivity extends BaseActivity implements
 
         LogUtils.debug(TAG, "++scanImageForISBN()");
         if (mImageBitmap != null) {
+            mProgressBar.setIndeterminate(true);
             if (mUser.IsLibrarian) {
                 LayoutInflater layoutInflater = LayoutInflater.from(this);
                 View promptView = layoutInflater.inflate(R.layout.dialog_debug_image, null);
@@ -817,8 +810,8 @@ public class MainActivity extends BaseActivity implements
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
                 alertDialogBuilder.setView(promptView);
                 alertDialogBuilder.setCancelable(false)
-                    .setPositiveButton("OK", (dialog, id) -> useFirebaseBarcodeScanning())
-                    .setNegativeButton("Cancel", (dialog, id) -> {
+                    .setPositiveButton(R.string.ok, (dialog, id) -> useFirebaseBarcodeScanning())
+                    .setNegativeButton(R.string.cancel, (dialog, id) -> {
                         mProgressBar.setIndeterminate(false);
                         dialog.cancel();
                     });
@@ -829,9 +822,7 @@ public class MainActivity extends BaseActivity implements
                 useFirebaseBarcodeScanning();
             }
         } else {
-            String message = "Image not loaded.";
-            LogUtils.warn(TAG, message);
-            showDismissableSnackbar(message);
+            showDismissableSnackbar(getString(R.string.err_image_not_loaded));
         }
     }
 
@@ -848,8 +839,8 @@ public class MainActivity extends BaseActivity implements
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
                 alertDialogBuilder.setView(promptView);
                 alertDialogBuilder.setCancelable(false)
-                    .setPositiveButton("OK", (dialog, id) -> useFirebaseTextScanning())
-                    .setNegativeButton("Cancel", (dialog, id) -> {
+                    .setPositiveButton(R.string.ok, (dialog, id) -> useFirebaseTextScanning())
+                    .setNegativeButton(R.string.cancel, (dialog, id) -> {
                         mProgressBar.setIndeterminate(false);
                         dialog.cancel();
                     });
@@ -860,21 +851,48 @@ public class MainActivity extends BaseActivity implements
                 useFirebaseTextScanning();
             }
         } else {
-            String message = "Image not loaded.";
-            LogUtils.warn(TAG, message);
-            showDismissableSnackbar(message);
+            LogUtils.warn(TAG, getString(R.string.err_image_not_loaded));
+            showDismissableSnackbar(getString(R.string.err_image_not_loaded));
         }
     }
 
     private void showDismissableSnackbar(String message) {
 
         mProgressBar.setIndeterminate(false);
+        LogUtils.warn(TAG, message);
         mSnackbar = Snackbar.make(
             findViewById(R.id.main_drawer_layout),
             message,
             Snackbar.LENGTH_INDEFINITE);
         mSnackbar.setAction(R.string.dismiss, v -> mSnackbar.dismiss());
         mSnackbar.show();
+    }
+
+    private void takePictureIntent() {
+
+        LogUtils.debug(TAG, "++takePictureIntent()");
+        deleteImageFile();
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            try {
+                mCurrentImageFile = createImageFile();
+            } catch (IOException e) {
+                Crashlytics.logException(e);
+            }
+
+            if (mCurrentImageFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(
+                    this,
+                    "net.frostedbytes.android.cloudycurator.fileprovider",
+                    mCurrentImageFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            } else {
+                showDismissableSnackbar(getString(R.string.err_photo_file_not_found));
+            }
+        } else {
+            showDismissableSnackbar(getString(R.string.err_camera_intent_failed));
+        }
     }
 
     private void updateTitleAndDrawer(Fragment fragment) {
@@ -942,13 +960,21 @@ public class MainActivity extends BaseActivity implements
                             true);
                         scanImageForISBN();
                     } else {
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(90);
+                        mImageBitmap = Bitmap.createBitmap(
+                            mImageBitmap,
+                            0,
+                            0,
+                            mImageBitmap.getWidth(),
+                            mImageBitmap.getHeight(),
+                            matrix,
+                            true);
                         mRotationAttempts = 0;
                         scanImageForText();
                     }
                 } else {
-                    String message = "Bar code detection task failed.";
-                    LogUtils.warn(TAG, message);
-                    showDismissableSnackbar(message);
+                    showDismissableSnackbar(getString(R.string.err_bar_code_task));
                     replaceFragment(QueryFragment.newInstance());
                 }
             });
@@ -983,15 +1009,11 @@ public class MainActivity extends BaseActivity implements
                         true);
                     scanImageForText();
                 } else {
-                    String message = "Did not find any bar codes/text in image.";
-                    LogUtils.warn(TAG, message);
-                    showDismissableSnackbar(message);
+                    showDismissableSnackbar(getString(R.string.err_no_bar_code_or_text));
                     replaceFragment(QueryFragment.newInstance());
                 }
             } else {
-                String message = "Text detection task failed.";
-                LogUtils.warn(TAG, message);
-                showDismissableSnackbar(message);
+                showDismissableSnackbar(getString(R.string.err_text_detection_task));
                 replaceFragment(QueryFragment.newInstance());
             }
         });
