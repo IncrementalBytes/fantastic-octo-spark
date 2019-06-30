@@ -16,7 +16,7 @@
 
 package net.frostedbytes.android.cloudycurator;
 
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 

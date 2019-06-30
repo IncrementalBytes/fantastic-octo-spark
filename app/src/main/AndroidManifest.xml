@@ -36,7 +36,7 @@
             android:name="com.google.firebase.ml.vision.DEPENDENCIES"
             android:value="barcode,ocr" />
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="net.frostedbytes.android.cloudycurator.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

@@ -58,7 +58,7 @@
     <string name="scan_photo">Scan Photo</string>
     <string name="check_back_later">Check back later!</string>
     <string name="librarian_fragment">Break Room</string>
-    <string name="debug_file_name">20190419_131840.jpg</string>
+    <string name="debug_file_name">20190511_060443.jpg</string>
     <string name="err_image_not_loaded">Image not loaded.</string>
     <string name="err_bar_code_task">Bar code detection task failed.</string>
     <string name="err_no_bar_code_or_text">Did not find any bar codes/text in image.</string>
