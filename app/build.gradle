@@ -24,7 +24,7 @@ android {
         def updatedVersionName = majorVersionProperty + "." + minorVersionProperty + "." + versionCodeProperty + "." + updatedBuildVersion
 
         defaultConfig {
-            applicationId "net.frostedbytes.android.cloudycurator"
+            applicationId "net.whollynugatory.android.cloudycurator"
             minSdkVersion 26
             targetSdkVersion 28
             versionCode versionCodeProperty

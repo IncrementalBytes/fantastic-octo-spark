@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator;
+package net.whollynugatory.android.cloudycurator;
 
 import androidx.appcompat.app.AppCompatActivity;
 

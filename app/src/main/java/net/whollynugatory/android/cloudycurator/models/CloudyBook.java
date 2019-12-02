@@ -14,14 +14,14 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.models;
+package net.whollynugatory.android.cloudycurator.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.google.firebase.firestore.Exclude;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
 
 import java.util.ArrayList;
 import java.util.List;

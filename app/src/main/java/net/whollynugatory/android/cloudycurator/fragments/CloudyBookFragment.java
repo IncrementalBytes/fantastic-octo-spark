@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.fragments;
+package net.whollynugatory.android.cloudycurator.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -32,21 +32,19 @@ import com.crashlytics.android.Crashlytics;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.models.User;
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
-import net.frostedbytes.android.cloudycurator.common.PathUtils;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.models.User;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.common.PathUtils;
 
 import java.util.Calendar;
 import java.util.Locale;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
-
 public class CloudyBookFragment extends Fragment {
 
-    private static final String TAG = BASE_TAG + CloudyBookFragment.class.getSimpleName();
+    private static final String TAG = BaseActivity.BASE_TAG + CloudyBookFragment.class.getSimpleName();
 
     public interface OnCloudyBookListener {
 

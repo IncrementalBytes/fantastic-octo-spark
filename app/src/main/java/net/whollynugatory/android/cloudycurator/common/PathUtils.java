@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.common;
 
 import java.util.Locale;
 

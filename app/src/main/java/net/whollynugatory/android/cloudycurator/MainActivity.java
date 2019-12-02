@@ -13,8 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
-package net.frostedbytes.android.cloudycurator;
+package net.whollynugatory.android.cloudycurator;
 
 import android.Manifest;
 import android.content.Intent;
@@ -65,19 +64,20 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
-import net.frostedbytes.android.cloudycurator.common.RetrieveBookDataTask;
-import net.frostedbytes.android.cloudycurator.common.WriteToLocalLibraryTask;
-import net.frostedbytes.android.cloudycurator.fragments.CloudyBookFragment;
-import net.frostedbytes.android.cloudycurator.fragments.CloudyBookListFragment;
-import net.frostedbytes.android.cloudycurator.fragments.LibrarianFragment;
-import net.frostedbytes.android.cloudycurator.fragments.QueryFragment;
-import net.frostedbytes.android.cloudycurator.fragments.ResultListFragment;
-import net.frostedbytes.android.cloudycurator.fragments.ScanResultsFragment;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.models.User;
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
-import net.frostedbytes.android.cloudycurator.common.PathUtils;
-import net.frostedbytes.android.cloudycurator.common.SortUtils;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.common.RetrieveBookDataTask;
+import net.whollynugatory.android.cloudycurator.common.WriteToLocalLibraryTask;
+import net.whollynugatory.android.cloudycurator.fragments.CloudyBookFragment;
+import net.whollynugatory.android.cloudycurator.fragments.CloudyBookListFragment;
+import net.whollynugatory.android.cloudycurator.fragments.LibrarianFragment;
+import net.whollynugatory.android.cloudycurator.fragments.QueryFragment;
+import net.whollynugatory.android.cloudycurator.fragments.ResultListFragment;
+import net.whollynugatory.android.cloudycurator.fragments.ScanResultsFragment;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.models.User;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.common.PathUtils;
+import net.whollynugatory.android.cloudycurator.common.SortUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -881,7 +881,7 @@ public class MainActivity extends BaseActivity implements
             if (mCurrentImageFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(
                     this,
-                    "net.frostedbytes.android.cloudycurator.fileprovider",
+                    "net.whollynugatory.android.cloudycurator.fileprovider",
                     mCurrentImageFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);

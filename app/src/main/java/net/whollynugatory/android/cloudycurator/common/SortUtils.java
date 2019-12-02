@@ -14,9 +14,9 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.common;
 
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
 
 import java.util.Comparator;
 

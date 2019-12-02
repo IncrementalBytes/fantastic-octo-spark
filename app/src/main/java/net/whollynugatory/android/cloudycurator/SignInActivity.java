@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator;
+package net.whollynugatory.android.cloudycurator;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -36,7 +36,8 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
 
 import java.util.Locale;
 
@@ -156,9 +157,9 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
             mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle);
 
             Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-            intent.putExtra(BaseActivity.ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
-            intent.putExtra(BaseActivity.ARG_USER_NAME, mAuth.getCurrentUser().getDisplayName());
-            intent.putExtra(BaseActivity.ARG_EMAIL, mAuth.getCurrentUser().getEmail());
+            intent.putExtra(ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
+            intent.putExtra(ARG_USER_NAME, mAuth.getCurrentUser().getDisplayName());
+            intent.putExtra(ARG_EMAIL, mAuth.getCurrentUser().getEmail());
             startActivity(intent);
             finish();
         } else {

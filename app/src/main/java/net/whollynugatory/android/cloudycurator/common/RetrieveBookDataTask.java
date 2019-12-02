@@ -14,15 +14,15 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.common;
 
 import android.os.AsyncTask;
 
 import com.crashlytics.android.Crashlytics;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-import net.frostedbytes.android.cloudycurator.MainActivity;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.MainActivity;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,14 +37,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
-
 /*
     Retrieve data task; querying URLs for data
  */
 public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
 
-    private static final String TAG = BASE_TAG + RetrieveBookDataTask.class.getSimpleName();
+    private static final String TAG = BaseActivity.BASE_TAG + RetrieveBookDataTask.class.getSimpleName();
 
     private WeakReference<MainActivity> mActivityWeakReference;
     private CloudyBook mQueryForBook;

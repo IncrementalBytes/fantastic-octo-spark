@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.fragments;
+package net.whollynugatory.android.cloudycurator.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -24,10 +24,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
+import static net.whollynugatory.android.cloudycurator.BaseActivity.BASE_TAG;
 
 public class LibrarianFragment extends Fragment {
 

@@ -14,14 +14,14 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.common;
 
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
 import java.util.Locale;
-import net.frostedbytes.android.cloudycurator.BuildConfig;
+import net.whollynugatory.android.cloudycurator.BuildConfig;
 
 /**
  * Wrapper class for logging to help remove from non-debug builds.

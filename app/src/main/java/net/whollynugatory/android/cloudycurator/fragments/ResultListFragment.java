@@ -14,14 +14,12 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.fragments;
+package net.whollynugatory.android.cloudycurator.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.fragment.app.Fragment;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -30,42 +28,38 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
+public class ResultListFragment extends Fragment {
 
-public class CloudyBookListFragment extends Fragment {
+    private static final String TAG = BaseActivity.BASE_TAG + ResultListFragment.class.getSimpleName();
 
-    private static final String TAG = BASE_TAG + CloudyBookListFragment.class.getSimpleName();
+    public interface OnResultListListener {
 
-    public interface OnCloudyBookListListener {
+        void onResultListActionComplete(String message);
 
-        void onCloudyBookListAddBook();
+        void onResultListItemSelected(CloudyBook cloudyBook);
 
-        void onCloudyBookListItemSelected(CloudyBook cloudyBook);
-
-        void onCloudyBookListPopulated(int size);
-
-        void onCloudyBookListSynchronize();
+        void onResultListPopulated(int size);
     }
 
-    private OnCloudyBookListListener mCallback;
+    private OnResultListListener mCallback;
 
     private RecyclerView mRecyclerView;
 
     private ArrayList<CloudyBook> mCloudyBookList;
 
-    public static CloudyBookListFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
+    public static ResultListFragment newInstance(ArrayList<CloudyBook> cloudyBookList) {
 
         LogUtils.debug(TAG, "++newInstance(%d)", cloudyBookList.size());
-        CloudyBookListFragment fragment = new CloudyBookListFragment();
+        ResultListFragment fragment = new ResultListFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST, cloudyBookList);
         fragment.setArguments(args);
@@ -81,7 +75,7 @@ public class CloudyBookListFragment extends Fragment {
 
         LogUtils.debug(TAG, "++onAttach(Context)");
         try {
-            mCallback = (OnCloudyBookListListener) context;
+            mCallback = (OnResultListListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(
                 String.format(Locale.US, "Missing interface implementations for %s", context.toString()));
@@ -91,7 +85,9 @@ public class CloudyBookListFragment extends Fragment {
         if (arguments != null) {
             mCloudyBookList = arguments.getParcelableArrayList(BaseActivity.ARG_CLOUDY_BOOK_LIST);
         } else {
-            LogUtils.error(TAG, "Arguments were null.");
+            String message = "Arguments were null.";
+            LogUtils.error(TAG, message);
+            mCallback.onResultListActionComplete(message);
         }
     }
 
@@ -99,18 +95,12 @@ public class CloudyBookListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
-        final View view = inflater.inflate(R.layout.fragment_cloudy_book_list, container, false);
+        final View view = inflater.inflate(R.layout.fragment_result_list, container, false);
 
-        FloatingActionButton mAddButton = view.findViewById(R.id.cloudy_book_fab_add);
-        mRecyclerView = view.findViewById(R.id.cloudy_book_list_view);
-        FloatingActionButton mSyncButton = view.findViewById(R.id.cloudy_book_fab_sync);
-
+        mRecyclerView = view.findViewById(R.id.result_list_view);
 
         final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(manager);
-
-        mAddButton.setOnClickListener(pickView -> mCallback.onCloudyBookListAddBook());
-        mSyncButton.setOnClickListener(pickView -> mCallback.onCloudyBookListSynchronize());
 
         updateUI();
         return view;
@@ -130,37 +120,37 @@ public class CloudyBookListFragment extends Fragment {
     private void updateUI() {
 
         if (mCloudyBookList == null || mCloudyBookList.size() == 0) {
-            mCallback.onCloudyBookListPopulated(0);
+            mCallback.onResultListPopulated(0);
         } else {
             LogUtils.debug(TAG, "++updateUI()");
-            CloudyBookAdapter cloudyBookAdapter = new CloudyBookAdapter(mCloudyBookList);
-            mRecyclerView.setAdapter(cloudyBookAdapter);
-            mCallback.onCloudyBookListPopulated(cloudyBookAdapter.getItemCount());
+            ResultAdapter resultAdapter = new ResultAdapter(mCloudyBookList);
+            mRecyclerView.setAdapter(resultAdapter);
+            mCallback.onResultListPopulated(resultAdapter.getItemCount());
         }
     }
 
     /**
-     * Adapter class for CloudyBook objects
+     * Adapter class for query result objects
      */
-    private class CloudyBookAdapter extends RecyclerView.Adapter<CloudyBookHolder> {
+    private class ResultAdapter extends RecyclerView.Adapter<ResultHolder> {
 
         private final List<CloudyBook> mCloudyBookList;
 
-        CloudyBookAdapter(List<CloudyBook> cloudyBookList) {
+        ResultAdapter(List<CloudyBook> cloudyBookList) {
 
             mCloudyBookList = cloudyBookList;
         }
 
         @NonNull
         @Override
-        public CloudyBookHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public ResultHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            return new CloudyBookHolder(layoutInflater, parent);
+            return new ResultHolder(layoutInflater, parent);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull CloudyBookHolder holder, int position) {
+        public void onBindViewHolder(@NonNull ResultHolder holder, int position) {
 
             CloudyBook cloudyBook = mCloudyBookList.get(position);
             holder.bind(cloudyBook);
@@ -173,32 +163,32 @@ public class CloudyBookListFragment extends Fragment {
     }
 
     /**
-     * Holder class for CloudyBook objects
+     * Holder class for query result object
      */
-    private class CloudyBookHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    private class ResultHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private final TextView mAuthorsTextView;
         private final TextView mCategoriesTextView;
         private final TextView mISBNTextView;
-        private final ImageView mOwnImage;
         private final TextView mPublishedTextView;
         private final TextView mPublisherTextView;
-        private final ImageView mReadImage;
         private final TextView mTitleTextView;
 
         private CloudyBook mCloudyBook;
 
-        CloudyBookHolder(LayoutInflater inflater, ViewGroup parent) {
+        ResultHolder(LayoutInflater inflater, ViewGroup parent) {
             super(inflater.inflate(R.layout.cloudy_book_item, parent, false));
 
             mAuthorsTextView = itemView.findViewById(R.id.cloudy_book_item_authors);
             mCategoriesTextView = itemView.findViewById(R.id.cloudy_book_item_categories);
             mISBNTextView = itemView.findViewById(R.id.cloudy_book_item_isbn);
-            mOwnImage = itemView.findViewById(R.id.cloudy_book_image_own);
             mPublishedTextView = itemView.findViewById(R.id.cloudy_book_item_published);
             mPublisherTextView = itemView.findViewById(R.id.cloudy_book_item_publisher);
-            mReadImage = itemView.findViewById(R.id.cloudy_book_image_read);
             mTitleTextView = itemView.findViewById(R.id.cloudy_book_item_title);
+            ImageView readImage = itemView.findViewById(R.id.cloudy_book_image_read);
+            readImage.setVisibility(View.GONE);
+            ImageView ownImage = itemView.findViewById(R.id.cloudy_book_image_own);
+            ownImage.setVisibility(View.GONE);
 
             itemView.setOnClickListener(this);
         }
@@ -208,29 +198,31 @@ public class CloudyBookListFragment extends Fragment {
             mCloudyBook = cloudyBook;
 
             mAuthorsTextView.setText(mCloudyBook.getAuthorsDelimited());
-            mCategoriesTextView.setVisibility(View.GONE);
+            mCategoriesTextView.setText(
+                String.format(
+                    Locale.US,
+                    getString(R.string.categories_format),
+                    mCloudyBook.getCategoriesDelimited()));
             mISBNTextView.setText(
                 String.format(
                     Locale.US,
                     getString(R.string.isbn_format),
                     mCloudyBook.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mCloudyBook.ISBN_8 : mCloudyBook.ISBN_13));
-            if (mCloudyBook.IsOwned) {
-                mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_owned_dark, null));
+            mPublishedTextView.setText(String.format(Locale.US, getString(R.string.published_date_format), mCloudyBook.PublishedDate));
+            if (mCloudyBook.Publisher == null || mCloudyBook.Publisher.isEmpty()) {
+                mPublisherTextView.setVisibility(View.GONE);
             } else {
-                mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_not_owned_dark, null));
+                mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mCloudyBook.Publisher));
             }
 
-            mPublishedTextView.setVisibility(View.GONE);
-            mPublisherTextView.setVisibility(View.GONE);
-            mReadImage.setVisibility(mCloudyBook.HasRead ? View.VISIBLE : View.INVISIBLE);
             mTitleTextView.setText(mCloudyBook.Title);
         }
 
         @Override
         public void onClick(View view) {
 
-            LogUtils.debug(TAG, "++CloudyBookHolder::onClick(View)");
-            mCallback.onCloudyBookListItemSelected(mCloudyBook);
+            LogUtils.debug(TAG, "++ResultHolder::onClick(View)");
+            mCallback.onResultListItemSelected(mCloudyBook);
         }
     }
 }

@@ -28,6 +28,6 @@
 # This rule will properly ProGuard all the model classes in
 # the package com.yourcompany.models. Modify to fit the structure
 # of your app.
--keepclassmembers class net.frostedbytes.android.cloudycurator.models.** {
+-keepclassmembers class net.whollynugatory.android.cloudycurator.models.** {
   *;
 }

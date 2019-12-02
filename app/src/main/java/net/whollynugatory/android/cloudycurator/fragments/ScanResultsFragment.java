@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.fragments;
+package net.whollynugatory.android.cloudycurator.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -27,19 +27,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-import net.frostedbytes.android.cloudycurator.R;
-import net.frostedbytes.android.cloudycurator.common.LogUtils;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.common.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
-
 public class ScanResultsFragment extends Fragment {
 
-    private static final String TAG = BASE_TAG + ScanResultsFragment.class.getSimpleName();
+    private static final String TAG = BaseActivity.BASE_TAG + ScanResultsFragment.class.getSimpleName();
 
     public interface OnScanResultsListener {
 

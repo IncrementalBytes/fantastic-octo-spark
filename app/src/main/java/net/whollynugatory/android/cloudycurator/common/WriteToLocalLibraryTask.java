@@ -14,27 +14,25 @@
  *    limitations under the License.
  */
 
-package net.frostedbytes.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.common;
 
 import android.content.Context;
 import android.os.AsyncTask;
 
 import com.crashlytics.android.Crashlytics;
 
-import net.frostedbytes.android.cloudycurator.BaseActivity;
-import net.frostedbytes.android.cloudycurator.MainActivity;
-import net.frostedbytes.android.cloudycurator.models.CloudyBook;
+import net.whollynugatory.android.cloudycurator.BaseActivity;
+import net.whollynugatory.android.cloudycurator.MainActivity;
+import net.whollynugatory.android.cloudycurator.models.CloudyBook;
 
 import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import static net.frostedbytes.android.cloudycurator.BaseActivity.BASE_TAG;
-
 public class WriteToLocalLibraryTask extends AsyncTask<Void, Void, ArrayList<CloudyBook>> {
 
-    private static final String TAG = BASE_TAG + WriteToLocalLibraryTask.class.getSimpleName();
+    private static final String TAG = BaseActivity.BASE_TAG + WriteToLocalLibraryTask.class.getSimpleName();
 
     private WeakReference<MainActivity> mFragmentWeakReference;
     private ArrayList<CloudyBook> mCloudyBooks;

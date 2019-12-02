@@ -1,4 +1,4 @@
-package net.frostedbytes.android.cloudycurator;
+package net.whollynugatory.android.cloudycurator;
 
 import org.junit.Test;
 
