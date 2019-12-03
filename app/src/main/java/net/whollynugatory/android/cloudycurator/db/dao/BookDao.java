@@ -13,43 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
-package net.whollynugatory.android.cloudycurator.models;
+package net.whollynugatory.android.cloudycurator.db.dao;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
-import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class User {
+import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
 
-    public static final String ROOT = "Users";
+@Dao
+public interface BookDao {
 
-    public String Email;
+  @Query("SELECT COUNT(*) FROM books_table")
+  int count();
 
-    public String FullName;
+  @Query("SELECT * FROM books_table")
+  LiveData<List<BookEntity>> getAll();
 
-    public String Id;
-
-    public boolean IsLibrarian;
-
-    public List<BookEntity> BookEntities;
-
-    public User() {
-
-        Email = "";
-        FullName = "";
-        Id = BaseActivity.DEFAULT_ID;
-        IsLibrarian = false;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-            "Email='" + Email + '\'' +
-            ", FullName='" + FullName + '\'' +
-            ", Id='" + Id + '\'' +
-            '}';
-    }
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  void insert(BookEntity bookEntity);
 }

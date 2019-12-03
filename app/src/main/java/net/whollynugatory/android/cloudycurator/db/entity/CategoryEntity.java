@@ -13,19 +13,28 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package net.whollynugatory.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.db.entity;
 
-import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import java.io.Serializable;
 
-import java.util.Comparator;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class SortUtils {
+@Entity(
+  tableName = "categories_table"
+)
+public class CategoryEntity implements Serializable {
 
-    public static class ByBookName implements Comparator<BookEntity> {
+  @PrimaryKey(autoGenerate = true)
+  @ColumnInfo(name = "id")
+  public int Id;
 
-        public int compare(BookEntity a, BookEntity b) {
+  @ColumnInfo(name = "category_string")
+  public String CategoryString;
 
-            return a.Title.compareTo(b.Title);
-        }
-    }
+  public CategoryEntity() {
+
+    CategoryString = "";
+  }
 }

@@ -13,46 +13,46 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
-package net.whollynugatory.android.cloudycurator.fragments;
+package net.whollynugatory.android.cloudycurator.ui.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.common.LogUtils;
 
-import static net.whollynugatory.android.cloudycurator.BaseActivity.BASE_TAG;
+import static net.whollynugatory.android.cloudycurator.ui.BaseActivity.BASE_TAG;
 
 public class LibrarianFragment extends Fragment {
 
-    private static final String TAG = BASE_TAG + LibrarianFragment.class.getSimpleName();
+  private static final String TAG = BASE_TAG + LibrarianFragment.class.getSimpleName();
 
-    public static LibrarianFragment newInstance() {
+  public static LibrarianFragment newInstance() {
 
-        LogUtils.debug(TAG, "++newInstance()");
-        return new LibrarianFragment();
-    }
+    Log.d(TAG, "++newInstance()");
+    return new LibrarianFragment();
+  }
 
-    /*
-        Fragment Override(s)
-     */
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+  /*
+      Fragment Override(s)
+   */
+  @Override
+  public void onAttach(Context context) {
+    super.onAttach(context);
 
-        LogUtils.debug(TAG, "++onAttach(Context)");
-    }
+    Log.d(TAG, "++onAttach(Context)");
+  }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  @Override
+  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        LogUtils.debug(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
-        return inflater.inflate(R.layout.fragment_librarian, container, false);
-    }
+    Log.d(TAG, "++onCreateView(LayoutInflater, ViewGroup, Bundle)");
+    return inflater.inflate(R.layout.fragment_librarian, container, false);
+  }
 }

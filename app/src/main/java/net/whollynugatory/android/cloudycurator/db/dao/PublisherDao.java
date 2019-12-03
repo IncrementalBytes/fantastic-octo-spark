@@ -13,19 +13,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package net.whollynugatory.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.db.dao;
 
-import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.entity.PublisherEntity;
 
-import java.util.Comparator;
+import java.util.List;
 
-public class SortUtils {
+import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
 
-    public static class ByBookName implements Comparator<BookEntity> {
+@Dao
+public interface PublisherDao {
 
-        public int compare(BookEntity a, BookEntity b) {
+  @Query("SELECT COUNT(*) FROM publishers_table")
+  int count();
 
-            return a.Title.compareTo(b.Title);
-        }
-    }
+  @Query("SELECT * FROM publishers_table")
+  List<PublisherEntity> getAll();
+
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  void insert(PublisherEntity publisherEntity);
 }
