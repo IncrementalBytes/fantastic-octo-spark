@@ -19,8 +19,10 @@ import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import androidx.fragment.app.Fragment;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.viewmodel.BookViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 import net.whollynugatory.android.cloudycurator.R;
 
@@ -56,10 +59,6 @@ public class BookEntityListFragment extends Fragment {
 
   private OnBookEntityListListener mCallback;
 
-  private RecyclerView mRecyclerView;
-
-  private ArrayList<BookEntity> mBookEntityList;
-
   public static BookEntityListFragment newInstance() {
 
     Log.d(TAG, "++newInstance()");
@@ -70,7 +69,7 @@ public class BookEntityListFragment extends Fragment {
       Fragment Override(s)
    */
   @Override
-  public void onAttach(Context context) {
+  public void onAttach(@NonNull Context context) {
     super.onAttach(context);
 
     Log.d(TAG, "++onAttach(Context)");
@@ -94,7 +93,6 @@ public class BookEntityListFragment extends Fragment {
     super.onDestroy();
 
     Log.d(TAG, "++onDestroy()");
-    mBookEntityList = null;
   }
 
   @Override
@@ -102,125 +100,120 @@ public class BookEntityListFragment extends Fragment {
     super.onViewCreated(view, savedInstanceState);
 
     FloatingActionButton mAddButton = view.findViewById(R.id.book_fab_add);
-    mRecyclerView = view.findViewById(R.id.book_list_view);
+    RecyclerView mRecyclerView = view.findViewById(R.id.book_list_view);
     FloatingActionButton mSyncButton = view.findViewById(R.id.book_fab_sync);
 
+    BookEntityAdapter bookEntityAdapter = new BookEntityAdapter(getActivity());
+    mRecyclerView.setAdapter(bookEntityAdapter);
+    mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-    final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
-    mRecyclerView.setLayoutManager(manager);
+    mCallback.onBookEntityListPopulated(bookEntityAdapter.getItemCount());
 
     mAddButton.setOnClickListener(pickView -> mCallback.onBookEntityListAddBook());
     mSyncButton.setOnClickListener(pickView -> mCallback.onBookEntityListSynchronize());
 
-    updateUI();
-  }
+    BookViewModel bookViewModel = ViewModelProviders.of(this).get(BookViewModel.class);
 
-  /*
-      Private Method(s)
-   */
-  private void updateUI() {
-
-    if (mBookEntityList == null || mBookEntityList.size() == 0) {
-      mCallback.onBookEntityListPopulated(0);
-    } else {
-      Log.d(TAG, "++updateUI()");
-      BookEntityAdapter bookEntityAdapter = new BookEntityAdapter(mBookEntityList);
-      mRecyclerView.setAdapter(bookEntityAdapter);
-      mCallback.onBookEntityListPopulated(bookEntityAdapter.getItemCount());
-    }
+    bookViewModel.getAllBooks().observe(this, bookEntityAdapter::setBooks);
   }
 
   /**
    * Adapter class for BookEntity objects
    */
-  private class BookEntityAdapter extends RecyclerView.Adapter<BookEntityHolder> {
+  private class BookEntityAdapter extends RecyclerView.Adapter<BookEntityAdapter.BookEntityHolder> {
 
-    private final List<BookEntity> mBookEntityList;
+    private List<BookEntity> mBookEntityList;
 
-    BookEntityAdapter(List<BookEntity> bookEntityList) {
+    private final LayoutInflater mInflater;
 
-      mBookEntityList = bookEntityList;
+    BookEntityAdapter(Context context) {
+
+      mInflater = LayoutInflater.from(context);
+      mBookEntityList = new ArrayList<>();
     }
 
     @NonNull
     @Override
     public BookEntityHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
-      LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-      return new BookEntityHolder(layoutInflater, parent);
+      View itemView = mInflater.inflate(R.layout.book_item, parent, false);
+      return new BookEntityHolder(itemView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull BookEntityHolder holder, int position) {
 
-      BookEntity bookEntity = mBookEntityList.get(position);
-      holder.bind(bookEntity);
+      if (mBookEntityList != null) {
+        BookEntity bookEntity = mBookEntityList.get(position);
+//        holder.mAuthorsTextView.setText(bookEntity.getAuthorsDelimited());
+        holder.mCategoriesTextView.setVisibility(View.GONE);
+        holder.mISBNTextView.setText(
+          String.format(
+            Locale.US,
+            getString(R.string.isbn_format),
+            bookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? bookEntity.ISBN_8 : bookEntity.ISBN_13));
+        if (bookEntity.IsOwned) {
+          holder.mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_owned_dark, null));
+        } else {
+          holder.mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_not_owned_dark, null));
+        }
+
+        holder.mPublishedTextView.setVisibility(View.GONE);
+        holder.mPublisherTextView.setVisibility(View.GONE);
+        holder.mReadImage.setVisibility(bookEntity.HasRead ? View.VISIBLE : View.INVISIBLE);
+        holder.mTitleTextView.setText(bookEntity.Title);
+      } else {
+        // TODO: cover case of data not being ready yet
+      }
     }
 
     @Override
     public int getItemCount() {
-      return mBookEntityList.size();
-    }
-  }
 
-  /**
-   * Holder class for BookEntity objects
-   */
-  private class BookEntityHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
-    private final TextView mAuthorsTextView;
-    private final TextView mCategoriesTextView;
-    private final TextView mISBNTextView;
-    private final ImageView mOwnImage;
-    private final TextView mPublishedTextView;
-    private final TextView mPublisherTextView;
-    private final ImageView mReadImage;
-    private final TextView mTitleTextView;
-
-    private BookEntity mBookEntity;
-
-    BookEntityHolder(LayoutInflater inflater, ViewGroup parent) {
-      super(inflater.inflate(R.layout.book_item, parent, false));
-
-      mAuthorsTextView = itemView.findViewById(R.id.book_item_authors);
-      mCategoriesTextView = itemView.findViewById(R.id.book_item_categories);
-      mISBNTextView = itemView.findViewById(R.id.book_item_isbn);
-      mOwnImage = itemView.findViewById(R.id.book_image_own);
-      mPublishedTextView = itemView.findViewById(R.id.book_item_published);
-      mPublisherTextView = itemView.findViewById(R.id.book_item_publisher);
-      mReadImage = itemView.findViewById(R.id.book_image_read);
-      mTitleTextView = itemView.findViewById(R.id.book_item_title);
-
-      itemView.setOnClickListener(this);
-    }
-
-    void bind(BookEntity bookEntity) {
-
-      mBookEntity = bookEntity;
-
-//            mAuthorsTextView.setText(mBookEntity.getAuthorsDelimited());
-      mCategoriesTextView.setVisibility(View.GONE);
-      mISBNTextView.setText(
-        String.format(
-          Locale.US,
-          getString(R.string.isbn_format),
-          mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
-      if (mBookEntity.IsOwned) {
-        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_owned_dark, null));
+      if (mBookEntityList != null) {
+        return mBookEntityList.size();
       } else {
-        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_not_owned_dark, null));
+        return 0;
+      }
+    }
+
+    void setBooks(List<BookEntity> bookEntityList) {
+
+      mBookEntityList = bookEntityList;
+      notifyDataSetChanged();
+    }
+
+    class BookEntityHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+      private final TextView mAuthorsTextView;
+      private final TextView mCategoriesTextView;
+      private final TextView mISBNTextView;
+      private final ImageView mOwnImage;
+      private final TextView mPublishedTextView;
+      private final TextView mPublisherTextView;
+      private final ImageView mReadImage;
+      private final TextView mTitleTextView;
+
+      BookEntityHolder(View itemView) {
+        super(itemView);
+
+        mAuthorsTextView = itemView.findViewById(R.id.book_item_authors);
+        mCategoriesTextView = itemView.findViewById(R.id.book_item_categories);
+        mISBNTextView = itemView.findViewById(R.id.book_item_isbn);
+        mOwnImage = itemView.findViewById(R.id.book_image_own);
+        mPublishedTextView = itemView.findViewById(R.id.book_item_published);
+        mPublisherTextView = itemView.findViewById(R.id.book_item_publisher);
+        mReadImage = itemView.findViewById(R.id.book_image_read);
+        mTitleTextView = itemView.findViewById(R.id.book_item_title);
+
+        itemView.setOnClickListener(this);
       }
 
-      mPublishedTextView.setVisibility(View.GONE);
-      mPublisherTextView.setVisibility(View.GONE);
-      mReadImage.setVisibility(mBookEntity.HasRead ? View.VISIBLE : View.INVISIBLE);
-      mTitleTextView.setText(mBookEntity.Title);
-    }
+      @Override
+      public void onClick(View view) {
 
-    @Override
-    public void onClick(View view) {
-
-      mCallback.onBookEntityListItemSelected(mBookEntity);
+        // TODO: mCallback.onBookEntityListItemSelected(mBookEntity);
+      }
     }
   }
 }

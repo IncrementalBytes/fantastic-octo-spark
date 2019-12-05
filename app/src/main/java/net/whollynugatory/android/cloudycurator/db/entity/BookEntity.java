@@ -24,13 +24,15 @@ import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 @Entity(
   tableName = "books_table",
   foreignKeys = {
     @ForeignKey(entity = AuthorEntity.class, parentColumns = "id", childColumns = "author_id")
-  }
+  },
+  indices = {@Index(value = {"author_id"}, unique = true)}
 )
 public class BookEntity implements Serializable {
 

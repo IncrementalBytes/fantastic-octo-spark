@@ -20,8 +20,8 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
+import net.whollynugatory.android.cloudycurator.ui.AddActivity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
-import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 
 import org.json.JSONArray;
@@ -44,10 +44,10 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEn
 
   private static final String TAG = BaseActivity.BASE_TAG + RetrieveBookDataTask.class.getSimpleName();
 
-  private WeakReference<MainActivity> mActivityWeakReference;
+  private WeakReference<AddActivity> mActivityWeakReference;
   private BookEntity mQueryForBook;
 
-  public RetrieveBookDataTask(MainActivity context, BookEntity queryForBook) {
+  public RetrieveBookDataTask(AddActivity context, BookEntity queryForBook) {
 
     mActivityWeakReference = new WeakReference<>(context);
     mQueryForBook = queryForBook;
@@ -194,7 +194,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEn
   protected void onPostExecute(ArrayList<BookEntity> bookEntities) {
 
     Log.d(TAG, "++onPostExecute(ArrayList<BookEntity>)");
-    MainActivity activity = mActivityWeakReference.get();
+    AddActivity activity = mActivityWeakReference.get();
     if (activity == null) {
       Log.e(TAG, "MainActivity is null or detached.");
       return;

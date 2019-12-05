@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <SwitchPreference
+    android:defaultValue="false"
+    android:key="preference_is_librarian"
+    android:summary="Show image captured by camera for scanning."
+    android:title="Enable librarian interface"/>
+  <SwitchPreference
+    android:defaultValue="false"
+    android:key="preference_show_tutorial"
+    android:summary="Show tutorial about taking picture of book bar code."
+    android:title="Show tutorial"/>
+  <SwitchPreference
+    android:defaultValue="false"
+    android:key="preference_image_preview"
+    android:summary="Use realtime image capture instead of photo for bar code."
+    android:title="Image Capture (BETA)"/>
+  <SwitchPreference
+    android:defaultValue="false"
+    android:key="preference_force_exception"
+    android:summary="Force exception (Debug test)"
+    android:title="Force Exception (DEBUG)"/>
+
+</PreferenceScreen>

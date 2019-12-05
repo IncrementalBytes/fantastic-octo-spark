@@ -19,10 +19,11 @@ package net.whollynugatory.android.cloudycurator.models;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class User {
+public class User implements Serializable {
 
     public static final String ROOT = "Users";
 
@@ -36,12 +37,16 @@ public class User {
 
     public List<BookEntity> BookEntities;
 
+    public boolean ShowBarcodeHint;
+    public boolean UseImageCapture;
+
     public User() {
 
         Email = "";
         FullName = "";
         Id = BaseActivity.DEFAULT_ID;
         IsLibrarian = false;
+        ShowBarcodeHint = true;
     }
 
     @Override
