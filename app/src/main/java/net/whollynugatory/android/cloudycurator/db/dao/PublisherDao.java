@@ -33,6 +33,6 @@ public interface PublisherDao {
   @Query("SELECT * FROM publishers_table")
   List<PublisherEntity> getAll();
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
-  void insert(PublisherEntity publisherEntity);
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  long insert(PublisherEntity publisherEntity);
 }

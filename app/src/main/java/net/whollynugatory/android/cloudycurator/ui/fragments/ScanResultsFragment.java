@@ -41,8 +41,6 @@ public class ScanResultsFragment extends Fragment {
 
   public interface OnScanResultsListener {
 
-    void onScanResultsPopulated(int size);
-
     void onScanResultsItemSelected(String searchText);
   }
 
@@ -126,9 +124,8 @@ public class ScanResultsFragment extends Fragment {
       Log.d(TAG, "++updateUI()");
       ScanResultsAdapter scanResultsAdapter = new ScanResultsAdapter(mScanResults);
       mRecyclerView.setAdapter(scanResultsAdapter);
-      mCallback.onScanResultsPopulated(scanResultsAdapter.getItemCount());
     } else {
-      mCallback.onScanResultsPopulated(0);
+      Log.w(TAG, "No results found.");
     }
   }
 

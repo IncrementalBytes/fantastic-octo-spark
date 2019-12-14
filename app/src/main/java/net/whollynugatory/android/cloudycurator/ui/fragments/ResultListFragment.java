@@ -46,8 +46,6 @@ public class ResultListFragment extends Fragment {
     void onResultListActionComplete(String message);
 
     void onResultListItemSelected(BookEntity bookEntity);
-
-    void onResultListPopulated(int size);
   }
 
   private OnResultListListener mCallback;
@@ -70,7 +68,7 @@ public class ResultListFragment extends Fragment {
       Fragment Override(s)
    */
   @Override
-  public void onAttach(Context context) {
+  public void onAttach(@NonNull Context context) {
     super.onAttach(context);
 
     Log.d(TAG, "++onAttach(Context)");
@@ -120,12 +118,11 @@ public class ResultListFragment extends Fragment {
   private void updateUI() {
 
     if (mBookEntityList == null || mBookEntityList.size() == 0) {
-      mCallback.onResultListPopulated(0);
+      Log.w(TAG, "No results found.");
     } else {
       Log.d(TAG, "++updateUI()");
       ResultAdapter resultAdapter = new ResultAdapter(mBookEntityList);
       mRecyclerView.setAdapter(resultAdapter);
-      mCallback.onResultListPopulated(resultAdapter.getItemCount());
     }
   }
 
@@ -197,23 +194,23 @@ public class ResultListFragment extends Fragment {
 
       mBookEntity = bookEntity;
 
-//            mAuthorsTextView.setText(mBookEntity.getAuthorsDelimited());
-//            mCategoriesTextView.setText(
-//                String.format(
-//                    Locale.US,
-//                    getString(R.string.categories_format),
-//                    mBookEntity.getCategoriesDelimited()));
+      mAuthorsTextView.setText(mBookEntity.getAuthorsDelimited());
+      mCategoriesTextView.setText(
+        String.format(
+          Locale.US,
+          getString(R.string.categories_format),
+          mBookEntity.getCategoriesDelimited()));
       mISBNTextView.setText(
         String.format(
           Locale.US,
           getString(R.string.isbn_format),
           mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
       mPublishedTextView.setText(String.format(Locale.US, getString(R.string.published_date_format), mBookEntity.PublishedDate));
-//            if (mBookEntity.Publisher == null || mBookEntity.Publisher.isEmpty()) {
-//                mPublisherTextView.setVisibility(View.GONE);
-//            } else {
-//                mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.Publisher));
-//            }
+      if (mBookEntity.Publisher == null || mBookEntity.Publisher.isEmpty()) {
+        mPublisherTextView.setVisibility(View.GONE);
+      } else {
+        mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.Publisher));
+      }
 
       mTitleTextView.setText(mBookEntity.Title);
     }

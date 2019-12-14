@@ -33,6 +33,6 @@ public interface CategoryDao {
   @Query("SELECT * FROM categories_table")
   List<CategoryEntity> getAll();
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
-  void insert(CategoryEntity categoryEntity);
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  long insert(CategoryEntity categoryEntity);
 }

@@ -33,6 +33,6 @@ public interface AuthorDao {
   @Query("SELECT * FROM authors_table")
   List<AuthorEntity> getAll();
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
-  void insert(AuthorEntity authorEntity);
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  long insert(AuthorEntity authorEntity);
 }

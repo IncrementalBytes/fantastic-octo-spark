@@ -15,15 +15,18 @@
  */
 package net.whollynugatory.android.cloudycurator.db.entity;
 
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
@@ -42,13 +45,13 @@ public class BookEntity implements Serializable {
   public String VolumeId;
 
   @ColumnInfo(name = "author_id")
-  public int AuthorId;
+  public long AuthorId;
 
   @ColumnInfo(name = "category_id")
-  public int CategoryId;
+  public long CategoryId;
 
   @ColumnInfo(name = "publisher_id")
-  public int PublisherId;
+  public long PublisherId;
 
   @ColumnInfo(name = "title")
   public String Title;
@@ -77,6 +80,15 @@ public class BookEntity implements Serializable {
   @ColumnInfo(name = "updated_date")
   public long UpdatedDate;
 
+  @Ignore
+  public ArrayList<String> Authors;
+
+  @Ignore
+  public ArrayList<String> Categories;
+
+  @Ignore
+  public String Publisher;
+
   public BookEntity() {
 
     AddedDate = 0;
@@ -92,6 +104,10 @@ public class BookEntity implements Serializable {
     Title = "";
     UpdatedDate = 0;
     VolumeId = BaseActivity.DEFAULT_VOLUME_ID;
+
+    Authors = new ArrayList<>();
+    Categories = new ArrayList<>();
+    Publisher = "";
   }
 
   public BookEntity(BookEntity bookEntity) {
@@ -109,6 +125,10 @@ public class BookEntity implements Serializable {
     Title = bookEntity.Title;
     UpdatedDate = bookEntity.UpdatedDate;
     VolumeId = bookEntity.VolumeId;
+
+    Authors = new ArrayList<>(bookEntity.Authors);
+    Categories = new ArrayList<>(bookEntity.Categories);
+    Publisher = bookEntity.Publisher;
   }
 
   @Override
@@ -123,5 +143,55 @@ public class BookEntity implements Serializable {
       ISBN_13,
       String.valueOf(HasRead),
       String.valueOf(IsOwned));
+  }
+
+  @Ignore
+  public String getAuthorsDelimited() {
+
+    StringBuilder builder = new StringBuilder();
+    for (String author : Authors) {
+      builder.append(author);
+      builder.append(",");
+    }
+
+    if (builder.length() > 1) {
+      builder.deleteCharAt(builder.length() - 1);
+    }
+
+    return builder.toString();
+  }
+
+  @Ignore
+  public String getCategoriesDelimited() {
+
+    StringBuilder builder = new StringBuilder();
+    for (String category : Categories) {
+      builder.append(category);
+      builder.append(",");
+    }
+
+    if (builder.length() > 1) {
+      builder.deleteCharAt(builder.length() - 1);
+    }
+
+    return builder.toString();
+  }
+
+  @Ignore
+  public static BookEntity fromBookDetail(BookDetail bookDetail) {
+
+    BookEntity bookEntity = new BookEntity();
+    bookEntity.VolumeId = bookDetail.Id;
+    bookEntity.AuthorId = bookDetail.AuthorId;
+    bookEntity.CategoryId = bookDetail.CategoryId;
+    bookEntity.PublisherId = bookDetail.PublisherId;
+    bookEntity.ISBN_8 = bookDetail.ISBN_8;
+    bookEntity.ISBN_13 = bookDetail.ISBN_13;
+    bookEntity.LCCN = bookDetail.LCCN;
+    bookEntity.Title = bookDetail.Title;
+    bookEntity.PublishedDate = bookDetail.Published;
+    bookEntity.HasRead = bookDetail.HasRead;
+    bookEntity.IsOwned = bookDetail.IsOwned;
+    return bookEntity;
   }
 }

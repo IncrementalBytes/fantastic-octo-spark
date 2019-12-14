@@ -16,10 +16,10 @@
 package net.whollynugatory.android.cloudycurator.db.dao;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 
 import java.util.List;
 
-import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -31,9 +31,15 @@ public interface BookDao {
   @Query("SELECT COUNT(*) FROM books_table")
   int count();
 
-  @Query("SELECT * FROM books_table")
-  LiveData<List<BookEntity>> getAll();
+  @Query("DELETE FROM books_table WHERE volume_id = :volumeId")
+  int delete(String volumeId);
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  @Query("SELECT * FROM bookdetail WHERE id = :volumeId")
+  BookDetail get(String volumeId);
+
+  @Query("SELECT * FROM bookdetail")
+  List<BookDetail> getAll();
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insert(BookEntity bookEntity);
 }

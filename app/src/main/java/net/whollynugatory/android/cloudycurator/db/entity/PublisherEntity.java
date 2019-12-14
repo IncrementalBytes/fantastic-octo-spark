@@ -13,7 +13,7 @@ public class PublisherEntity implements Serializable {
 
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
-  public int Id;
+  public long Id;
 
   @ColumnInfo(name = "publisher_string")
   public String PublisherString;
@@ -21,5 +21,10 @@ public class PublisherEntity implements Serializable {
   public PublisherEntity() {
 
     PublisherString = "";
+  }
+
+  public PublisherEntity(String publisherString) {
+
+    PublisherString = publisherString;
   }
 }

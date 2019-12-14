@@ -14,16 +14,13 @@
  *    limitations under the License.
  */
 
-package net.whollynugatory.android.cloudycurator.models;
+package net.whollynugatory.android.cloudycurator.db.entity;
 
-import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
-public class User implements Serializable {
+public class UserEntity implements Serializable {
 
     public static final String ROOT = "Users";
 
@@ -35,12 +32,11 @@ public class User implements Serializable {
 
     public boolean IsLibrarian;
 
-    public List<BookEntity> BookEntities;
-
     public boolean ShowBarcodeHint;
+
     public boolean UseImageCapture;
 
-    public User() {
+    public UserEntity() {
 
         Email = "";
         FullName = "";

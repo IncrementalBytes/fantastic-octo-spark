@@ -22,11 +22,10 @@ import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.CategoryEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.PublisherEntity;
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.List;
-
-import androidx.lifecycle.LiveData;
 
 public class CuratorRepository {
 
@@ -81,9 +80,19 @@ public class CuratorRepository {
     return mDatabase.bookDao().count();
   }
 
-  public LiveData<List<BookEntity>> getAllBooks() {
+  public void deleteBook(String volumeId) {
+
+    CuratorDatabase.databaseWriteExecutor.execute(() -> mDatabase.bookDao().delete(volumeId));
+  }
+
+  public List<BookDetail> getAllBooks() {
 
     return mDatabase.bookDao().getAll();
+  }
+
+  public BookDetail getBook(String volumeId) {
+
+    return mDatabase.bookDao().get(volumeId);
   }
 
   public void insertBookEntity(BookEntity bookEntity) {

@@ -20,7 +20,8 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
-import net.whollynugatory.android.cloudycurator.ui.AddActivity;
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
+import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 
@@ -40,23 +41,24 @@ import java.util.Locale;
 /*
     Retrieve data task; querying URLs for data
  */
-public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEntity>> {
+public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntity>> {
 
-  private static final String TAG = BaseActivity.BASE_TAG + RetrieveBookDataTask.class.getSimpleName();
+  private static final String TAG = BaseActivity.BASE_TAG + "GoogleBookAPITask";
 
-  private WeakReference<AddActivity> mActivityWeakReference;
-  private BookEntity mQueryForBook;
+  private WeakReference<MainActivity> mActivityWeakReference;
+  private BookDetail mQueryForBook;
 
-  public RetrieveBookDataTask(AddActivity context, BookEntity queryForBook) {
+  public GoogleBookApiTask(MainActivity activityContext, BookDetail queryForBook) {
 
-    mActivityWeakReference = new WeakReference<>(context);
+    Log.d(TAG, "++GoogleBookApiTask(MainActivity, BookEntity)");
+    mActivityWeakReference = new WeakReference<>(activityContext);
     mQueryForBook = queryForBook;
   }
 
   protected ArrayList<BookEntity> doInBackground(Void... params) {
 
+    Log.d(TAG, "++doInBackground(Void...)");
     ArrayList<BookEntity> bookEntities = new ArrayList<>();
-
     String searchParam = null;
     if (!mQueryForBook.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) {
       searchParam = String.format(Locale.US, "isbn:%s", mQueryForBook.ISBN_8);
@@ -131,21 +133,18 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEn
           JSONObject volumeInfo = item.getJSONObject("volumeInfo");
 
           BookEntity bookEntity = new BookEntity();
-
-          // TODO: find this author object in authors_table
           if (volumeInfo.has("authors")) {
-//            JSONArray infoArray = volumeInfo.getJSONArray("authors");
-//            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
-//              cloudyBook.Authors.add((String) infoArray.get(subIndex));
-//            }
+            JSONArray infoArray = volumeInfo.getJSONArray("authors");
+            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+              bookEntity.Authors.add((String) infoArray.get(subIndex));
+            }
           }
 
-          // TODO: find this category object in categories_table
           if (volumeInfo.has("categories")) {
-//            JSONArray infoArray = volumeInfo.getJSONArray("categories");
-//            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
-//              cloudyBook.Categories.add((String) infoArray.get(subIndex));
-//            }
+            JSONArray infoArray = volumeInfo.getJSONArray("categories");
+            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+              bookEntity.Categories.add((String) infoArray.get(subIndex));
+            }
           }
 
           if (volumeInfo.has("industryIdentifiers")) {
@@ -166,9 +165,8 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEn
             bookEntity.PublishedDate = volumeInfo.getString("publishedDate");
           }
 
-          // TODO: find this publisher object in publishers_table
           if (volumeInfo.has("publisher")) {
-//            bookEntity.Publisher = volumeInfo.getString("publisher");
+            bookEntity.Publisher = volumeInfo.getString("publisher");
           }
 
           // if title or id are missing, allow exception to be thrown to skip
@@ -194,7 +192,7 @@ public class RetrieveBookDataTask extends AsyncTask<Void, Void, ArrayList<BookEn
   protected void onPostExecute(ArrayList<BookEntity> bookEntities) {
 
     Log.d(TAG, "++onPostExecute(ArrayList<BookEntity>)");
-    AddActivity activity = mActivityWeakReference.get();
+    MainActivity activity = mActivityWeakReference.get();
     if (activity == null) {
       Log.e(TAG, "MainActivity is null or detached.");
       return;

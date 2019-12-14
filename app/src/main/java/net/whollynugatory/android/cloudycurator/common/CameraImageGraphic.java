@@ -13,33 +13,25 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package net.whollynugatory.android.cloudycurator.db.entity;
+package net.whollynugatory.android.cloudycurator.common;
 
-import java.io.Serializable;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
+public class CameraImageGraphic extends GraphicOverlay.Graphic {
 
-@Entity(
-  tableName = "categories_table"
-)
-public class CategoryEntity implements Serializable {
+  private final Bitmap bitmap;
 
-  @PrimaryKey(autoGenerate = true)
-  @ColumnInfo(name = "id")
-  public long Id;
+  CameraImageGraphic(GraphicOverlay overlay, Bitmap bitmap) {
+    super(overlay);
 
-  @ColumnInfo(name = "category_string")
-  public String CategoryString;
-
-  public CategoryEntity() {
-
-    CategoryString = "";
+    this.bitmap = bitmap;
   }
 
-  public CategoryEntity(String categoryString) {
+  @Override
+  public void draw(Canvas canvas) {
 
-    CategoryString = categoryString;
+    canvas.drawBitmap(bitmap, null, new Rect(0, 0, canvas.getWidth(), canvas.getHeight()), null);
   }
 }

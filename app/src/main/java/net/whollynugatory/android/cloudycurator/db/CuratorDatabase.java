@@ -33,6 +33,7 @@ import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.CategoryEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.PublisherEntity;
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,7 @@ import java.util.concurrent.Executors;
 
 @Database(
   entities = {AuthorEntity.class, BookEntity.class, CategoryEntity.class, PublisherEntity.class},
+  views = {BookDetail.class},
   version = 1,
   exportSchema = false
 )

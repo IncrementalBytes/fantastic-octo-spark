@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <net.frostedbytes.android.comiccollector.common.CameraSourcePreview
+    android:id="@+id/camera_preview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <net.frostedbytes.android.comiccollector.common.GraphicOverlay
+      android:id="@+id/camera_graphic_overlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
+  </net.frostedbytes.android.comiccollector.common.CameraSourcePreview>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

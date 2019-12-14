@@ -27,7 +27,7 @@ import java.util.Locale;
 import net.whollynugatory.android.cloudycurator.BuildConfig;
 import net.whollynugatory.android.cloudycurator.R;
 import net.whollynugatory.android.cloudycurator.common.CloudyCuratorException;
-import net.whollynugatory.android.cloudycurator.models.User;
+import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import androidx.annotation.NonNull;
@@ -48,9 +48,9 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat implements 
 
   private OnPreferencesListener mCallback;
 
-  private User mUser;
+  private UserEntity mUser;
 
-  public static UserPreferenceFragment newInstance(User user) {
+  public static UserPreferenceFragment newInstance(UserEntity user) {
 
     Log.d(TAG, "++newInstance()");
     UserPreferenceFragment fragment = new UserPreferenceFragment();
@@ -82,7 +82,7 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat implements 
     Log.d(TAG, "++onCreate(Bundle)");
     Bundle arguments = getArguments();
     if (arguments != null) {
-      mUser = (User)arguments.getSerializable(BaseActivity.ARG_USER);
+      mUser = (UserEntity) arguments.getSerializable(BaseActivity.ARG_USER);
     } else {
       Log.e(TAG, "Arguments were null.");
     }

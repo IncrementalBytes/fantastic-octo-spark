@@ -13,7 +13,7 @@ public class AuthorEntity implements Serializable {
 
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
-  public int Id;
+  public long Id;
 
   @ColumnInfo(name = "author_string")
   public String AuthorString;
@@ -21,5 +21,10 @@ public class AuthorEntity implements Serializable {
   public AuthorEntity() {
 
     AuthorString = "";
+  }
+
+  public AuthorEntity(String authorString) {
+
+    AuthorString = authorString;
   }
 }

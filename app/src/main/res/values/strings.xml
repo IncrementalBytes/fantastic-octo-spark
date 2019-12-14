@@ -52,13 +52,13 @@
   <string name="categories_format">Categories: %s</string>
   <string name="user_has_read_this_book">User has read this book.</string>
   <string name="user_owns_this_book">User owns this book.</string>
-  <string name="select_book">Select a Book to Add</string>
-  <string name="select_text_search">Select Text</string>
+  <string name="fragment_select_book">Select a Book to Add</string>
+  <string name="fragment_select_text">Select Text</string>
   <string name="librarian">Librarian</string>
   <string name="scan_photo">Scan Photo</string>
   <string name="check_back_later">Check back later!</string>
-  <string name="librarian_fragment">Break Room</string>
-  <string name="debug_file_name">20190511_060443.jpg</string>
+  <string name="fragment_librarian">Break Room</string>
+  <string name="fragment_book_update">Update Book</string>
   <string name="err_image_not_loaded">Image not loaded.</string>
   <string name="err_bar_code_task">Bar code detection task failed.</string>
   <string name="err_no_bar_code_or_text">Did not find any bar codes/text in image.</string>
@@ -79,21 +79,24 @@
   <string name="hint_barcode">Picture of barcode.</string>
   <string name="hint_tutorial">To add a book, take a photo of the bar code. An example of a bar code:</string>
   <string name="title_tutorial">Tutorial</string>
-  <string name="title_gathering_data">Getting data</string>
+  <string name="title_gathering_data">Getting Data</string>
   <string name="err_bar_code_not_found">Barcode not found in image.</string>
   <string name="retry">Retry</string>
   <string name="unknown_request_code">Unknown request code.</string>
   <string name="err_unknown_user">Unknown user.</string>
   <string name="permission_camera">Permission needed for capturing barcode images for processing.</string>
+  <string name="permission_storage">Permission needed for book database.</string>
+  <string name="permission_default">Permission needed for application to function properly.</string>
 
   <string name="debug_prompt">Select image file to use:</string>
   <string name="hint_search_isbn">8 or 13 digit ISBN number.</string>
   <string name="hint_example">Example:</string>
   <string name="hint_img_barcode">Sample ISNB barcode.</string>
+  <string name="title_camera_source">Camera</string>
+  <string name="menu_preferences">Preferences</string>
+  <string name="message_unknown_activity_result">Unfortunately an unknown error occurred. Please try again later.</string>
   <string-array name="debug_scenario_array">
+    <item>scenario_barcode.jpg</item>
     <item>scenario_barcode_not_found.jpg</item>
-    <item>scenario_new_comic.jpg</item>
-    <item>scenario_unknown_publisher.jpg</item>
-    <item>scenario_unknown_series.jpg</item>
   </string-array>
 </resources>
