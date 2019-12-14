@@ -1,107 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:layout_margin="1dp"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:background="@color/colorPrimaryDark"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@+id/book_item_title"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:ellipsize="end"
+    android:gravity="start"
+    android:text="@string/placeholder"
+    android:textAlignment="viewStart"
+    android:textColor="@android:color/white"
+    android:textSize="24sp"
+    android:textStyle="bold"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+  <TextView
+    android:id="@+id/book_item_authors"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:ellipsize="end"
+    android:text="@string/placeholder"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="@+id/book_item_image_delete"
+    app:layout_constraintBottom_toBottomOf="@id/book_item_image_delete"/>
+
+  <ImageButton
+    android:id="@+id/book_item_image_delete"
+    style="@android:style/Widget.Holo.Light.ImageButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_view_margin"
+    android:contentDescription="@string/hint_remove_book"
+    android:padding="8dp"
+    android:src="@drawable/ic_delete_dark"
+    app:layout_constraintBottom_toTopOf="@id/book_item_publisher"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/book_item_title" />
+
+  <TextView
+    android:id="@+id/book_item_published"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:text="@string/published_date_format"
+    android:textAlignment="viewStart"
+    app:layout_constraintBottom_toTopOf="@id/book_item_categories"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/book_item_authors" />
+
+  <TextView
+    android:id="@+id/book_item_publisher"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:text="@string/publisher_format"
+    android:textAlignment="viewEnd"
+    app:layout_constraintBottom_toTopOf="@id/book_item_categories"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/book_item_authors" />
+
+  <TextView
+    android:id="@+id/book_item_categories"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="1dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/colorPrimaryDark"
-    android:orientation="vertical">
+    android:layout_margin="8dp"
+    android:text="@string/categories_format"
+    android:textAlignment="viewStart"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintBottom_toTopOf="@id/book_item_isbn"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/book_item_publisher" />
 
-    <TextView
-        android:id="@+id/book_item_title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:ellipsize="end"
-        android:gravity="start"
-        android:text="@string/placeholder"
-        android:textAlignment="viewStart"
-        android:textColor="@android:color/white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+  <TextView
+    android:id="@+id/book_item_text_own"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_view_margin"
+    android:text="@string/owned"
+    app:layout_constraintBottom_toBottomOf="@id/book_item_image_own"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="@id/book_item_image_own" />
+  <ImageView
+    android:id="@+id/book_item_image_own"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_image_margin"
+    android:contentDescription="@string/user_owns_this_book"
+    android:src="@drawable/ic_unchecked_dark"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toEndOf="@id/book_item_text_own"
+    app:layout_constraintTop_toBottomOf="@id/book_item_categories"/>
+  <TextView
+    android:id="@+id/book_item_text_read"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_view_margin"
+    android:text="@string/read"
+    app:layout_constraintBottom_toBottomOf="@id/book_item_image_read"
+    app:layout_constraintStart_toEndOf="@id/book_item_image_own"
+    app:layout_constraintTop_toTopOf="@id/book_item_image_read"/>
+  <ImageView
+    android:id="@+id/book_item_image_read"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_image_margin"
+    android:contentDescription="@string/user_read_this_book"
+    android:src="@drawable/ic_unchecked_dark"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toEndOf="@id/book_item_text_read"
+    app:layout_constraintTop_toBottomOf="@id/book_item_categories"/>
 
-    <TextView
-        android:id="@+id/book_item_authors"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:ellipsize="end"
-        android:text="@string/placeholder"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_item_title"
-        app:layout_constraintBottom_toTopOf="@id/book_item_publisher"/>
-
-    <TextView
-        android:id="@+id/book_item_published"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="@string/published_date_format"
-        android:textAlignment="viewStart"
-        app:layout_constraintBottom_toTopOf="@id/book_item_categories"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_item_authors" />
-
-    <TextView
-        android:id="@+id/book_item_publisher"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="@string/publisher_format"
-        android:textAlignment="viewEnd"
-        app:layout_constraintBottom_toTopOf="@id/book_item_categories"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_item_authors" />
-
-    <TextView
-        android:id="@+id/book_item_categories"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:text="@string/categories_format"
-        android:textAlignment="viewStart"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/book_item_isbn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_item_publisher" />
-
-    <ImageView
-        android:id="@+id/book_image_read"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/default_view_margin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/book_item_categories"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:src="@drawable/ic_read_dark"
-        android:contentDescription="@string/user_has_read_this_book" />
-
-    <ImageView
-        android:id="@+id/book_image_own"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/default_view_margin"
-        app:layout_constraintStart_toEndOf="@id/book_image_read"
-        app:layout_constraintTop_toBottomOf="@id/book_item_categories"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:src="@drawable/ic_owned_dark"
-        android:contentDescription="@string/user_owns_this_book" />
-
-    <TextView
-        android:id="@+id/book_item_isbn"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="@string/isbn_format"
-        android:textAlignment="viewEnd"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/book_item_categories" />
+  <TextView
+    android:id="@+id/book_item_isbn"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:layout_marginEnd="8dp"
+    android:text="@string/isbn_format"
+    android:textAlignment="viewEnd"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/book_item_categories" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -20,6 +20,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -47,7 +48,7 @@ public class BookEntityListFragment extends Fragment {
   public interface OnBookEntityListListener {
 
     void onBookEntityListAddBook();
-
+    void onBookEntityListDeleteBook(String volumeId);
     void onBookEntityListItemSelected(BookDetail bookDetail);
   }
 
@@ -193,6 +194,7 @@ public class BookEntityListFragment extends Fragment {
 
     private final TextView mAuthorsTextView;
     private final TextView mCategoriesTextView;
+    private final ImageView mDeleteImage;
     private final TextView mISBNTextView;
     private final ImageView mOwnImage;
     private final TextView mPublishedTextView;
@@ -207,11 +209,12 @@ public class BookEntityListFragment extends Fragment {
 
       mAuthorsTextView = itemView.findViewById(R.id.book_item_authors);
       mCategoriesTextView = itemView.findViewById(R.id.book_item_categories);
+      mDeleteImage = itemView.findViewById(R.id.book_item_image_delete);
       mISBNTextView = itemView.findViewById(R.id.book_item_isbn);
-      mOwnImage = itemView.findViewById(R.id.book_image_own);
+      mOwnImage = itemView.findViewById(R.id.book_item_image_own);
       mPublishedTextView = itemView.findViewById(R.id.book_item_published);
       mPublisherTextView = itemView.findViewById(R.id.book_item_publisher);
-      mReadImage = itemView.findViewById(R.id.book_image_read);
+      mReadImage = itemView.findViewById(R.id.book_item_image_read);
       mTitleTextView = itemView.findViewById(R.id.book_item_title);
 
       itemView.setOnClickListener(this);
@@ -221,22 +224,46 @@ public class BookEntityListFragment extends Fragment {
 
       mBookDetail = bookDetail;
 
-        mAuthorsTextView.setText(bookDetail.Authors);
+      mDeleteImage.setOnClickListener(v -> {
+        if (getActivity() != null) {
+          String message = String.format(Locale.US, getString(R.string.remove_specific_book_message), mBookDetail.Title);
+          if (mBookDetail.Title.isEmpty()) {
+            message = getString(R.string.remove_book_message);
+          }
+
+          AlertDialog removeBookDialog = new AlertDialog.Builder(getActivity())
+            .setMessage(message)
+            .setPositiveButton(android.R.string.yes, (dialog, which) -> mCallback.onBookEntityListDeleteBook(mBookDetail.Id))
+            .setNegativeButton(android.R.string.no, null)
+            .create();
+          removeBookDialog.show();
+        } else {
+          Log.w(TAG, "Unable to remove book at this time.");
+        }
+      });
+
+      mAuthorsTextView.setText(bookDetail.Authors);
       mCategoriesTextView.setVisibility(View.GONE);
       mISBNTextView.setText(
         String.format(
           Locale.US,
           getString(R.string.isbn_format),
           bookDetail.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? bookDetail.ISBN_8 : bookDetail.ISBN_13));
-      if (bookDetail.IsOwned) {
-        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_owned_dark, null));
+
+      if (mBookDetail.IsOwned) {
+        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_checked_dark, null));
       } else {
-        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_not_owned_dark, null));
+        mOwnImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_unchecked_dark, null));
+      }
+
+      if (mBookDetail.HasRead) {
+        mReadImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_checked_dark, null));
+      } else {
+        mReadImage.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_unchecked_dark, null));
       }
 
       mPublishedTextView.setVisibility(View.GONE);
       mPublisherTextView.setVisibility(View.GONE);
-      mReadImage.setVisibility(bookDetail.HasRead ? View.VISIBLE : View.INVISIBLE);
       mTitleTextView.setText(bookDetail.Title);
     }
 

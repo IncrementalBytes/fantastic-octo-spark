@@ -182,9 +182,12 @@ public class ResultListFragment extends Fragment {
       mPublishedTextView = itemView.findViewById(R.id.book_item_published);
       mPublisherTextView = itemView.findViewById(R.id.book_item_publisher);
       mTitleTextView = itemView.findViewById(R.id.book_item_title);
-      ImageView readImage = itemView.findViewById(R.id.book_image_read);
+
+      ImageView deleteImage = itemView.findViewById(R.id.book_item_image_delete);
+      deleteImage.setVisibility(View.GONE);
+      ImageView readImage = itemView.findViewById(R.id.book_item_image_read);
       readImage.setVisibility(View.GONE);
-      ImageView ownImage = itemView.findViewById(R.id.book_image_own);
+      ImageView ownImage = itemView.findViewById(R.id.book_item_image_own);
       ownImage.setVisibility(View.GONE);
 
       itemView.setOnClickListener(this);

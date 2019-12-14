@@ -74,12 +74,7 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat implements 
       throw new ClassCastException(
         String.format(Locale.US, "Missing interface implementations for %s", context.toString()));
     }
-  }
-  @Override
-  public void onCreate(Bundle savedBundleInstance) {
-    super.onCreate(savedBundleInstance);
 
-    Log.d(TAG, "++onCreate(Bundle)");
     Bundle arguments = getArguments();
     if (arguments != null) {
       mUser = (UserEntity) arguments.getSerializable(BaseActivity.ARG_USER);

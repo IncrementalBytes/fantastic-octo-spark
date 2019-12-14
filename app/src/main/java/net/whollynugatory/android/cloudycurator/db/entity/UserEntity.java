@@ -43,6 +43,7 @@ public class UserEntity implements Serializable {
         Id = BaseActivity.DEFAULT_ID;
         IsLibrarian = false;
         ShowBarcodeHint = true;
+        UseImageCapture = false;
     }
 
     @Override

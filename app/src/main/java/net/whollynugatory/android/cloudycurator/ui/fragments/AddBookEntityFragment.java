@@ -11,8 +11,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.common.GetPropertyIdsTask;
-import net.whollynugatory.android.cloudycurator.db.CuratorDatabase;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 

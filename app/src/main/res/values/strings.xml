@@ -95,6 +95,10 @@
   <string name="title_camera_source">Camera</string>
   <string name="menu_preferences">Preferences</string>
   <string name="message_unknown_activity_result">Unfortunately an unknown error occurred. Please try again later.</string>
+  <string name="hint_remove_book">Remove book from library?</string>
+  <string name="user_read_this_book">User has read this book.</string>
+  <string name="remove_specific_book_message">Remove \'%s\' from your library?</string>
+  <string name="fragment_preferences">User Preferences</string>
   <string-array name="debug_scenario_array">
     <item>scenario_barcode.jpg</item>
     <item>scenario_barcode_not_found.jpg</item>

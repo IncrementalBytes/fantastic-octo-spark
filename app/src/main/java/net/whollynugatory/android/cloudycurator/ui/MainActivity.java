@@ -64,6 +64,7 @@ import android.widget.Spinner;
 
 import net.whollynugatory.android.cloudycurator.BuildConfig;
 import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.common.CloudyCuratorException;
 import net.whollynugatory.android.cloudycurator.common.GetDataTask;
 import net.whollynugatory.android.cloudycurator.common.GetPropertyIdsTask;
 import net.whollynugatory.android.cloudycurator.common.QueryBookDatabaseTask;
@@ -100,7 +101,8 @@ public class MainActivity extends BaseActivity implements
   ResultListFragment.OnResultListListener,
   ScanResultsFragment.OnScanResultsListener,
   TutorialFragment.OnTutorialListener,
-  UpdateBookEntityFragment.OnUpdateBookEntityListener {
+  UpdateBookEntityFragment.OnUpdateBookEntityListener,
+  UserPreferenceFragment.OnPreferencesListener {
 
   private static final String TAG = BASE_TAG + "MainActivity";
 
@@ -147,6 +149,8 @@ public class MainActivity extends BaseActivity implements
           setTitle(R.string.fragment_select_text);
         } else if (fragmentClassName.equals(UpdateBookEntityFragment.class.getName())) {
           setTitle(R.string.fragment_book_update);
+        } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
+          setTitle(getString(R.string.fragment_preferences));
         }
       }
     });
@@ -363,6 +367,14 @@ public class MainActivity extends BaseActivity implements
   }
 
   @Override
+  public void onBookEntityListDeleteBook(String volumeId) {
+
+    Log.d(TAG, "++onBookEntityListDeleteBook(String)");
+    CuratorRepository.getInstance(this).deleteBook(volumeId);
+    new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+  }
+
+  @Override
   public void onBookEntityListItemSelected(BookDetail bookDetail) {
 
     Log.d(TAG, "++onBookEntityListItemSelected(BookDetail)");
@@ -533,6 +545,30 @@ public class MainActivity extends BaseActivity implements
       BookEntity bookEntity = BookEntity.fromBookDetail(updatedBookDetail);
       CuratorRepository.getInstance(this).insertBookEntity(bookEntity);
       new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+    }
+  }
+
+  @Override
+  public void onPreferenceChanged() throws CloudyCuratorException {
+
+    Log.d(TAG, "++onPreferenceChanged()");
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    if (preferences.contains(UserPreferenceFragment.IS_LIBRARIAN_PREFERENCE)) {
+      mUser.IsLibrarian = preferences.getBoolean(UserPreferenceFragment.IS_LIBRARIAN_PREFERENCE, false);
+    }
+
+    if (preferences.contains(UserPreferenceFragment.SHOW_TUTORIAL_PREFERENCE)) {
+      mUser.ShowBarcodeHint = preferences.getBoolean(UserPreferenceFragment.SHOW_TUTORIAL_PREFERENCE, true);
+    }
+
+    if (preferences.contains(UserPreferenceFragment.USE_IMAGE_PREVIEW_PREFERENCE)) {
+      mUser.UseImageCapture = preferences.getBoolean(UserPreferenceFragment.USE_IMAGE_PREVIEW_PREFERENCE, false);
+    }
+
+    if (preferences.contains(UserPreferenceFragment.FORCE_EXCEPTION_PREFERENCE)) {
+      if (BuildConfig.DEBUG) {
+        throw new CloudyCuratorException("Testing the exceptional expection-ness");
+      }
     }
   }
 
