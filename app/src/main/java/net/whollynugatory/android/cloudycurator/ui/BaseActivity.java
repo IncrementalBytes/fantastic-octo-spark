@@ -21,12 +21,14 @@ public class BaseActivity extends AppCompatActivity {
 
   public static final String ARG_BARCODE_HINT = "barcode_hint";
   public static final String ARG_BOOK = "book";
+  public static final String ARG_BOOK_DETAIL = "book_detail";
   public static final String ARG_BOOK_LIST = "book_list";
   public static final String ARG_DEBUG_FILE_NAME = "debug_file_name";
   public static final String ARG_EMAIL = "email";
   public static final String ARG_FIREBASE_USER_ID = "firebase_user_id";
   public static final String ARG_MESSAGE = "message";
   public static final String ARG_MESSAGE_ID = "message_id";
+  public static final String ARG_RESULT_LIST = "result_list";
   public static final String ARG_SCAN_RESULTS = "scan_results";
   public static final String ARG_USER = "user";
   public static final String ARG_USER_NAME = "user_name";

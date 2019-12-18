@@ -13,25 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package net.whollynugatory.android.cloudycurator.common;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Rect;
+package net.whollynugatory.android.cloudycurator.camera;
 
-public class CameraImageGraphic extends GraphicOverlay.Graphic {
+import java.nio.ByteBuffer;
 
-  private final Bitmap bitmap;
+/**
+ * An interface to process the input camera frame and perform detection on it.
+ **/
+public interface FrameProcessor {
 
-  CameraImageGraphic(GraphicOverlay overlay, Bitmap bitmap) {
-    super(overlay);
+  /** Processes the input frame with the underlying detector. */
+  void process(ByteBuffer data, FrameMetadata frameMetadata, GraphicOverlay graphicOverlay);
 
-    this.bitmap = bitmap;
-  }
-
-  @Override
-  public void draw(Canvas canvas) {
-
-    canvas.drawBitmap(bitmap, null, new Rect(0, 0, canvas.getWidth(), canvas.getHeight()), null);
-  }
+  /** Stops the underlying detector and release resources. */
+  void stop();
 }

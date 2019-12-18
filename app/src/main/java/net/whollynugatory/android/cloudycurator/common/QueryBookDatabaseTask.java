@@ -7,6 +7,7 @@ import net.whollynugatory.android.cloudycurator.db.CuratorRepository;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
+import net.whollynugatory.android.cloudycurator.ui.LiveBarcodeScanningActivity;
 import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 
 import java.lang.ref.WeakReference;
@@ -15,13 +16,13 @@ public class QueryBookDatabaseTask extends AsyncTask<Void, Void, BookDetail> {
 
   private static final String TAG = BaseActivity.BASE_TAG + "QueryBookDatabaseTask";
 
-  private WeakReference<MainActivity> mActivityWeakReference;
+  private WeakReference<LiveBarcodeScanningActivity> mActivityWeakReference;
   private BookEntity mBookEntity;
   private CuratorRepository mRepository;
 
-  public QueryBookDatabaseTask(MainActivity activityContext, CuratorRepository repository, BookEntity bookEntity) {
+  public QueryBookDatabaseTask(LiveBarcodeScanningActivity activityContext, CuratorRepository repository, BookEntity bookEntity) {
 
-    Log.d(TAG, "++QueryBookDatabaseTask(MainActivity, CuratorRepository, BookDetail)");
+    Log.d(TAG, "++QueryBookDatabaseTask(LiveBarcodeScanningActivity, CuratorRepository, BookDetail)");
     mActivityWeakReference = new WeakReference<>(activityContext);
     mBookEntity = bookEntity;
     mRepository = repository;
@@ -37,7 +38,7 @@ public class QueryBookDatabaseTask extends AsyncTask<Void, Void, BookDetail> {
   protected void onPostExecute(BookDetail bookDetail) {
 
     Log.d(TAG, "++onPostExecute(BookEntity)");
-    MainActivity activity = mActivityWeakReference.get();
+    LiveBarcodeScanningActivity activity = mActivityWeakReference.get();
     if (activity == null) {
       Log.e(TAG, "MainActivity is null or detached.");
       return;

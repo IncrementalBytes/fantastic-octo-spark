@@ -21,6 +21,7 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
+import net.whollynugatory.android.cloudycurator.ui.LiveBarcodeScanningActivity;
 import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
@@ -45,10 +46,10 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
 
   private static final String TAG = BaseActivity.BASE_TAG + "GoogleBookAPITask";
 
-  private WeakReference<MainActivity> mActivityWeakReference;
+  private WeakReference<LiveBarcodeScanningActivity> mActivityWeakReference;
   private BookDetail mQueryForBook;
 
-  public GoogleBookApiTask(MainActivity activityContext, BookDetail queryForBook) {
+  public GoogleBookApiTask(LiveBarcodeScanningActivity activityContext, BookDetail queryForBook) {
 
     Log.d(TAG, "++GoogleBookApiTask(MainActivity, BookEntity)");
     mActivityWeakReference = new WeakReference<>(activityContext);
@@ -192,7 +193,7 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
   protected void onPostExecute(ArrayList<BookEntity> bookEntities) {
 
     Log.d(TAG, "++onPostExecute(ArrayList<BookEntity>)");
-    MainActivity activity = mActivityWeakReference.get();
+    LiveBarcodeScanningActivity activity = mActivityWeakReference.get();
     if (activity == null) {
       Log.e(TAG, "MainActivity is null or detached.");
       return;

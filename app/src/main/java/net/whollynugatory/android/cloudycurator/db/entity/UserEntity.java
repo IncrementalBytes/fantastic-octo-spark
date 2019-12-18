@@ -30,20 +30,11 @@ public class UserEntity implements Serializable {
 
     public String Id;
 
-    public boolean IsLibrarian;
-
-    public boolean ShowBarcodeHint;
-
-    public boolean UseImageCapture;
-
     public UserEntity() {
 
         Email = "";
         FullName = "";
         Id = BaseActivity.DEFAULT_ID;
-        IsLibrarian = false;
-        ShowBarcodeHint = true;
-        UseImageCapture = false;
     }
 
     @Override

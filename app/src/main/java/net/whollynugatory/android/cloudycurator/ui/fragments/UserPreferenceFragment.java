@@ -36,9 +36,6 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat implements 
 
   private static final String TAG = BaseActivity.BASE_TAG + "UserPreferenceFragment";
 
-  public static final String IS_LIBRARIAN_PREFERENCE = "preference_is_librarian";
-  public static final String SHOW_TUTORIAL_PREFERENCE = "preference_show_tutorial";
-  public static final String USE_IMAGE_PREVIEW_PREFERENCE = "preference_image_preview";
   public static final String FORCE_EXCEPTION_PREFERENCE = "preference_force_exception";
 
   public interface OnPreferencesListener {
@@ -88,22 +85,7 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat implements 
 
     Log.d(TAG, "++onCreatePreferences(Bundle, String)");
     addPreferencesFromResource(R.xml.app_preferences);
-    SwitchPreference switchPreference = findPreference(IS_LIBRARIAN_PREFERENCE);
-    if (switchPreference != null) {
-      switchPreference.setChecked(mUser.IsLibrarian);
-    }
-
-    switchPreference = findPreference(SHOW_TUTORIAL_PREFERENCE);
-    if (switchPreference != null) {
-      switchPreference.setChecked(mUser.ShowBarcodeHint);
-    }
-
-    switchPreference = findPreference(USE_IMAGE_PREVIEW_PREFERENCE);
-    if (switchPreference != null) {
-      switchPreference.setChecked(mUser.UseImageCapture);
-    }
-
-    switchPreference = findPreference(FORCE_EXCEPTION_PREFERENCE);
+    SwitchPreference switchPreference = findPreference(FORCE_EXCEPTION_PREFERENCE);
     if (switchPreference != null) {
       if (BuildConfig.DEBUG) {
         switchPreference.setVisible(true);
