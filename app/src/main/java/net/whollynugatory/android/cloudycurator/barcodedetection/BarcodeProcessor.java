@@ -52,6 +52,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
 
   public BarcodeProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
 
+    Log.d(TAG, "++BarcodeProcessor(GraphicOverlay, WorkflowModel)");
     this.workflowModel = workflowModel;
     this.cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
   }
@@ -59,7 +60,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
   @Override
   protected Task<List<FirebaseVisionBarcode>> detectInImage(FirebaseVisionImage image) {
 
-    Log.d(TAG, "++detectInImage(FirebaseVisionImage)");
+//    Log.d(TAG, "++detectInImage(FirebaseVisionImage)");
     return detector.detectInImage(image);
   }
 
@@ -67,12 +68,12 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
   @Override
   protected void onSuccess(FirebaseVisionImage image, List<FirebaseVisionBarcode> results, GraphicOverlay graphicOverlay) {
 
-    Log.d(TAG, "++onSuccess(FirebaseVisionImage, List<FirebaseVisionBarcode>, GraphicOverlay)");
+//    Log.d(TAG, "++onSuccess(FirebaseVisionImage, List<FirebaseVisionBarcode>, GraphicOverlay)");
     if (!workflowModel.isCameraLive()) {
       return;
     }
 
-    Log.d(TAG, "Barcode result size: " + results.size());
+//    Log.d(TAG, "Barcode result size: " + results.size());
 
     // Picks the barcode, if exists, that covers the center of graphic overlay.
     FirebaseVisionBarcode barcodeInCenter = null;

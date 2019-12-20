@@ -22,27 +22,31 @@ import java.io.Serializable;
 
 public class UserEntity implements Serializable {
 
-    public static final String ROOT = "Users";
+  public static final String ROOT = "Users";
 
-    public String Email;
+  public String Email;
 
-    public String FullName;
+  public String FullName;
 
-    public String Id;
+  public String Id;
 
-    public UserEntity() {
+  public boolean IsLibrarian;
 
-        Email = "";
-        FullName = "";
-        Id = BaseActivity.DEFAULT_ID;
-    }
+  public UserEntity() {
 
-    @Override
-    public String toString() {
-        return "User{" +
-            "Email='" + Email + '\'' +
-            ", FullName='" + FullName + '\'' +
-            ", Id='" + Id + '\'' +
-            '}';
-    }
+    Email = "";
+    FullName = "";
+    Id = BaseActivity.DEFAULT_ID;
+    IsLibrarian = false;
+  }
+
+  @Override
+  public String toString() {
+    return "User{" +
+      "Email='" + Email + '\'' +
+      ", FullName='" + FullName + '\'' +
+      ", Id='" + Id + '\'' +
+      ", IsLibrarian='" + IsLibrarian + '\'' +
+      "}";
+  }
 }

@@ -13,113 +13,119 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.ui.fragments;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.preference.ListPreference;
 import androidx.preference.SwitchPreference;
 import androidx.preference.PreferenceFragmentCompat;
-import java.util.Locale;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import net.whollynugatory.android.cloudycurator.BuildConfig;
+import net.whollynugatory.android.cloudycurator.PreferenceUtils;
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.common.CloudyCuratorException;
-import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
+import net.whollynugatory.android.cloudycurator.Utils;
+import net.whollynugatory.android.cloudycurator.camera.CameraSizePair;
+import net.whollynugatory.android.cloudycurator.camera.CameraSource;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
-import androidx.annotation.NonNull;
-
-public class UserPreferenceFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class UserPreferenceFragment extends PreferenceFragmentCompat {
 
   private static final String TAG = BaseActivity.BASE_TAG + "UserPreferenceFragment";
 
-  public static final String FORCE_EXCEPTION_PREFERENCE = "preference_force_exception";
-
-  public interface OnPreferencesListener {
-
-    void onPreferenceChanged() throws CloudyCuratorException;
-  }
-
-  private OnPreferencesListener mCallback;
-
-  private UserEntity mUser;
-
-  public static UserPreferenceFragment newInstance(UserEntity user) {
+  public static UserPreferenceFragment newInstance() {
 
     Log.d(TAG, "++newInstance()");
-    UserPreferenceFragment fragment = new UserPreferenceFragment();
-    Bundle args = new Bundle();
-    args.putSerializable(BaseActivity.ARG_USER, user);
-    fragment.setArguments(args);
-    return fragment;
+    return new UserPreferenceFragment();
   }
 
   /*
       Fragment Override(s)
    */
   @Override
-  public void onAttach(@NonNull Context context) {
-    super.onAttach(context);
-
-    Log.d(TAG, "++onAttach(Context)");
-    try {
-      mCallback = (OnPreferencesListener) context;
-    } catch (ClassCastException e) {
-      throw new ClassCastException(
-        String.format(Locale.US, "Missing interface implementations for %s", context.toString()));
-    }
-
-    Bundle arguments = getArguments();
-    if (arguments != null) {
-      mUser = (UserEntity) arguments.getSerializable(BaseActivity.ARG_USER);
-    } else {
-      Log.e(TAG, "Arguments were null.");
-    }
-  }
-
-  @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
     Log.d(TAG, "++onCreatePreferences(Bundle, String)");
-    addPreferencesFromResource(R.xml.app_preferences);
-    SwitchPreference switchPreference = findPreference(FORCE_EXCEPTION_PREFERENCE);
-    if (switchPreference != null) {
-      if (BuildConfig.DEBUG) {
-        switchPreference.setVisible(true);
-      } else {
-        switchPreference.setVisible(false);
-      }
+    setPreferencesFromResource(R.xml.app_preferences, rootKey);
+    setUpRearCameraPreviewSizePreference();
+    if (BuildConfig.DEBUG) {
+      setUpDebugPreference();
     }
   }
 
-  @Override
-  public void onPause() {
-    super.onPause();
+  private void setUpDebugPreference() {
 
-    Log.d(TAG, "++onPause()");
-    getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+    Log.d(TAG, "++setUpDebugPreference()");
+    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_debug));
+    if (debugPreference == null) {
+      return;
+    }
+
+    debugPreference.setOnPreferenceChangeListener(
+      (preference, newValue) -> {
+
+        Log.d(TAG, "++setUpDebugPreference::onPreferenceChange()");
+        PreferenceUtils.saveBooleanPreference(
+          getActivity(),
+          R.string.pref_key_debug,
+          (boolean) newValue);
+        return true;
+      });
   }
 
-  @Override
-  public void onResume() {
-    super.onResume();
+  private void setUpRearCameraPreviewSizePreference() {
 
-    Log.d(TAG, "++onResume()");
-    getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-  }
+    Log.d(TAG, "++setUpRearCameraPreviewSizePreference()");
+    ListPreference previewSizePreference = findPreference(getString(R.string.pref_key_rear_camera_preview_size));
+    if (previewSizePreference == null) {
+      return;
+    }
 
-  @Override
-  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String keyName) {
-
-    Log.d(TAG, "++onSharedPreferenceChanged(SharedPreferences, String)");
-    getPreferenceScreen().getSharedPreferences().edit().apply();
+    Camera camera = null;
     try {
-      mCallback.onPreferenceChanged();
-    } catch (CloudyCuratorException e) {
-      Log.d(TAG, "Exception!", e);
+      camera = Camera.open(CameraSource.CAMERA_FACING_BACK);
+      List<CameraSizePair> previewSizeList = Utils.generateValidPreviewSizeList(camera);
+      String[] previewSizeStringValues = new String[previewSizeList.size()];
+      Map<String, String> previewToPictureSizeStringMap = new HashMap<>();
+      for (int i = 0; i < previewSizeList.size(); i++) {
+        CameraSizePair sizePair = previewSizeList.get(i);
+        previewSizeStringValues[i] = sizePair.preview.toString();
+        if (sizePair.picture != null) {
+          previewToPictureSizeStringMap.put(
+            sizePair.preview.toString(), sizePair.picture.toString());
+        }
+      }
+
+      previewSizePreference.setEntries(previewSizeStringValues);
+      previewSizePreference.setEntryValues(previewSizeStringValues);
+      previewSizePreference.setSummary(previewSizePreference.getEntry());
+      previewSizePreference.setOnPreferenceChangeListener(
+        (preference, newValue) -> {
+
+          Log.d(TAG, "++setUpRearCameraPreviewSizePreference::onPreferenceChange()");
+          String newPreviewSizeStringValue = (String) newValue;
+          previewSizePreference.setSummary(newPreviewSizeStringValue);
+          PreferenceUtils.saveStringPreference(
+            getActivity(),
+            R.string.pref_key_rear_camera_picture_size,
+            previewToPictureSizeStringMap.get(newPreviewSizeStringValue));
+          return true;
+        });
+    } catch (Exception e) { // If there's no camera for the given camera id, hide the corresponding preference.
+      if (previewSizePreference.getParent() != null) {
+        previewSizePreference.getParent().removePreference(previewSizePreference);
+      }
+    } finally {
+      if (camera != null) {
+        camera.release();
+      }
     }
   }
 }

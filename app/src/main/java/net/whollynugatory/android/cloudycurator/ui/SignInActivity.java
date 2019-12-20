@@ -41,9 +41,11 @@ import net.whollynugatory.android.cloudycurator.R;
 
 import java.util.Locale;
 
-public class SignInActivity extends BaseActivity implements OnClickListener {
+import androidx.appcompat.app.AppCompatActivity;
 
-  private static final String TAG = BASE_TAG + SignInActivity.class.getSimpleName();
+public class SignInActivity extends AppCompatActivity implements OnClickListener {
+
+  private static final String TAG = BaseActivity.BASE_TAG + SignInActivity.class.getSimpleName();
 
   private static final int RC_SIGN_IN = 4701;
 
@@ -157,9 +159,9 @@ public class SignInActivity extends BaseActivity implements OnClickListener {
       mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle);
 
       Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-      intent.putExtra(ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
-      intent.putExtra(ARG_USER_NAME, mAuth.getCurrentUser().getDisplayName());
-      intent.putExtra(ARG_EMAIL, mAuth.getCurrentUser().getEmail());
+      intent.putExtra(BaseActivity.ARG_FIREBASE_USER_ID, mAuth.getCurrentUser().getUid());
+      intent.putExtra(BaseActivity.ARG_USER_NAME, mAuth.getCurrentUser().getDisplayName());
+      intent.putExtra(BaseActivity.ARG_EMAIL, mAuth.getCurrentUser().getEmail());
       startActivity(intent);
       finish();
     } else {

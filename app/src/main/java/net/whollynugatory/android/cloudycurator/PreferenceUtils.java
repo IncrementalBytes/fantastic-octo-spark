@@ -36,6 +36,7 @@ import androidx.annotation.StringRes;
 public class PreferenceUtils {
 
   public static RectF getBarcodeReticleBox(GraphicOverlay overlay) {
+
     Context context = overlay.getContext();
     float overlayWidth = overlay.getWidth();
     float overlayHeight = overlay.getHeight();
@@ -54,10 +55,13 @@ public class PreferenceUtils {
     Context context = overlay.getContext();
     if (getBooleanPref(context, R.string.pref_key_enable_barcode_size_check, false)) {
       float reticleBoxWidth = getBarcodeReticleBox(overlay).width();
-      float barcodeWidth = overlay.translateX(barcode.getBoundingBox().width());
-      float requiredWidth =
-        reticleBoxWidth * getIntPref(context, R.string.pref_key_minimum_barcode_width, 50) / 100;
-      return Math.min(barcodeWidth / requiredWidth, 1);
+      if (barcode != null && barcode.getBoundingBox() != null) {
+        float barcodeWidth = overlay.translateX(barcode.getBoundingBox().width());
+        float requiredWidth = reticleBoxWidth * getIntPref(context, R.string.pref_key_minimum_barcode_width, 50) / 100;
+        return Math.min(barcodeWidth / requiredWidth, 1);
+      } else {
+        return 1;
+      }
     } else {
       return 1;
     }
@@ -78,9 +82,13 @@ public class PreferenceUtils {
     }
   }
 
-  public static boolean isAutoSearchEnabled(Context context) {
+  public static void saveBooleanPreference(
 
-    return getBooleanPref(context, R.string.pref_key_enable_auto_search, true);
+    Context context, @StringRes int prefKeyId, boolean value) {
+    PreferenceManager.getDefaultSharedPreferences(context)
+      .edit()
+      .putBoolean(context.getString(prefKeyId), value)
+      .apply();
   }
 
   public static void saveStringPreference(
@@ -93,10 +101,12 @@ public class PreferenceUtils {
   }
 
   public static boolean shouldDelayLoadingBarcodeResult(Context context) {
+
     return getBooleanPref(context, R.string.pref_key_delay_loading_barcode_result, true);
   }
 
   private static boolean getBooleanPref(
+
     Context context, @StringRes int prefKeyId, boolean defaultValue) {
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     String prefKey = context.getString(prefKeyId);
@@ -104,6 +114,7 @@ public class PreferenceUtils {
   }
 
   private static int getIntPref(Context context, @StringRes int prefKeyId, int defaultValue) {
+
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     String prefKey = context.getString(prefKeyId);
     return sharedPreferences.getInt(prefKey, defaultValue);

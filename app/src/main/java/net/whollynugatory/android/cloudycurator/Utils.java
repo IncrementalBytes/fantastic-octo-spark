@@ -19,6 +19,8 @@ package net.whollynugatory.android.cloudycurator;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
+import android.hardware.Camera.Size;
 import android.util.Log;
 
 import net.whollynugatory.android.cloudycurator.camera.CameraSizePair;
@@ -43,11 +45,13 @@ public class Utils {
    * preview images may be distorted on some devices.
    */
   public static List<CameraSizePair> generateValidPreviewSizeList(Camera camera) {
-    Camera.Parameters parameters = camera.getParameters();
-    List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
-    List<Camera.Size> supportedPictureSizes = parameters.getSupportedPictureSizes();
+
+    Log.d(TAG, "++generateValidPreviewSizeList(Camera)");
+    Parameters parameters = camera.getParameters();
+    List<Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+    List<Size> supportedPictureSizes = parameters.getSupportedPictureSizes();
     List<CameraSizePair> validPreviewSizes = new ArrayList<>();
-    for (Camera.Size previewSize : supportedPreviewSizes) {
+    for (Size previewSize : supportedPreviewSizes) {
       float previewAspectRatio = (float) previewSize.width / (float) previewSize.height;
 
       // By looping through the picture sizes in order, we favor the higher resolutions.
@@ -78,6 +82,7 @@ public class Utils {
 
   public static boolean isPortraitMode(Context context) {
 
+    Log.d(TAG, "++isPortraitMode()");
     return context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
   }
 }

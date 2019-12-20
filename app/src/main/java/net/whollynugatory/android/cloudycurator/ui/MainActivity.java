@@ -19,44 +19,47 @@ package net.whollynugatory.android.cloudycurator.ui;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.Toolbar;
-import androidx.preference.PreferenceManager;
 
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 
-import net.whollynugatory.android.cloudycurator.BuildConfig;
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.common.CloudyCuratorException;
 import net.whollynugatory.android.cloudycurator.common.GetDataTask;
 import net.whollynugatory.android.cloudycurator.common.GetPropertyIdsTask;
+import net.whollynugatory.android.cloudycurator.common.GoogleBookApiTask;
+import net.whollynugatory.android.cloudycurator.common.PathUtils;
+import net.whollynugatory.android.cloudycurator.common.QueryBookDatabaseTask;
 import net.whollynugatory.android.cloudycurator.db.CuratorDatabase;
 import net.whollynugatory.android.cloudycurator.db.CuratorRepository;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.fragments.AddBookEntityFragment;
+import net.whollynugatory.android.cloudycurator.ui.fragments.BarcodeScanFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.BookEntityListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.LibrarianFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.QueryFragment;
@@ -70,16 +73,18 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
   AddBookEntityFragment.OnAddBookEntityListener,
+  BarcodeScanFragment.OnBarcodeScanListener,
   BookEntityListFragment.OnBookEntityListListener,
+  NavigationView.OnNavigationItemSelectedListener,
   QueryFragment.OnQueryListener,
   ResultListFragment.OnResultListListener,
   ScanResultsFragment.OnScanResultsListener,
-  UpdateBookEntityFragment.OnUpdateBookEntityListener,
-  UserPreferenceFragment.OnPreferencesListener {
+  UpdateBookEntityFragment.OnUpdateBookEntityListener {
 
   private static final String TAG = BaseActivity.BASE_TAG + "MainActivity";
 
-  private ProgressBar mProgressBar;
+  private DrawerLayout mDrawerLayout;
+  private NavigationView mNavigationView;
   private Snackbar mSnackbar;
 
   private int mAttempts;
@@ -89,17 +94,35 @@ public class MainActivity extends AppCompatActivity implements
       AppCompatActivity Override(s)
    */
   @Override
+  public void onBackPressed() {
+
+    Log.d(TAG, "++onBackPressed()");
+    if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+      mDrawerLayout.closeDrawer(GravityCompat.START);
+    }
+  }
+
+  @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     Log.d(TAG, "++onCreate(Bundle)");
     setContentView(R.layout.activity_main);
 
-    mProgressBar = findViewById(R.id.main_progress);
-    mProgressBar.setIndeterminate(true);
-
+    mDrawerLayout = findViewById(R.id.main_drawer_layout);
     Toolbar toolbar = findViewById(R.id.main_toolbar);
     setSupportActionBar(toolbar);
+
+    ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+      this,
+      mDrawerLayout,
+      toolbar,
+      R.string.navigation_drawer_open,
+      R.string.navigation_drawer_close);
+    mDrawerLayout.addDrawerListener(toggle);
+    toggle.syncState();
+    mNavigationView = findViewById(R.id.main_navigation_view);
+    mNavigationView.setNavigationItemSelectedListener(this);
 
     getSupportFragmentManager().addOnBackStackChangedListener(() -> {
       Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.main_fragment_container);
@@ -119,8 +142,6 @@ public class MainActivity extends AppCompatActivity implements
           setTitle(R.string.fragment_select_text);
         } else if (fragmentClassName.equals(UpdateBookEntityFragment.class.getName())) {
           setTitle(R.string.fragment_book_update);
-        } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
-          setTitle(getString(R.string.fragment_preferences));
         }
       }
     });
@@ -138,7 +159,27 @@ public class MainActivity extends AppCompatActivity implements
       ArrayList<BookEntity> bookEntityList = (ArrayList<BookEntity>)getIntent().getSerializableExtra(BaseActivity.ARG_RESULT_LIST);
       replaceFragment(ResultListFragment.newInstance(bookEntityList));
     } else {
-      checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, BaseActivity.REQUEST_STORAGE_PERMISSIONS);
+      String queryPath = PathUtils.combine(UserEntity.ROOT, mUser.Id);
+      FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
+
+        if (task.isSuccessful() && task.getResult() != null) {
+          UserEntity user = task.getResult().toObject(UserEntity.class);
+          if (user != null) {
+            mUser.IsLibrarian = user.IsLibrarian;
+          }
+        }
+
+        // enable options if user has permissions
+        if (mUser.IsLibrarian) {
+          // TODO: add access to debug (image from camera, etc.)
+          MenuItem librarianMenu = mNavigationView.getMenu().findItem(R.id.navigation_menu_librarian);
+          if (librarianMenu != null) {
+            librarianMenu.setVisible(true);
+          }
+        }
+
+        checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, BaseActivity.REQUEST_STORAGE_PERMISSIONS);
+      });
     }
   }
 
@@ -149,29 +190,32 @@ public class MainActivity extends AppCompatActivity implements
     Log.d(TAG, "++onDestroy()");
   }
 
+//  @Override
+//  public boolean onCreateOptionsMenu(Menu menu) {
+//
+//    Log.d(TAG, "++onCreateOptionsMenu(Menu)");
+//    getMenuInflater().inflate(R.menu.menu_main, menu);
+//    return true;
+//  }
+
   @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
+  public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-    Log.d(TAG, "++onCreateOptionsMenu(Menu)");
-    getMenuInflater().inflate(R.menu.menu_main, menu);
-    return true;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-
-    Log.d(TAG, "++onOptionsItemSelected(MenuItem)");
+    Log.d(TAG, "++onNavigationItemSelected(MenuItem)");
     switch (item.getItemId()) {
-      case R.id.action_home:
+      case R.id.navigation_menu_home:
         new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
         break;
-      case R.id.action_add:
+      case R.id.navigation_menu_add:
         checkForPermission(Manifest.permission.CAMERA, BaseActivity.REQUEST_CAMERA_PERMISSIONS);
         break;
-      case R.id.action_preferences:
-        startActivity(new Intent(this, SettingsActivity.class));
+      case R.id.navigation_menu_settings:
+        replaceFragment(UserPreferenceFragment.newInstance());
         break;
-      case R.id.action_logout:
+      case R.id.navigation_menu_librarian:
+        replaceFragment(LibrarianFragment.newInstance());
+        break;
+      case R.id.navigation_menu_logout:
         AlertDialog dialog = new AlertDialog.Builder(this)
           .setMessage(R.string.logout_message)
           .setPositiveButton(android.R.string.yes, (dialog1, which) -> {
@@ -181,7 +225,8 @@ public class MainActivity extends AppCompatActivity implements
 
             // sign out of google, if necessary
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-              .requestIdToken(getString(R.string.default_web_client_id))
+              //.requestIdToken(getString(R.string.default_web_client_id))
+              .requestIdToken("1079143607884-n6m9tirs482fdn65bf54lnvfrk4u8e54.apps.googleusercontent.com")
               .requestEmail()
               .build();
             GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -198,7 +243,8 @@ public class MainActivity extends AppCompatActivity implements
         break;
     }
 
-    return super.onOptionsItemSelected(item);
+    mDrawerLayout.closeDrawer(GravityCompat.START);
+    return true;
   }
 
   @Override
@@ -282,18 +328,41 @@ public class MainActivity extends AppCompatActivity implements
   public void onAddBookEntityInit(boolean isSuccessful) {
 
     Log.d(TAG, "++onAddBookEntityInit(boolean)");
-    if (mProgressBar != null) {
-      mProgressBar.setIndeterminate(false);
-    }
   }
 
   @Override
   public void onAddBookEntityStarted() {
 
     Log.d(TAG, "++onAddBookEntityStarted()");
-    if (mProgressBar != null) {
-      mProgressBar.setIndeterminate(true);
+  }
+
+  @Override
+  public void onBarcodeScanClose() {
+
+    Log.d(TAG, "++onBarcodeScanClose()");
+    new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+  }
+
+  @Override
+  public void onBarcodeScanned(String barcodeValue) {
+
+    Log.d(TAG, "++onBarcodeScanned(String)");
+    BookEntity bookEntity = new BookEntity();
+    if (barcodeValue != null && barcodeValue.length() == 8) {
+      bookEntity.ISBN_8 = barcodeValue;
+    } else if (barcodeValue != null && barcodeValue.length() == 13) {
+      bookEntity.ISBN_13 = barcodeValue;
     }
+    if (bookEntity.isValidISBN()) {
+      new QueryBookDatabaseTask(this, CuratorRepository.getInstance(this), bookEntity).execute();
+    } // TODO: add feedback if ISBN isn't valid
+  }
+
+  @Override
+  public void onBarcodeScanSettings() {
+
+    Log.d(TAG, "++onBarcodeScanSettings()");
+    replaceFragment(UserPreferenceFragment.newInstance());
   }
 
   @Override
@@ -315,7 +384,6 @@ public class MainActivity extends AppCompatActivity implements
   public void onBookEntityListItemSelected(BookDetail bookDetail) {
 
     Log.d(TAG, "++onBookEntityListItemSelected(BookDetail)");
-    mProgressBar.setIndeterminate(false);
     setTitle(getString(R.string.fragment_book));
     replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
   }
@@ -324,7 +392,6 @@ public class MainActivity extends AppCompatActivity implements
   public void onQueryActionComplete(String message) {
 
     Log.d(TAG, "++onQueryActionComplete(String)");
-    mProgressBar.setIndeterminate(false);
     if (!message.isEmpty()) {
       showDismissableSnackbar(message);
     }
@@ -334,7 +401,6 @@ public class MainActivity extends AppCompatActivity implements
   public void onQueryShowManualDialog() {
 
     Log.d(TAG, "++onQueryShowManualDialog()");
-    mProgressBar.setIndeterminate(true);
     LayoutInflater layoutInflater = LayoutInflater.from(this);
     View promptView = layoutInflater.inflate(R.layout.dialog_search_manual, null);
     EditText editText = promptView.findViewById(R.id.manual_dialog_edit_search);
@@ -371,10 +437,7 @@ public class MainActivity extends AppCompatActivity implements
             queryInUserBooks(bookEntity);
         }
       })
-      .setNegativeButton(R.string.cancel, (dialog, id) -> {
-        mProgressBar.setIndeterminate(false);
-        dialog.cancel();
-      });
+      .setNegativeButton(R.string.cancel, (dialog, id) ->  dialog.cancel() );
 
     androidx.appcompat.app.AlertDialog alert = alertDialogBuilder.create();
     alert.show();
@@ -427,16 +490,12 @@ public class MainActivity extends AppCompatActivity implements
   public void onUpdateBookEntityInit(boolean isSuccessful) {
 
     Log.d(TAG, "++onUpdateBookEntityInit(boolean)");
-    if (mProgressBar != null) {
-      mProgressBar.setIndeterminate(false);
-    }
   }
 
   @Override
   public void onUpdateBookEntityRemove(String volumeId) {
 
     Log.d(TAG, "++onUpdateBookEntityRemove(String)");
-    mProgressBar.setIndeterminate(false);
     CuratorRepository.getInstance(this).deleteBook(volumeId);
     new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
   }
@@ -445,35 +504,18 @@ public class MainActivity extends AppCompatActivity implements
   public void onUpdateBookEntityStarted() {
 
     Log.d(TAG, "++onUpdateBookEntityStarted()");
-    if (mProgressBar != null) {
-      mProgressBar.setIndeterminate(true);
-    }
   }
 
   @Override
   public void onUpdateBookEntityUpdate(BookDetail updatedBookDetail) {
 
     Log.d(TAG, "++onUpdateBookEntityUpdate(BookDetail)");
-    mProgressBar.setIndeterminate(false);
     if (updatedBookDetail == null) {
       showDismissableSnackbar(getString(R.string.err_update_book));
     } else {
       BookEntity bookEntity = BookEntity.fromBookDetail(updatedBookDetail);
       CuratorRepository.getInstance(this).insertBookEntity(bookEntity);
       new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
-    }
-  }
-
-  @Override
-  public void onPreferenceChanged() throws CloudyCuratorException {
-
-    Log.d(TAG, "++onPreferenceChanged()");
-    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    if (preferences.contains(UserPreferenceFragment.FORCE_EXCEPTION_PREFERENCE)) {
-      boolean throwException = preferences.getBoolean(UserPreferenceFragment.FORCE_EXCEPTION_PREFERENCE, false);
-      if (BuildConfig.DEBUG && throwException) {
-        throw new CloudyCuratorException("Testing the exceptional expection-ness");
-      }
     }
   }
 
@@ -501,6 +543,42 @@ public class MainActivity extends AppCompatActivity implements
     } else {
       mAttempts = 0;
       replaceFragment(BookEntityListFragment.newInstance(bookDetailList));
+    }
+  }
+
+  public void queryBookDatabaseComplete(BookDetail bookDetail) {
+
+    Log.d(TAG, "++queryBookDatabaseComplete(BookDetail)");
+    if (bookDetail.isValid()) {
+      Log.d(TAG, "Found existing book entity in database.");
+      Intent intent = new Intent(this, MainActivity.class);
+      intent.putExtra(BaseActivity.ARG_BOOK_DETAIL, bookDetail);
+      startActivity(intent);
+    } else {
+      Log.d(TAG, "Not in user's book list: " + bookDetail.toString());
+      if (bookDetail.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) &&
+        bookDetail.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) &&
+        bookDetail.LCCN.equals(BaseActivity.DEFAULT_LCCN) &&
+        bookDetail.Title.isEmpty()) {
+        Log.d(TAG, "Book entity is not valid: " + bookDetail.toString());
+      } else {
+        new GoogleBookApiTask(this, bookDetail).execute();
+      }
+    }
+  }
+
+  public void retrieveBooksComplete(ArrayList<BookEntity> bookEntityList) {
+
+    Log.d(TAG, "++retrieveBooksComplete(ArrayList<BookEntity>)");
+    if (bookEntityList.size() == 0) {
+      Log.d(TAG, "Book entity list is empty after Google Book API query.");
+    } else {
+      if (bookEntityList.size() == BaseActivity.MAX_RESULTS) {
+      }
+
+      Intent intent = new Intent(this, MainActivity.class);
+      intent.putExtra(BaseActivity.ARG_RESULT_LIST, bookEntityList);
+      startActivity(intent);
     }
   }
 
@@ -540,7 +618,7 @@ public class MainActivity extends AppCompatActivity implements
       Log.d(TAG, "Permission granted: " + permission);
       switch (permissionRequest) {
         case BaseActivity.REQUEST_CAMERA_PERMISSIONS:
-          startActivity(new Intent(MainActivity.this, LiveBarcodeScanningActivity.class));
+          replaceFragment(BarcodeScanFragment.newInstance());
           break;
         case BaseActivity.REQUEST_STORAGE_PERMISSIONS:
           new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
@@ -567,7 +645,6 @@ public class MainActivity extends AppCompatActivity implements
 
   private void showDismissableSnackbar(String message) {
 
-    mProgressBar.setIndeterminate(false);
     Log.w(TAG, message);
     mSnackbar = Snackbar.make(
       findViewById(R.id.main_fragment_container),

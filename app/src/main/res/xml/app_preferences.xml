@@ -60,13 +60,13 @@
 
     </androidx.preference.PreferenceCategory>
 
-  <androidx.preference.PreferenceCategory android:title="@string/pref_debug">
+  <androidx.preference.PreferenceCategory android:title="@string/pref_category_debug">
 
     <androidx.preference.SwitchPreference
       android:defaultValue="false"
-      android:key="preference_force_exception"
-      android:summary="Force exception (debug test)"
-      android:title="Force Exception"/>
+      android:key="@string/pref_key_debug"
+      android:summary="@string/pref_summary_debug"
+      android:title="@string/pref_title_debug"/>
 
   </androidx.preference.PreferenceCategory>
 

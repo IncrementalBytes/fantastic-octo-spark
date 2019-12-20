@@ -178,6 +178,13 @@ public class BookEntity implements Serializable {
   }
 
   @Ignore
+  public boolean isValidISBN() {
+
+    return (!ISBN_8.isEmpty() && !ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) ||
+      (!ISBN_13.isEmpty() && !ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13));
+  }
+
+  @Ignore
   public static BookEntity fromBookDetail(BookDetail bookDetail) {
 
     BookEntity bookEntity = new BookEntity();
