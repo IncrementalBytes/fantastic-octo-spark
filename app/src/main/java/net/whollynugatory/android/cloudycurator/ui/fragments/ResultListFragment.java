@@ -184,11 +184,15 @@ public class ResultListFragment extends Fragment {
       mTitleTextView = itemView.findViewById(R.id.book_item_title);
 
       ImageView deleteImage = itemView.findViewById(R.id.book_item_image_delete);
-      deleteImage.setVisibility(View.GONE);
+      deleteImage.setVisibility(View.INVISIBLE);
+      TextView readText = itemView.findViewById(R.id.book_item_text_read);
+      readText.setVisibility(View.INVISIBLE);
       ImageView readImage = itemView.findViewById(R.id.book_item_image_read);
-      readImage.setVisibility(View.GONE);
+      readImage.setVisibility(View.INVISIBLE);
+      TextView ownText = itemView.findViewById(R.id.book_item_text_own);
+      ownText.setVisibility(View.INVISIBLE);
       ImageView ownImage = itemView.findViewById(R.id.book_item_image_own);
-      ownImage.setVisibility(View.GONE);
+      ownImage.setVisibility(View.INVISIBLE);
 
       itemView.setOnClickListener(this);
     }
@@ -210,7 +214,7 @@ public class ResultListFragment extends Fragment {
           mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
       mPublishedTextView.setText(String.format(Locale.US, getString(R.string.published_date_format), mBookEntity.PublishedDate));
       if (mBookEntity.Publisher == null || mBookEntity.Publisher.isEmpty()) {
-        mPublisherTextView.setVisibility(View.GONE);
+        mPublisherTextView.setVisibility(View.INVISIBLE);
       } else {
         mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.Publisher));
       }

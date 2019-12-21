@@ -34,8 +34,8 @@ public interface BookDao {
   @Query("DELETE FROM books_table WHERE volume_id = :volumeId")
   int delete(String volumeId);
 
-  @Query("SELECT * FROM bookdetail WHERE id = :volumeId")
-  BookDetail get(String volumeId);
+  @Query("SELECT * FROM bookdetail WHERE id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
+  BookDetail get(String bookId);
 
   @Query("SELECT * FROM bookdetail")
   List<BookDetail> getAll();

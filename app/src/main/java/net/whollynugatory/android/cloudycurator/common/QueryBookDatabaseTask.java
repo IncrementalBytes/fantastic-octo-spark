@@ -30,7 +30,15 @@ public class QueryBookDatabaseTask extends AsyncTask<Void, Void, BookDetail> {
   protected BookDetail doInBackground(Void... params) {
 
     Log.d(TAG, "++doInBackground(Void...)");
-    BookDetail bookDetail = mRepository.getBook(mBookEntity.VolumeId);
+    BookDetail bookDetail;
+    if (!mBookEntity.VolumeId.equals(BaseActivity.DEFAULT_VOLUME_ID)) {
+      bookDetail = mRepository.getBook(mBookEntity.VolumeId);
+    } else if (!mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
+      bookDetail = mRepository.getBook(mBookEntity.ISBN_13);
+    } else {
+      bookDetail = mRepository.getBook(mBookEntity.ISBN_8);
+    }
+
     return bookDetail == null ? BookDetail.fromBookEntity(mBookEntity) : bookDetail;
   }
 

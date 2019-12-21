@@ -56,14 +56,15 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat {
     setPreferencesFromResource(R.xml.app_preferences, rootKey);
     setUpRearCameraPreviewSizePreference();
     if (BuildConfig.DEBUG) {
-      setUpDebugPreference();
+      setUpBypassPreference();
+      setUpExceptionPreference();
     }
   }
 
-  private void setUpDebugPreference() {
+  private void setUpBypassPreference() {
 
-    Log.d(TAG, "++setUpDebugPreference()");
-    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_debug));
+    Log.d(TAG, "++setUpBypassPreference()");
+    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_bypass));
     if (debugPreference == null) {
       return;
     }
@@ -71,10 +72,30 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat {
     debugPreference.setOnPreferenceChangeListener(
       (preference, newValue) -> {
 
-        Log.d(TAG, "++setUpDebugPreference::onPreferenceChange()");
+        Log.d(TAG, "++setUpBypassPreference::onPreferenceChange()");
         PreferenceUtils.saveBooleanPreference(
           getActivity(),
-          R.string.pref_key_debug,
+          R.string.pref_key_bypass,
+          (boolean) newValue);
+        return true;
+      });
+  }
+
+  private void setUpExceptionPreference() {
+
+    Log.d(TAG, "++setUpExceptionPreference()");
+    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_exception));
+    if (debugPreference == null) {
+      return;
+    }
+
+    debugPreference.setOnPreferenceChangeListener(
+      (preference, newValue) -> {
+
+        Log.d(TAG, "++setUpExceptionPreference::onPreferenceChange()");
+        PreferenceUtils.saveBooleanPreference(
+          getActivity(),
+          R.string.pref_key_exception,
           (boolean) newValue);
         return true;
       });

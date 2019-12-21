@@ -24,6 +24,7 @@
   <string name="fragment_book">Your Book</string>
   <string name="fragment_book_add">Add Book to Library</string>
   <string name="fragment_book_list">In Your Library</string>
+  <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
   <string name="err_no_camera_detected">Camera was not detected.</string>
   <string name="remove_from_library">Remove from Library</string>
   <string name="remove_book_message">Remove \'%s\' from your library?</string>
@@ -51,6 +52,7 @@
   <string name="check_back_later">Check back later!</string>
   <string name="fragment_librarian">Break Room</string>
   <string name="fragment_book_update">Update Book</string>
+  <string name="fragment_manual">Search</string>
   <string name="err_invalid_isbn">Invalid ISBN value.</string>
   <string name="cancel">Cancel</string>
   <string name="ok">OK</string>
@@ -60,7 +62,9 @@
   <string name="permission_camera">Permission needed for capturing barcode images for processing.</string>
   <string name="permission_storage">Permission needed for book database.</string>
   <string name="permission_default">Permission needed for application to function properly.</string>
-
+  <string name="err_image_empty">Image was empty.</string>
+  <string name="err_image_not_found">Image does not exist.</string>
+  <string name="debug_prompt">Select image file to use:</string>
   <string name="hint_search_isbn">8 or 13 digit ISBN number.</string>
   <string name="hint_example">Example:</string>
   <string name="hint_img_barcode">Sample ISNB barcode.</string>
@@ -69,6 +73,10 @@
   <string name="hint_remove_book">Remove book from library?</string>
   <string name="user_read_this_book">User has read this book.</string>
   <string name="remove_specific_book_message">Remove \'%s\' from your library?</string>
+  <string-array name="debug_scenario_array">
+    <item>scenario_barcode.jpg</item>
+    <item>scenario_barcode_not_found.jpg</item>
+  </string-array>
 
   <string name="cd_settings_button">Settings</string>
   <string name="cd_close_button">Back</string>
@@ -103,8 +111,12 @@
   <string name="pref_summary_delay_loading_barcode_result">Will show the loading spinner for 2s</string>
 
   <!-- Strings for debug settings. -->
-  <string name="pref_category_debug">Barcode detection</string>
-  <string name="pref_key_debug" translatable="false">dbg_excp</string>
-  <string name="pref_title_debug">Force Exception</string>
-  <string name="pref_summary_debug" formatted="false">Force exception (debug test)</string>
+  <string name="pref_category_debug">Debug</string>
+  <string name="pref_key_bypass" translatable="false">dbg_bypass</string>
+  <string name="pref_title_bypass">Detection Bypass</string>
+  <string name="pref_summary_bypass" formatted="false">Bypass Barcode Detection</string>
+  <string name="pref_key_exception" translatable="false">dbg_exception</string>
+  <string name="pref_title_exception">Force Exception</string>
+  <string name="pref_summary_exception" formatted="false">Force exception (debug test)</string>
+  <string name="fragment_settings">Settings</string>
 </resources>

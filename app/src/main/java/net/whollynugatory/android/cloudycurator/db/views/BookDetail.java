@@ -121,6 +121,15 @@ public class BookDetail implements Serializable {
   }
 
   @Ignore
+  public boolean hasBarcode() {
+
+    return !ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
+      !ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ||
+      !LCCN.equals(BaseActivity.DEFAULT_LCCN) ||
+      !Title.isEmpty();
+  }
+
+  @Ignore
   public boolean isValid() {
 
     return !Id.isEmpty() && !Id.equals(BaseActivity.DEFAULT_VOLUME_ID) &&

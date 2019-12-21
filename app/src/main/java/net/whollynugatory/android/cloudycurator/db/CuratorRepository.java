@@ -90,9 +90,9 @@ public class CuratorRepository {
     return mDatabase.bookDao().getAll();
   }
 
-  public BookDetail getBook(String volumeId) {
+  public BookDetail getBook(String bookId) {
 
-    return mDatabase.bookDao().get(volumeId);
+    return mDatabase.bookDao().get(bookId);
   }
 
   public void insertBookEntity(BookEntity bookEntity) {

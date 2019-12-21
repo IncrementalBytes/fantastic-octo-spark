@@ -64,9 +64,15 @@
 
     <androidx.preference.SwitchPreference
       android:defaultValue="false"
-      android:key="@string/pref_key_debug"
-      android:summary="@string/pref_summary_debug"
-      android:title="@string/pref_title_debug"/>
+      android:key="@string/pref_key_bypass"
+      android:summary="@string/pref_summary_bypass"
+      android:title="@string/pref_title_bypass"/>
+
+    <androidx.preference.SwitchPreference
+      android:defaultValue="false"
+      android:key="@string/pref_key_exception"
+      android:summary="@string/pref_summary_exception"
+      android:title="@string/pref_title_exception"/>
 
   </androidx.preference.PreferenceCategory>
 

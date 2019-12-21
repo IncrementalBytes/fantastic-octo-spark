@@ -20,8 +20,13 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -29,6 +34,11 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetectorOptions;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -45,8 +55,11 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 
+import net.whollynugatory.android.cloudycurator.PreferenceUtils;
 import net.whollynugatory.android.cloudycurator.R;
 import net.whollynugatory.android.cloudycurator.common.GetDataTask;
 import net.whollynugatory.android.cloudycurator.common.GetPropertyIdsTask;
@@ -62,14 +75,16 @@ import net.whollynugatory.android.cloudycurator.ui.fragments.AddBookEntityFragme
 import net.whollynugatory.android.cloudycurator.ui.fragments.BarcodeScanFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.BookEntityListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.LibrarianFragment;
+import net.whollynugatory.android.cloudycurator.ui.fragments.ManualSearchFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.QueryFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ResultListFragment;
-import net.whollynugatory.android.cloudycurator.ui.fragments.ScanResultsFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.UpdateBookEntityFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.UserPreferenceFragment;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
   AddBookEntityFragment.OnAddBookEntityListener,
@@ -78,7 +93,6 @@ public class MainActivity extends AppCompatActivity implements
   NavigationView.OnNavigationItemSelectedListener,
   QueryFragment.OnQueryListener,
   ResultListFragment.OnResultListListener,
-  ScanResultsFragment.OnScanResultsListener,
   UpdateBookEntityFragment.OnUpdateBookEntityListener {
 
   private static final String TAG = BaseActivity.BASE_TAG + "MainActivity";
@@ -88,6 +102,8 @@ public class MainActivity extends AppCompatActivity implements
   private Snackbar mSnackbar;
 
   private int mAttempts;
+  private Bitmap mImageBitmap;
+  private int mRotationAttempts;
   private UserEntity mUser;
 
   /*
@@ -134,14 +150,16 @@ public class MainActivity extends AppCompatActivity implements
           setTitle(getString(R.string.fragment_book_list));
         } else if (fragmentClassName.equals(LibrarianFragment.class.getName())) {
           setTitle(getString(R.string.fragment_librarian));
+        } else if (fragmentClassName.equals(ManualSearchFragment.class.getName())) {
+          setTitle(getString(R.string.fragment_manual));
         } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
           setTitle(getString(R.string.fragment_query));
         } else if (fragmentClassName.equals(ResultListFragment.class.getName())) {
           setTitle(R.string.fragment_select_book);
-        } else if (fragmentClassName.equals(ScanResultsFragment.class.getName())) {
-          setTitle(R.string.fragment_select_text);
         } else if (fragmentClassName.equals(UpdateBookEntityFragment.class.getName())) {
           setTitle(R.string.fragment_book_update);
+        } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
+          setTitle(getString(R.string.fragment_settings));
         }
       }
     });
@@ -151,36 +169,27 @@ public class MainActivity extends AppCompatActivity implements
     mUser.Email = getIntent().getStringExtra(BaseActivity.ARG_EMAIL);
     mUser.FullName = getIntent().getStringExtra(BaseActivity.ARG_USER_NAME);
 
-    // check for additional extras to assist with flow
-    if (getIntent().hasExtra(BaseActivity.ARG_BOOK)) {
-      BookDetail bookDetail = (BookDetail)getIntent().getSerializableExtra(BaseActivity.ARG_BOOK_DETAIL);
-      replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
-    } else if (getIntent().hasExtra(BaseActivity.ARG_RESULT_LIST)) {
-      ArrayList<BookEntity> bookEntityList = (ArrayList<BookEntity>)getIntent().getSerializableExtra(BaseActivity.ARG_RESULT_LIST);
-      replaceFragment(ResultListFragment.newInstance(bookEntityList));
-    } else {
-      String queryPath = PathUtils.combine(UserEntity.ROOT, mUser.Id);
-      FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
+    String queryPath = PathUtils.combine(UserEntity.ROOT, mUser.Id);
+    FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
 
-        if (task.isSuccessful() && task.getResult() != null) {
-          UserEntity user = task.getResult().toObject(UserEntity.class);
-          if (user != null) {
-            mUser.IsLibrarian = user.IsLibrarian;
-          }
+      if (task.isSuccessful() && task.getResult() != null) {
+        UserEntity user = task.getResult().toObject(UserEntity.class);
+        if (user != null) {
+          mUser.IsLibrarian = user.IsLibrarian;
         }
+      }
 
-        // enable options if user has permissions
-        if (mUser.IsLibrarian) {
-          // TODO: add access to debug (image from camera, etc.)
-          MenuItem librarianMenu = mNavigationView.getMenu().findItem(R.id.navigation_menu_librarian);
-          if (librarianMenu != null) {
-            librarianMenu.setVisible(true);
-          }
+      // enable options if user has permissions
+      if (mUser.IsLibrarian) {
+        // TODO: add access to debug (image from camera, etc.)
+        MenuItem librarianMenu = mNavigationView.getMenu().findItem(R.id.navigation_menu_librarian);
+        if (librarianMenu != null) {
+          librarianMenu.setVisible(true);
         }
+      }
 
-        checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, BaseActivity.REQUEST_STORAGE_PERMISSIONS);
-      });
-    }
+      checkForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, BaseActivity.REQUEST_STORAGE_PERMISSIONS);
+    });
   }
 
   @Override
@@ -252,46 +261,90 @@ public class MainActivity extends AppCompatActivity implements
     super.onActivityResult(requestCode, resultCode, data);
 
     Log.d(TAG, "++onActivityResult(int, int, Intent)");
-    if (requestCode == BaseActivity.REQUEST_BOOK_ADD) { // pick up any change to tutorial
-      String message = null;
-      BookEntity bookEntity = null;
-      if (data != null) {
-        if (data.hasExtra(BaseActivity.ARG_MESSAGE)) {
-          message = data.getStringExtra(BaseActivity.ARG_MESSAGE);
-        }
-
-        if (data.hasExtra(BaseActivity.ARG_BOOK)) {
-          bookEntity = (BookEntity) data.getSerializableExtra(BaseActivity.ARG_BOOK);
-        }
-      }
-
-      switch (resultCode) {
-        case BaseActivity.RESULT_ADD_SUCCESS:
-          if (bookEntity == null) {
-            showDismissableSnackbar(getString(R.string.err_add_book));
+    switch (requestCode) {
+      case BaseActivity.REQUEST_BOOK_ADD:
+        String message = null;
+        BookEntity bookEntity = null;
+        if (data != null) {
+          if (data.hasExtra(BaseActivity.ARG_MESSAGE)) {
+            message = data.getStringExtra(BaseActivity.ARG_MESSAGE);
           }
 
-          break;
-        case BaseActivity.RESULT_ADD_FAILED:
-          if (message != null && message.length() > 0) {
-            showDismissableSnackbar(message);
+          if (data.hasExtra(BaseActivity.ARG_BOOK)) {
+            bookEntity = (BookEntity) data.getSerializableExtra(BaseActivity.ARG_BOOK);
+          }
+        }
+
+        switch (resultCode) {
+          case BaseActivity.RESULT_ADD_SUCCESS:
+            if (bookEntity == null) {
+              showDismissableSnackbar(getString(R.string.err_add_book));
+            }
+
+            break;
+          case BaseActivity.RESULT_ADD_FAILED:
+            if (message != null && message.length() > 0) {
+              showDismissableSnackbar(message);
+            } else {
+              Log.e(TAG, "Activity return with incomplete data or no message was sent.");
+              showDismissableSnackbar(getString(R.string.message_unknown_activity_result));
+            }
+
+            break;
+          case RESULT_CANCELED:
+            if (message != null && message.length() > 0) {
+              showDismissableSnackbar(message);
+            }
+
+            break;
+        }
+
+        new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+        break;
+
+      case BaseActivity.REQUEST_IMAGE_CAPTURE:
+        if (resultCode != RESULT_OK) {
+          Log.d(TAG, "User canceled camera intent.");
+        } else {
+          File f = new File(getString(R.string.debug_path), data.getStringExtra(BaseActivity.ARG_DEBUG_FILE_NAME));
+          Log.d(TAG, "Using " + f.getAbsolutePath());
+          try {
+            mImageBitmap = BitmapFactory.decodeStream(new FileInputStream(f));
+          } catch (FileNotFoundException e) {
+            Crashlytics.logException(e);
+          }
+
+          if (mImageBitmap != null) {
+            Bitmap emptyBitmap = Bitmap.createBitmap(
+              mImageBitmap.getWidth(),
+              mImageBitmap.getHeight(),
+              mImageBitmap.getConfig());
+            if (!mImageBitmap.sameAs(emptyBitmap)) {
+              LayoutInflater layoutInflater = LayoutInflater.from(this);
+              View promptView = layoutInflater.inflate(R.layout.dialog_debug_image, null);
+              ImageView imageView = promptView.findViewById(R.id.debug_dialog_image);
+              BitmapDrawable bmd = new BitmapDrawable(this.getResources(), mImageBitmap);
+              imageView.setImageDrawable(bmd);
+              AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+              alertDialogBuilder.setView(promptView);
+              alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK", (dialog, id) -> useFirebaseBarcodeScanning())
+                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+
+              AlertDialog alert = alertDialogBuilder.create();
+              alert.show();
+            } else {
+              Log.w(TAG, getString(R.string.err_image_empty));
+            }
           } else {
-            Log.e(TAG, "Activity return with incomplete data or no message was sent.");
-            showDismissableSnackbar(getString(R.string.message_unknown_activity_result));
+            Log.w(TAG, getString(R.string.err_image_not_found));
           }
+        }
+        break;
 
-          break;
-        case RESULT_CANCELED:
-          if (message != null && message.length() > 0) {
-            showDismissableSnackbar(message);
-          }
-
-          break;
-      }
-
-      new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
-    } else {
-      Log.w(TAG, String.format(Locale.US, "Unexpected activity request: %d", requestCode));
+      default:
+        Log.e(TAG, "Unknown request code received:" + requestCode);
+        break;
     }
   }
 
@@ -353,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements
     } else if (barcodeValue != null && barcodeValue.length() == 13) {
       bookEntity.ISBN_13 = barcodeValue;
     }
+
     if (bookEntity.isValidISBN()) {
       new QueryBookDatabaseTask(this, CuratorRepository.getInstance(this), bookEntity).execute();
     } // TODO: add feedback if ISBN isn't valid
@@ -437,7 +491,7 @@ public class MainActivity extends AppCompatActivity implements
             queryInUserBooks(bookEntity);
         }
       })
-      .setNegativeButton(R.string.cancel, (dialog, id) ->  dialog.cancel() );
+      .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
 
     androidx.appcompat.app.AlertDialog alert = alertDialogBuilder.create();
     alert.show();
@@ -468,15 +522,6 @@ public class MainActivity extends AppCompatActivity implements
 
     Log.d(TAG, "++onResultListItemSelected(BookEntity)");
     replaceFragment(AddBookEntityFragment.newInstance(bookEntity));
-  }
-
-  @Override
-  public void onScanResultsItemSelected(String searchText) {
-
-    Log.d(TAG, "++onScanResultsItemSelected(String)");
-    BookEntity bookEntity = new BookEntity();
-    bookEntity.Title = searchText;
-    queryInUserBooks(bookEntity);
   }
 
   @Override
@@ -551,15 +596,10 @@ public class MainActivity extends AppCompatActivity implements
     Log.d(TAG, "++queryBookDatabaseComplete(BookDetail)");
     if (bookDetail.isValid()) {
       Log.d(TAG, "Found existing book entity in database.");
-      Intent intent = new Intent(this, MainActivity.class);
-      intent.putExtra(BaseActivity.ARG_BOOK_DETAIL, bookDetail);
-      startActivity(intent);
+      replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
     } else {
       Log.d(TAG, "Not in user's book list: " + bookDetail.toString());
-      if (bookDetail.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) &&
-        bookDetail.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) &&
-        bookDetail.LCCN.equals(BaseActivity.DEFAULT_LCCN) &&
-        bookDetail.Title.isEmpty()) {
+      if (!bookDetail.hasBarcode()) {
         Log.d(TAG, "Book entity is not valid: " + bookDetail.toString());
       } else {
         new GoogleBookApiTask(this, bookDetail).execute();
@@ -574,11 +614,10 @@ public class MainActivity extends AppCompatActivity implements
       Log.d(TAG, "Book entity list is empty after Google Book API query.");
     } else {
       if (bookEntityList.size() == BaseActivity.MAX_RESULTS) {
+        // TODO: message about only showing max results
       }
 
-      Intent intent = new Intent(this, MainActivity.class);
-      intent.putExtra(BaseActivity.ARG_RESULT_LIST, bookEntityList);
-      startActivity(intent);
+      replaceFragment(ResultListFragment.newInstance(bookEntityList));
     }
   }
 
@@ -618,7 +657,26 @@ public class MainActivity extends AppCompatActivity implements
       Log.d(TAG, "Permission granted: " + permission);
       switch (permissionRequest) {
         case BaseActivity.REQUEST_CAMERA_PERMISSIONS:
-          replaceFragment(BarcodeScanFragment.newInstance());
+          if (PreferenceUtils.isBypass(this)) {
+            LayoutInflater layoutInflater = LayoutInflater.from(this);
+            View promptView = layoutInflater.inflate(R.layout.dialog_debug_camera, null);
+            Spinner spinner = promptView.findViewById(R.id.debug_spinner_file);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setView(promptView);
+            alertDialogBuilder.setCancelable(false)
+              .setPositiveButton(R.string.ok, (dialog, id) -> {
+                Intent debugIntent = new Intent();
+                debugIntent.putExtra(BaseActivity.ARG_DEBUG_FILE_NAME, spinner.getSelectedItem().toString());
+                onActivityResult(BaseActivity.REQUEST_IMAGE_CAPTURE, RESULT_OK, debugIntent);
+              })
+              .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
+
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
+          } else {
+            replaceFragment(BarcodeScanFragment.newInstance());
+          }
+
           break;
         case BaseActivity.REQUEST_STORAGE_PERMISSIONS:
           new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
@@ -652,5 +710,54 @@ public class MainActivity extends AppCompatActivity implements
       Snackbar.LENGTH_INDEFINITE);
     mSnackbar.setAction(R.string.dismiss, v -> mSnackbar.dismiss());
     mSnackbar.show();
+  }
+
+  private void useFirebaseBarcodeScanning() {
+
+    Log.d(TAG, "++useFirebaseBarcodeScanning()");
+    FirebaseVisionBarcodeDetectorOptions options =
+      new FirebaseVisionBarcodeDetectorOptions.Builder()
+        .setBarcodeFormats(FirebaseVisionBarcode.FORMAT_EAN_8, FirebaseVisionBarcode.FORMAT_EAN_13)
+        .build();
+    FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(mImageBitmap);
+    FirebaseVisionBarcodeDetector detector = FirebaseVision.getInstance().getVisionBarcodeDetector(options);
+
+    com.google.android.gms.tasks.Task<java.util.List<FirebaseVisionBarcode>> result = detector.detectInImage(image)
+      .addOnCompleteListener(task -> {
+
+        if (task.isSuccessful() && task.getResult() != null) {
+          String barcodeValue = "";
+          for (FirebaseVisionBarcode barcode : task.getResult()) {
+            if (barcode.getValueType() == FirebaseVisionBarcode.TYPE_ISBN) {
+              barcodeValue = barcode.getDisplayValue();
+              Log.d(TAG, "Found a bar code: " + barcodeValue);
+            } else {
+              Log.w(TAG, "Unexpected bar code: " + barcode.getDisplayValue());
+            }
+          }
+
+          if (barcodeValue != null && !barcodeValue.isEmpty()) {
+            mRotationAttempts = 0;
+            onBarcodeScanned(barcodeValue);
+          } else if (mRotationAttempts < 3) {
+            mRotationAttempts++;
+            Matrix matrix = new Matrix();
+            matrix.postRotate(90);
+            mImageBitmap = Bitmap.createBitmap(
+              mImageBitmap,
+              0,
+              0,
+              mImageBitmap.getWidth(),
+              mImageBitmap.getHeight(),
+              matrix,
+              true);
+            useFirebaseBarcodeScanning();
+          } else {
+            mRotationAttempts = 0;
+          }
+        } else {
+          // TODO: handle detectInImage failure
+        }
+      });
   }
 }

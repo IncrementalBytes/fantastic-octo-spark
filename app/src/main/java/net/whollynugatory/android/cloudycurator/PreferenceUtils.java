@@ -82,6 +82,16 @@ public class PreferenceUtils {
     }
   }
 
+  public static boolean isBypass(Context context) {
+
+    return getBooleanPref(context, R.string.pref_key_bypass, false);
+  }
+
+  public static boolean isException(Context context) {
+
+    return getBooleanPref(context, R.string.pref_key_exception, false);
+  }
+
   public static void saveBooleanPreference(
 
     Context context, @StringRes int prefKeyId, boolean value) {
