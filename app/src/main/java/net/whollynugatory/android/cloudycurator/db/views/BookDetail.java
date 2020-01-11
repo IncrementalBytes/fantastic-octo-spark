@@ -13,6 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.db.views;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
@@ -31,18 +32,13 @@ import androidx.room.Ignore;
     "BookTable.lccn AS LCCN, " +
     "BookTable.title AS Title, " +
     "BookTable.author_id AS AuthorId, " +
-    "AuthorTable.author_string AS Authors, " +
-    "BookTable.category_id AS CategoryId, " +
-    "CategorieTable.category_string AS Categories, " +
-    "BookTable.publisher_id AS PublisherId, " +
-    "PublisherTable.publisher_string AS Publishers, " +
+    "AuthorTable.Authors AS Authors, " +
     "BookTable.published_date AS Published, " +
     "BookTable.is_owned AS IsOwned, " +
-    "BookTable.has_read AS HasRead " +
+    "BookTable.has_read AS HasRead, " +
+    "BookTable.added_date AS DateAdded " +
     "FROM books_table AS BookTable " +
-    "INNER JOIN authors_table AS AuthorTable ON AuthorTable.id = BookTable.author_id " +
-    "INNER JOIN publishers_table AS PublisherTable ON PublisherTable.id = BookTable.publisher_id " +
-    "INNER JOIN categories_table AS CategorieTable ON CategorieTable.id = BookTable.category_id")
+    "INNER JOIN authors_table AS AuthorTable ON AuthorTable.AuthorId = BookTable.author_id")
 public class BookDetail implements Serializable {
 
   public String Id;
@@ -51,14 +47,11 @@ public class BookDetail implements Serializable {
   public String LCCN;
   public String Title;
   public String Authors;
-  public long AuthorId;
-  public String Publishers;
-  public long PublisherId;
-  public String Categories;
-  public long CategoryId;
+  public String AuthorId;
   public String Published;
   public boolean HasRead;
   public boolean IsOwned;
+  public long DateAdded;
 
   public BookDetail() {
 
@@ -68,14 +61,11 @@ public class BookDetail implements Serializable {
     LCCN = BaseActivity.DEFAULT_LCCN;
     Title = "";
     Authors = "";
-    AuthorId = -1;
-    Publishers = "";
-    PublisherId = -1;
-    Categories = "";
-    CategoryId = -1;
+    AuthorId = BaseActivity.DEFAULT_ID;
     Published = "";
     HasRead = false;
     IsOwned = false;
+    DateAdded = 0;
   }
 
   public BookDetail(String volumeId) {
@@ -92,15 +82,12 @@ public class BookDetail implements Serializable {
     LCCN = bookDetails.LCCN;
     Title = bookDetails.Title;
     AuthorId = bookDetails.AuthorId;
-    PublisherId = bookDetails.PublisherId;
-    CategoryId = bookDetails.CategoryId;
     Published = bookDetails.Published;
     HasRead = bookDetails.HasRead;
     IsOwned = bookDetails.IsOwned;
+    DateAdded = bookDetails.DateAdded;
 
     Authors = bookDetails.Authors;
-    Categories = bookDetails.Categories;
-    Publishers = bookDetails.Publishers;
   }
 
   /*
@@ -111,11 +98,9 @@ public class BookDetail implements Serializable {
 
     return String.format(
       Locale.US,
-      "Book { Title=%s, Author(s)=%s, Categories=%s, Publisher(s)=%s, %s, %s}",
+      "Book { Title=%s, Author(s)=%s, %s, %s}",
       Title,
       Authors,
-      Categories,
-      Publishers,
       HasRead ? "Read" : "Unread",
       IsOwned ? "Owned" : "Not Owned");
   }
@@ -133,9 +118,7 @@ public class BookDetail implements Serializable {
   public boolean isValid() {
 
     return !Id.isEmpty() && !Id.equals(BaseActivity.DEFAULT_VOLUME_ID) &&
-      AuthorId >= 0 &&
-      CategoryId >= 0 &&
-      PublisherId >= 0 &&
+      !AuthorId.isEmpty() && !AuthorId.equals(BaseActivity.DEFAULT_ID) &&
       !Title.isEmpty();
   }
 
@@ -150,10 +133,9 @@ public class BookDetail implements Serializable {
     bookDetail.Title = bookEntity.Title;
     bookDetail.Published = bookEntity.PublishedDate;
     bookDetail.AuthorId = bookEntity.AuthorId;
-    bookDetail.CategoryId = bookEntity.CategoryId;
-    bookDetail.PublisherId = bookEntity.PublisherId;
     bookDetail.HasRead = bookEntity.HasRead;
     bookDetail.IsOwned = bookEntity.IsOwned;
+    bookDetail.DateAdded = bookEntity.AddedDate;
     return bookDetail;
   }
 }

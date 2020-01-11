@@ -13,12 +13,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.db.dao;
 
 import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 
 import java.util.List;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -27,12 +29,12 @@ import androidx.room.Query;
 @Dao
 public interface AuthorDao {
 
-  @Query("SELECT COUNT(*) FROM authors_table")
-  int count();
+  @Query("SELECT * FROM authors_table WHERE Authors = :authorName")
+  LiveData<AuthorEntity> find(String authorName);
 
-  @Query("SELECT * FROM authors_table")
-  List<AuthorEntity> getAll();
+  @Query("SELECT DISTINCT AuthorId, Authors FROM BookDetail")
+  LiveData<List<AuthorEntity>> getAllAuthors();
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
   long insert(AuthorEntity authorEntity);
 }

@@ -16,6 +16,7 @@
 package net.whollynugatory.android.cloudycurator.common;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 
 import java.util.Comparator;
 
@@ -26,6 +27,14 @@ public class SortUtils {
         public int compare(BookEntity a, BookEntity b) {
 
             return a.Title.compareTo(b.Title);
+        }
+    }
+
+    public static class ByRecent implements Comparator<BookDetail> {
+
+        public int compare(BookDetail a, BookDetail b) {
+
+            return Long.compare(a.DateAdded, b.DateAdded);
         }
     }
 }

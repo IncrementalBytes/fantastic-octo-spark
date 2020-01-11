@@ -13,6 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.db.dao;
 
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
@@ -20,26 +21,28 @@ import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 
 import java.util.List;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 @Dao
 public interface BookDao {
 
-  @Query("SELECT COUNT(*) FROM books_table")
-  int count();
-
   @Query("DELETE FROM books_table WHERE volume_id = :volumeId")
-  int delete(String volumeId);
+  void delete(String volumeId);
 
-  @Query("SELECT * FROM bookdetail WHERE id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
-  BookDetail get(String bookId);
+  @Query("SELECT * FROM books_table WHERE volume_id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
+  LiveData<BookEntity> find(String bookId);
 
-  @Query("SELECT * FROM bookdetail")
-  List<BookDetail> getAll();
+  @Query("SELECT * FROM books_table LIMIT 50")
+  LiveData<List<BookEntity>> getAllByRecent();
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  void insert(BookEntity bookEntity);
+  long insert(BookEntity bookEntity);
+
+  @Update
+  void update(BookEntity bookEntity);
 }

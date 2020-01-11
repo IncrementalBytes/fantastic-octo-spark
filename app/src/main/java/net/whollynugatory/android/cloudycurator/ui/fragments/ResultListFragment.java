@@ -19,6 +19,7 @@ import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +27,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 import net.whollynugatory.android.cloudycurator.R;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
@@ -52,6 +55,7 @@ public class ResultListFragment extends Fragment {
 
   private RecyclerView mRecyclerView;
 
+  private BookListViewModel mBookListViewModel;
   private ArrayList<BookEntity> mBookEntityList;
 
   public static ResultListFragment newInstance(ArrayList<BookEntity> bookEntityList) {
@@ -59,7 +63,7 @@ public class ResultListFragment extends Fragment {
     Log.d(TAG, "++newInstance(ArrayList<BookEntity>)");
     ResultListFragment fragment = new ResultListFragment();
     Bundle args = new Bundle();
-    args.putSerializable(BaseActivity.ARG_BOOK_LIST, bookEntityList);
+    args.putSerializable(BaseActivity.ARG_LIST_BOOK, bookEntityList);
     fragment.setArguments(args);
     return fragment;
   }
@@ -67,6 +71,14 @@ public class ResultListFragment extends Fragment {
   /*
       Fragment Override(s)
    */
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+
+    Log.d(TAG, "++onActivityCreated()");
+    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
+  }
+
   @Override
   public void onAttach(@NonNull Context context) {
     super.onAttach(context);
@@ -81,7 +93,7 @@ public class ResultListFragment extends Fragment {
 
     Bundle arguments = getArguments();
     if (arguments != null) {
-      mBookEntityList = (ArrayList<BookEntity>)arguments.getSerializable(BaseActivity.ARG_BOOK_LIST);
+      mBookEntityList = (ArrayList<BookEntity>)arguments.getSerializable(BaseActivity.ARG_LIST_BOOK);
     } else {
       String message = "Arguments were null.";
       Log.e(TAG, message);
@@ -162,10 +174,10 @@ public class ResultListFragment extends Fragment {
   /**
    * Holder class for query result object
    */
-  private class ResultHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+  private class ResultHolder extends RecyclerView.ViewHolder {
 
+    private final Button mAddButton;
     private final TextView mAuthorsTextView;
-    private final TextView mCategoriesTextView;
     private final TextView mISBNTextView;
     private final TextView mPublishedTextView;
     private final TextView mPublisherTextView;
@@ -174,27 +186,21 @@ public class ResultListFragment extends Fragment {
     private BookEntity mBookEntity;
 
     ResultHolder(LayoutInflater inflater, ViewGroup parent) {
-      super(inflater.inflate(R.layout.book_item, parent, false));
+      super(inflater.inflate(R.layout.item_result, parent, false));
 
-      mAuthorsTextView = itemView.findViewById(R.id.book_item_authors);
-      mCategoriesTextView = itemView.findViewById(R.id.book_item_categories);
-      mISBNTextView = itemView.findViewById(R.id.book_item_isbn);
-      mPublishedTextView = itemView.findViewById(R.id.book_item_published);
-      mPublisherTextView = itemView.findViewById(R.id.book_item_publisher);
-      mTitleTextView = itemView.findViewById(R.id.book_item_title);
+      mAddButton = itemView.findViewById(R.id.result_button_add);
+      mAuthorsTextView = itemView.findViewById(R.id.result_text_authors);
+      mISBNTextView = itemView.findViewById(R.id.result_text_isbn);
+      mPublishedTextView = itemView.findViewById(R.id.result_text_published);
+      mPublisherTextView = itemView.findViewById(R.id.result_text_publisher);
+      mTitleTextView = itemView.findViewById(R.id.result_text_title);
 
-      ImageView deleteImage = itemView.findViewById(R.id.book_item_image_delete);
-      deleteImage.setVisibility(View.INVISIBLE);
-      TextView readText = itemView.findViewById(R.id.book_item_text_read);
-      readText.setVisibility(View.INVISIBLE);
-      ImageView readImage = itemView.findViewById(R.id.book_item_image_read);
-      readImage.setVisibility(View.INVISIBLE);
-      TextView ownText = itemView.findViewById(R.id.book_item_text_own);
-      ownText.setVisibility(View.INVISIBLE);
-      ImageView ownImage = itemView.findViewById(R.id.book_item_image_own);
-      ownImage.setVisibility(View.INVISIBLE);
+      mAddButton.setOnClickListener(v -> {
 
-      itemView.setOnClickListener(this);
+        Log.d(TAG, "++ResultHolder::onClick(View)");
+        mBookListViewModel.insert(mBookEntity);
+        mCallback.onResultListItemSelected(mBookEntity);
+      });
     }
 
     void bind(BookEntity bookEntity) {
@@ -202,31 +208,14 @@ public class ResultListFragment extends Fragment {
       mBookEntity = bookEntity;
 
       mAuthorsTextView.setText(mBookEntity.getAuthorsDelimited());
-      mCategoriesTextView.setText(
-        String.format(
-          Locale.US,
-          getString(R.string.categories_format),
-          mBookEntity.getCategoriesDelimited()));
       mISBNTextView.setText(
         String.format(
           Locale.US,
           getString(R.string.isbn_format),
           mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
       mPublishedTextView.setText(String.format(Locale.US, getString(R.string.published_date_format), mBookEntity.PublishedDate));
-      if (mBookEntity.Publisher == null || mBookEntity.Publisher.isEmpty()) {
-        mPublisherTextView.setVisibility(View.INVISIBLE);
-      } else {
-        mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.Publisher));
-      }
-
+//      mPublishedTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.getPublisherDelimited()));
       mTitleTextView.setText(mBookEntity.Title);
-    }
-
-    @Override
-    public void onClick(View view) {
-
-      Log.d(TAG, "++ResultHolder::onClick(View)");
-      mCallback.onResultListItemSelected(mBookEntity);
     }
   }
 }

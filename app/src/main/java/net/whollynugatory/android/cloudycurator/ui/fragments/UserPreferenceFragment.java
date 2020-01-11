@@ -64,41 +64,49 @@ public class UserPreferenceFragment extends PreferenceFragmentCompat {
   private void setUpBypassPreference() {
 
     Log.d(TAG, "++setUpBypassPreference()");
-    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_bypass));
-    if (debugPreference == null) {
+    SwitchPreference bypassPreference = findPreference(getString(R.string.pref_key_bypass));
+    if (bypassPreference == null) {
       return;
     }
 
-    debugPreference.setOnPreferenceChangeListener(
-      (preference, newValue) -> {
+    if (!BuildConfig.DEBUG) {
+      bypassPreference.setVisible(false);
+    } else {
+      bypassPreference.setOnPreferenceChangeListener(
+        (preference, newValue) -> {
 
-        Log.d(TAG, "++setUpBypassPreference::onPreferenceChange()");
-        PreferenceUtils.saveBooleanPreference(
-          getActivity(),
-          R.string.pref_key_bypass,
-          (boolean) newValue);
-        return true;
-      });
+          Log.d(TAG, "++setUpBypassPreference::onPreferenceChange()");
+          PreferenceUtils.saveBooleanPreference(
+            getActivity(),
+            R.string.pref_key_bypass,
+            (boolean) newValue);
+          return true;
+        });
+    }
   }
 
   private void setUpExceptionPreference() {
 
     Log.d(TAG, "++setUpExceptionPreference()");
-    SwitchPreference debugPreference = findPreference(getString(R.string.pref_key_exception));
-    if (debugPreference == null) {
+    SwitchPreference exceptionPreference = findPreference(getString(R.string.pref_key_exception));
+    if (exceptionPreference == null) {
       return;
     }
 
-    debugPreference.setOnPreferenceChangeListener(
-      (preference, newValue) -> {
+    if (!BuildConfig.DEBUG) {
+      exceptionPreference.setVisible(false);
+    } else {
+      exceptionPreference.setOnPreferenceChangeListener(
+        (preference, newValue) -> {
 
-        Log.d(TAG, "++setUpExceptionPreference::onPreferenceChange()");
-        PreferenceUtils.saveBooleanPreference(
-          getActivity(),
-          R.string.pref_key_exception,
-          (boolean) newValue);
-        return true;
-      });
+          Log.d(TAG, "++setUpExceptionPreference::onPreferenceChange()");
+          PreferenceUtils.saveBooleanPreference(
+            getActivity(),
+            R.string.pref_key_exception,
+            (boolean) newValue);
+          return true;
+        });
+    }
   }
 
   private void setUpRearCameraPreviewSizePreference() {

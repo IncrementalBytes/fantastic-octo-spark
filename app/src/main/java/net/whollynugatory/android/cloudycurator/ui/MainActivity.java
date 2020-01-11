@@ -30,6 +30,7 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -49,6 +50,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -58,22 +60,19 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import net.whollynugatory.android.cloudycurator.PreferenceUtils;
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.common.GetDataTask;
-import net.whollynugatory.android.cloudycurator.common.GetPropertyIdsTask;
 import net.whollynugatory.android.cloudycurator.common.GoogleBookApiTask;
 import net.whollynugatory.android.cloudycurator.common.PathUtils;
-import net.whollynugatory.android.cloudycurator.common.QueryBookDatabaseTask;
-import net.whollynugatory.android.cloudycurator.db.CuratorDatabase;
-import net.whollynugatory.android.cloudycurator.db.CuratorRepository;
+import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
+import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
-import net.whollynugatory.android.cloudycurator.ui.fragments.AddBookEntityFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.BarcodeScanFragment;
-import net.whollynugatory.android.cloudycurator.ui.fragments.BookEntityListFragment;
+import net.whollynugatory.android.cloudycurator.ui.fragments.ItemListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.LibrarianFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ManualSearchFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.QueryFragment;
@@ -85,11 +84,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
-  AddBookEntityFragment.OnAddBookEntityListener,
   BarcodeScanFragment.OnBarcodeScanListener,
-  BookEntityListFragment.OnBookEntityListListener,
+  ItemListFragment.OnItemListListener,
   NavigationView.OnNavigationItemSelectedListener,
   QueryFragment.OnQueryListener,
   ResultListFragment.OnResultListListener,
@@ -97,11 +96,16 @@ public class MainActivity extends AppCompatActivity implements
 
   private static final String TAG = BaseActivity.BASE_TAG + "MainActivity";
 
+  private BottomNavigationView mBottomNavigationView;
+  private TextView mNavigationBooksText;
   private DrawerLayout mDrawerLayout;
   private NavigationView mNavigationView;
   private Snackbar mSnackbar;
 
+  private BookListViewModel mBookListViewModel;
+
   private int mAttempts;
+  private ArrayList<BookDetail> mBookDetailList;
   private Bitmap mImageBitmap;
   private int mRotationAttempts;
   private UserEntity mUser;
@@ -126,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements
     setContentView(R.layout.activity_main);
 
     mDrawerLayout = findViewById(R.id.main_drawer_layout);
+    mBottomNavigationView = findViewById(R.id.main_bottom_navigation);
     Toolbar toolbar = findViewById(R.id.main_toolbar);
     setSupportActionBar(toolbar);
 
@@ -144,11 +149,7 @@ public class MainActivity extends AppCompatActivity implements
       Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.main_fragment_container);
       if (fragment != null) {
         String fragmentClassName = fragment.getClass().getName();
-        if (fragmentClassName.equals(AddBookEntityFragment.class.getName())) {
-          setTitle(R.string.fragment_book_add);
-        } else if (fragmentClassName.equals(BookEntityListFragment.class.getName())) {
-          setTitle(getString(R.string.fragment_book_list));
-        } else if (fragmentClassName.equals(LibrarianFragment.class.getName())) {
+        if (fragmentClassName.equals(LibrarianFragment.class.getName())) {
           setTitle(getString(R.string.fragment_librarian));
         } else if (fragmentClassName.equals(ManualSearchFragment.class.getName())) {
           setTitle(getString(R.string.fragment_manual));
@@ -160,14 +161,51 @@ public class MainActivity extends AppCompatActivity implements
           setTitle(R.string.fragment_book_update);
         } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
           setTitle(getString(R.string.fragment_settings));
+        } else {
+          setTitle(getString(R.string.app_name));
         }
       }
     });
+
+    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
+
+    mBottomNavigationView.setOnNavigationItemSelectedListener(menuItem -> {
+
+      Log.d(TAG, "++onNavigationItemSelectedListener(MenuItem)");
+      switch (menuItem.getItemId()) {
+        case R.id.navigation_authors:
+          replaceFragment(ItemListFragment.newInstance(ItemListFragment.ItemType.Authors));
+          return true;
+        case R.id.navigation_categories:
+          return true;
+        case R.id.navigation_recent:
+          replaceFragment(ItemListFragment.newInstance());
+          return true;
+        case R.id.navigation_settings:
+          replaceFragment(UserPreferenceFragment.newInstance());
+          return true;
+      }
+
+      return false;
+    });
+
+    mBookDetailList = new ArrayList<>();
 
     mUser = new UserEntity();
     mUser.Id = getIntent().getStringExtra(BaseActivity.ARG_FIREBASE_USER_ID);
     mUser.Email = getIntent().getStringExtra(BaseActivity.ARG_EMAIL);
     mUser.FullName = getIntent().getStringExtra(BaseActivity.ARG_USER_NAME);
+
+    View navigationHeaderView = mNavigationView.inflateHeaderView(R.layout.main_navigation_header);
+    TextView navigationFullName = navigationHeaderView.findViewById(R.id.navigation_text_full_name);
+    navigationFullName.setText(mUser.FullName);
+    mNavigationBooksText = navigationHeaderView.findViewById(R.id.navigation_text_books);
+    if (mBookDetailList == null || mBookDetailList.size() == 0) {
+      mNavigationBooksText.setVisibility(View.INVISIBLE);
+    } else {
+      mNavigationBooksText.setVisibility(View.VISIBLE);
+      mNavigationBooksText.setText(String.format(Locale.US, getString(R.string.navigation_book_format), mBookDetailList.size()));
+    }
 
     String queryPath = PathUtils.combine(UserEntity.ROOT, mUser.Id);
     FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
@@ -199,21 +237,14 @@ public class MainActivity extends AppCompatActivity implements
     Log.d(TAG, "++onDestroy()");
   }
 
-//  @Override
-//  public boolean onCreateOptionsMenu(Menu menu) {
-//
-//    Log.d(TAG, "++onCreateOptionsMenu(Menu)");
-//    getMenuInflater().inflate(R.menu.menu_main, menu);
-//    return true;
-//  }
-
   @Override
   public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
     Log.d(TAG, "++onNavigationItemSelected(MenuItem)");
     switch (item.getItemId()) {
       case R.id.navigation_menu_home:
-        new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+//        new GetDataTask(this, CuratorDatabase.getInstance(this)).execute();
+        replaceFragment(ItemListFragment.newInstance());
         break;
       case R.id.navigation_menu_add:
         checkForPermission(Manifest.permission.CAMERA, BaseActivity.REQUEST_CAMERA_PERMISSIONS);
@@ -299,7 +330,7 @@ public class MainActivity extends AppCompatActivity implements
             break;
         }
 
-        new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+        replaceFragment(ItemListFragment.newInstance());
         break;
 
       case BaseActivity.REQUEST_IMAGE_CAPTURE:
@@ -366,50 +397,29 @@ public class MainActivity extends AppCompatActivity implements
       Fragment Override(s)
    */
   @Override
-  public void onAddBookEntityAddToLibrary(BookEntity bookEntity) {
-
-    Log.d(TAG, "++onAddBookEntityAddToLibrary(BookEntity)");
-    if (bookEntity.PublisherId < 0 || bookEntity.CategoryId < 0 || bookEntity.AuthorId < 0) {
-      new GetPropertyIdsTask(this, CuratorDatabase.getInstance(this), bookEntity).execute();
-    } else {
-      CuratorRepository.getInstance(this).insertBookEntity(bookEntity);
-      new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
-    }
-  }
-
-  @Override
-  public void onAddBookEntityInit(boolean isSuccessful) {
-
-    Log.d(TAG, "++onAddBookEntityInit(boolean)");
-  }
-
-  @Override
-  public void onAddBookEntityStarted() {
-
-    Log.d(TAG, "++onAddBookEntityStarted()");
-  }
-
-  @Override
   public void onBarcodeScanClose() {
 
     Log.d(TAG, "++onBarcodeScanClose()");
-    new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+    replaceFragment(ItemListFragment.newInstance());
   }
 
   @Override
   public void onBarcodeScanned(String barcodeValue) {
 
     Log.d(TAG, "++onBarcodeScanned(String)");
-    BookEntity bookEntity = new BookEntity();
-    if (barcodeValue != null && barcodeValue.length() == 8) {
-      bookEntity.ISBN_8 = barcodeValue;
-    } else if (barcodeValue != null && barcodeValue.length() == 13) {
-      bookEntity.ISBN_13 = barcodeValue;
-    }
+    mBookListViewModel.find(barcodeValue).observe(this, bookEntity -> {
 
-    if (bookEntity.isValidISBN()) {
-      new QueryBookDatabaseTask(this, CuratorRepository.getInstance(this), bookEntity).execute();
-    } // TODO: add feedback if ISBN isn't valid
+      if (bookEntity == null) {
+        BookEntity queryForBook = new BookEntity();
+        if (barcodeValue != null && barcodeValue.length() == 8) {
+          queryForBook.ISBN_8 = barcodeValue;
+        } else if (barcodeValue != null && barcodeValue.length() == 13) {
+          queryForBook.ISBN_13 = barcodeValue;
+        }
+
+        new GoogleBookApiTask(this, queryForBook).execute();
+      } // TODO: found book, show summary fragment
+    });
   }
 
   @Override
@@ -420,25 +430,30 @@ public class MainActivity extends AppCompatActivity implements
   }
 
   @Override
-  public void onBookEntityListAddBook() {
+  public void onItemListAddBook() {
 
-    Log.d(TAG, "++onBookEntityListItemSelected()");
+    Log.d(TAG, "++onItemListAddBook()");
     checkForPermission(Manifest.permission.CAMERA, BaseActivity.REQUEST_CAMERA_PERMISSIONS);
   }
 
   @Override
-  public void onBookEntityListDeleteBook(String volumeId) {
+  public void onItemListDeleteBook(String volumeId) {
 
-    Log.d(TAG, "++onBookEntityListDeleteBook(String)");
-    CuratorRepository.getInstance(this).deleteBook(volumeId);
-    new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+    Log.d(TAG, "++onItemListDeleteBook(String)");
+    // TODO: new DeleteDataTask(this, CuratorDatabase.getInstance(this), volumeId).execute();
   }
 
   @Override
-  public void onBookEntityListItemSelected(BookDetail bookDetail) {
+  public void onAuthorItemSelected(AuthorEntity authorEntity) {
 
-    Log.d(TAG, "++onBookEntityListItemSelected(BookDetail)");
-    setTitle(getString(R.string.fragment_book));
+    Log.d(TAG, "++onAuthorItemSelected(AuthorEntity)");
+    Log.w(TAG, "Not yet implemented!");
+  }
+
+  @Override
+  public void onBookItemSelected(BookDetail bookDetail) {
+
+    Log.d(TAG, "++onBookItemSelected(BookDetail)");
     replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
   }
 
@@ -521,7 +536,7 @@ public class MainActivity extends AppCompatActivity implements
   public void onResultListItemSelected(BookEntity bookEntity) {
 
     Log.d(TAG, "++onResultListItemSelected(BookEntity)");
-    replaceFragment(AddBookEntityFragment.newInstance(bookEntity));
+    replaceFragment(ItemListFragment.newInstance());
   }
 
   @Override
@@ -541,8 +556,8 @@ public class MainActivity extends AppCompatActivity implements
   public void onUpdateBookEntityRemove(String volumeId) {
 
     Log.d(TAG, "++onUpdateBookEntityRemove(String)");
-    CuratorRepository.getInstance(this).deleteBook(volumeId);
-    new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+    // TODO: CuratorDatabase.getInstance(this).bookDao().delete(volumeId);
+    replaceFragment(ItemListFragment.newInstance());
   }
 
   @Override
@@ -559,54 +574,13 @@ public class MainActivity extends AppCompatActivity implements
       showDismissableSnackbar(getString(R.string.err_update_book));
     } else {
       BookEntity bookEntity = BookEntity.fromBookDetail(updatedBookDetail);
-      CuratorRepository.getInstance(this).insertBookEntity(bookEntity);
-      new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+      // TODO: new InsertDataTask(this, CuratorDatabase.getInstance(this), bookEntity).execute();
     }
   }
 
   /*
     Public Method(s)
    */
-  public void getPropertyIdComplete(BookEntity bookEntity) {
-
-    Log.d(TAG, "++getPropertyIdComplete(BookEntity)");
-    if (bookEntity.AuthorId > 0 && bookEntity.PublisherId > 0 && bookEntity.CategoryId > 0) {
-      // TODO: timing issue, insert is it's own task so calling GetDataTask too soon won't get insert, etc.
-      CuratorRepository.getInstance(this).insertBookEntity(bookEntity);
-      new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
-    } else {
-      Log.w(TAG, "Property retrieval task failed.");
-    }
-  }
-
-  public void getDataComplete(ArrayList<BookDetail> bookDetailList) {
-
-    Log.d(TAG, "++getDataComplete(ArrayList<BookDetail>)");
-    if (bookDetailList.size() == 0 && mAttempts < 5) {
-      mAttempts++;
-      new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
-    } else {
-      mAttempts = 0;
-      replaceFragment(BookEntityListFragment.newInstance(bookDetailList));
-    }
-  }
-
-  public void queryBookDatabaseComplete(BookDetail bookDetail) {
-
-    Log.d(TAG, "++queryBookDatabaseComplete(BookDetail)");
-    if (bookDetail.isValid()) {
-      Log.d(TAG, "Found existing book entity in database.");
-      replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
-    } else {
-      Log.d(TAG, "Not in user's book list: " + bookDetail.toString());
-      if (!bookDetail.hasBarcode()) {
-        Log.d(TAG, "Book entity is not valid: " + bookDetail.toString());
-      } else {
-        new GoogleBookApiTask(this, bookDetail).execute();
-      }
-    }
-  }
-
   public void retrieveBooksComplete(ArrayList<BookEntity> bookEntityList) {
 
     Log.d(TAG, "++retrieveBooksComplete(ArrayList<BookEntity>)");
@@ -679,7 +653,7 @@ public class MainActivity extends AppCompatActivity implements
 
           break;
         case BaseActivity.REQUEST_STORAGE_PERMISSIONS:
-          new GetDataTask(this, CuratorRepository.getInstance(this)).execute();
+          replaceFragment(ItemListFragment.newInstance());
           break;
       }
     }

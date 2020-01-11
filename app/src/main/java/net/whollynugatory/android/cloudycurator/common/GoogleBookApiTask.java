@@ -46,9 +46,9 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
   private static final String TAG = BaseActivity.BASE_TAG + "GoogleBookAPITask";
 
   private WeakReference<MainActivity> mActivityWeakReference;
-  private BookDetail mQueryForBook;
+  private BookEntity mQueryForBook;
 
-  public GoogleBookApiTask(MainActivity activityContext, BookDetail queryForBook) {
+  public GoogleBookApiTask(MainActivity activityContext, BookEntity queryForBook) {
 
     Log.d(TAG, "++GoogleBookApiTask(MainActivity, BookEntity)");
     mActivityWeakReference = new WeakReference<>(activityContext);
@@ -140,13 +140,6 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
             }
           }
 
-          if (volumeInfo.has("categories")) {
-            JSONArray infoArray = volumeInfo.getJSONArray("categories");
-            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
-              bookEntity.Categories.add((String) infoArray.get(subIndex));
-            }
-          }
-
           if (volumeInfo.has("industryIdentifiers")) {
             JSONArray infoArray = volumeInfo.getJSONArray("industryIdentifiers");
             for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
@@ -163,10 +156,6 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
 
           if (volumeInfo.has("publishedDate")) {
             bookEntity.PublishedDate = volumeInfo.getString("publishedDate");
-          }
-
-          if (volumeInfo.has("publisher")) {
-            bookEntity.Publisher = volumeInfo.getString("publisher");
           }
 
           // if title or id are missing, allow exception to be thrown to skip

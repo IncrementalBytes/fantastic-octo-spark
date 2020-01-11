@@ -104,12 +104,8 @@ public class UpdateBookEntityFragment extends Fragment {
     titleText.setText(mBookDetail.Title);
     TextView authorsText = view.findViewById(R.id.book_text_author_value);
     authorsText.setText(mBookDetail.Authors);
-    TextView categoriesText = view.findViewById(R.id.book_text_categories_value);
-    categoriesText.setText(mBookDetail.Categories);
     TextView publishedDateText = view.findViewById(R.id.book_text_published_date_value);
     publishedDateText.setText(mBookDetail.Published);
-    TextView publisherText = view.findViewById(R.id.book_text_publisher_value);
-    publisherText.setText(mBookDetail.Publishers);
     TextView isbnText = view.findViewById(R.id.book_text_isbn_value);
     if (mBookDetail.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
       isbnText.setText(mBookDetail.ISBN_8);

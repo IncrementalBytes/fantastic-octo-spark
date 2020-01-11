@@ -13,6 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.db.entity;
 
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
@@ -33,9 +34,11 @@ import androidx.room.PrimaryKey;
 @Entity(
   tableName = "books_table",
   foreignKeys = {
-    @ForeignKey(entity = AuthorEntity.class, parentColumns = "id", childColumns = "author_id")
+    @ForeignKey(entity = AuthorEntity.class, parentColumns = "AuthorId", childColumns = "author_id")
   },
-  indices = {@Index(value = {"author_id"}, unique = true)}
+  indices = {
+    @Index(value = {"author_id"})
+  }
 )
 public class BookEntity implements Serializable {
 
@@ -44,14 +47,9 @@ public class BookEntity implements Serializable {
   @ColumnInfo(name = "volume_id")
   public String VolumeId;
 
+  @NonNull
   @ColumnInfo(name = "author_id")
-  public long AuthorId;
-
-  @ColumnInfo(name = "category_id")
-  public long CategoryId;
-
-  @ColumnInfo(name = "publisher_id")
-  public long PublisherId;
+  public String AuthorId;
 
   @ColumnInfo(name = "title")
   public String Title;
@@ -83,52 +81,38 @@ public class BookEntity implements Serializable {
   @Ignore
   public ArrayList<String> Authors;
 
-  @Ignore
-  public ArrayList<String> Categories;
-
-  @Ignore
-  public String Publisher;
-
   public BookEntity() {
 
     AddedDate = 0;
-    AuthorId = -1;
-    CategoryId = -1;
+    AuthorId = BaseActivity.DEFAULT_ID;
     HasRead = false;
     ISBN_8 = BaseActivity.DEFAULT_ISBN_8;
     ISBN_13 = BaseActivity.DEFAULT_ISBN_13;
     IsOwned = false;
     LCCN = BaseActivity.DEFAULT_LCCN;
     PublishedDate = "";
-    PublisherId = -1;
     Title = "";
     UpdatedDate = 0;
     VolumeId = BaseActivity.DEFAULT_VOLUME_ID;
 
     Authors = new ArrayList<>();
-    Categories = new ArrayList<>();
-    Publisher = "";
   }
 
   public BookEntity(BookEntity bookEntity) {
 
     AddedDate = bookEntity.AddedDate;
     AuthorId = bookEntity.AuthorId;
-    CategoryId = bookEntity.CategoryId;
     HasRead = bookEntity.HasRead;
     ISBN_8 = bookEntity.ISBN_8;
     ISBN_13 = bookEntity.ISBN_13;
     IsOwned = bookEntity.IsOwned;
     LCCN = bookEntity.LCCN;
     PublishedDate = bookEntity.PublishedDate;
-    PublisherId = bookEntity.PublisherId;
     Title = bookEntity.Title;
     UpdatedDate = bookEntity.UpdatedDate;
     VolumeId = bookEntity.VolumeId;
 
     Authors = new ArrayList<>(bookEntity.Authors);
-    Categories = new ArrayList<>(bookEntity.Categories);
-    Publisher = bookEntity.Publisher;
   }
 
   @Override
@@ -162,22 +146,6 @@ public class BookEntity implements Serializable {
   }
 
   @Ignore
-  public String getCategoriesDelimited() {
-
-    StringBuilder builder = new StringBuilder();
-    for (String category : Categories) {
-      builder.append(category);
-      builder.append(",");
-    }
-
-    if (builder.length() > 1) {
-      builder.deleteCharAt(builder.length() - 1);
-    }
-
-    return builder.toString();
-  }
-
-  @Ignore
   public boolean isValidISBN() {
 
     return (!ISBN_8.isEmpty() && !ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8)) ||
@@ -190,8 +158,6 @@ public class BookEntity implements Serializable {
     BookEntity bookEntity = new BookEntity();
     bookEntity.VolumeId = bookDetail.Id;
     bookEntity.AuthorId = bookDetail.AuthorId;
-    bookEntity.CategoryId = bookDetail.CategoryId;
-    bookEntity.PublisherId = bookDetail.PublisherId;
     bookEntity.ISBN_8 = bookDetail.ISBN_8;
     bookEntity.ISBN_13 = bookDetail.ISBN_13;
     bookEntity.LCCN = bookDetail.LCCN;

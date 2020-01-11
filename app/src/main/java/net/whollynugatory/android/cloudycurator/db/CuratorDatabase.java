@@ -16,23 +16,22 @@
  *    Referencing:
  *    https://github.com/android/architecture-components-samples/blob/master/BasicSample/app/src/main/java/com/example/android/persistence/db/AppDatabase.java
  */
+
 package net.whollynugatory.android.cloudycurator.db;
 
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import net.whollynugatory.android.cloudycurator.db.dao.AuthorDao;
 import net.whollynugatory.android.cloudycurator.db.dao.BookDao;
-import net.whollynugatory.android.cloudycurator.db.dao.CategoryDao;
-import net.whollynugatory.android.cloudycurator.db.dao.PublisherDao;
 import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
-import net.whollynugatory.android.cloudycurator.db.entity.CategoryEntity;
-import net.whollynugatory.android.cloudycurator.db.entity.PublisherEntity;
 import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
@@ -40,39 +39,50 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Database(
-  entities = {AuthorEntity.class, BookEntity.class, CategoryEntity.class, PublisherEntity.class},
-  views = {BookDetail.class},
+  entities = {AuthorEntity.class, BookEntity.class},
+  views = {BookDetail.class },
   version = 1,
   exportSchema = false
 )
 public abstract class CuratorDatabase extends RoomDatabase {
 
   private static final String TAG = BaseActivity.BASE_TAG + "CuratorDatabase";
-  private static final int NUMBER_OF_THREADS = 4;
-
-  private static CuratorDatabase sInstance;
 
   public abstract AuthorDao authorDao();
 
   public abstract BookDao bookDao();
 
-  public abstract CategoryDao categoryDao();
+  private static volatile CuratorDatabase INSTANCE;
+  private static final int NUMBER_OF_THREADS = 4;
 
-  public abstract PublisherDao publisherDao();
-
-  static final ExecutorService databaseWriteExecutor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+  public static final ExecutorService databaseWriteExecutor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
   public static CuratorDatabase getInstance(final Context context) {
 
-    if (sInstance == null) {
+    Log.d(TAG, "++getDatabase(Context)");
+    if (INSTANCE == null) {
       synchronized (CuratorDatabase.class) {
-        if (sInstance == null) {
-          Log.d(TAG, "Building RoomDatabase object.");
-          sInstance = Room.databaseBuilder(context, CuratorDatabase.class, BaseActivity.DATABASE_NAME).build();
+        if (INSTANCE == null) {
+          INSTANCE = Room.databaseBuilder(
+            context.getApplicationContext(),
+            CuratorDatabase.class,
+            BaseActivity.DATABASE_NAME)
+            .addCallback(CuratorDatabaseCallback)
+            .build();
         }
       }
     }
 
-    return sInstance;
+    return INSTANCE;
   }
+
+  private static CuratorDatabase.Callback CuratorDatabaseCallback = new RoomDatabase.Callback() {
+
+    @Override
+    public void onCreate(@NonNull SupportSQLiteDatabase db) {
+      super.onCreate(db);
+
+      databaseWriteExecutor.execute(() -> INSTANCE.authorDao().insert(new AuthorEntity()));
+    }
+  };
 }

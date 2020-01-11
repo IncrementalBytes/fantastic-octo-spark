@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:id="@+id/navigation_recent" android:icon="@drawable/ic_recent_dark" android:title="@string/menu_recent"/>
+  <item android:id="@+id/navigation_authors" android:icon="@drawable/ic_authors_dark" android:title="@string/menu_authors"/>
+  <item android:id="@+id/navigation_categories" android:icon="@drawable/ic_categories_dark" android:title="@string/menu_categories"/>
+  <item android:id="@+id/navigation_settings" android:icon="@drawable/ic_settings_vd_white_24" android:title="@string/menu_settings"/>
+</menu>
