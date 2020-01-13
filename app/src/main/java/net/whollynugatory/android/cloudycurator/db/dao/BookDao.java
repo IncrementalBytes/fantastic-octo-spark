@@ -38,10 +38,10 @@ public interface BookDao {
   @Query("SELECT * FROM books_table WHERE volume_id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
   LiveData<BookEntity> find(String bookId);
 
-  @Query("SELECT Authors AS AuthorName, COUNT() AS BookCount FROM books_table GROUP BY AuthorName")
+  @Query("SELECT * FROM AuthorSummaryView")
   LiveData<List<BookAuthor>> getAllByAuthors();
 
-  @Query("SELECT Categories AS CategoryName, COUNT() AS BookCount FROM books_table GROUP BY CategoryName")
+  @Query("SELECT * FROM CategorySummaryView")
   LiveData<List<BookCategory>> getAllByCategories();
 
   @Query("SELECT * FROM books_table LIMIT 50")

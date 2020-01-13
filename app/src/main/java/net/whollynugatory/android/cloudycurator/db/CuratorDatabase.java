@@ -30,6 +30,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import net.whollynugatory.android.cloudycurator.db.dao.BookDao;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.views.AuthorSummaryView;
+import net.whollynugatory.android.cloudycurator.db.views.CategorySummaryView;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.concurrent.ExecutorService;
@@ -37,6 +39,7 @@ import java.util.concurrent.Executors;
 
 @Database(
   entities = {BookEntity.class},
+  views = {AuthorSummaryView.class, CategorySummaryView.class},
   version = 1,
   exportSchema = false
 )
