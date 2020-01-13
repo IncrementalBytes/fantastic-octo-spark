@@ -27,6 +27,7 @@
     android:layout_margin="@dimen/default_view_margin"
     android:text="@string/books_within_category"
     app:layout_constraintTop_toBottomOf="@id/category_item_name"
-    app:layout_constraintEnd_toEndOf="parent"/>
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,6 +23,7 @@
     android:id="@+id/navigation_text_full_name"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_view_margin"
     android:paddingTop="@dimen/nav_header_vertical_spacing"
     android:text="@string/placeholder"
     android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
@@ -31,6 +32,7 @@
     android:id="@+id/navigation_text_books"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="@dimen/default_view_margin"
     android:text="@string/placeholder" />
 
 </LinearLayout>

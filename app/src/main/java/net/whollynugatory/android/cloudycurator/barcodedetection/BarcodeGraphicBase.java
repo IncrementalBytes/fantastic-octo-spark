@@ -45,17 +45,17 @@ abstract class BarcodeGraphicBase extends Graphic {
     super(overlay);
 
     mBoxPaint = new Paint();
-    mBoxPaint.setColor(ContextCompat.getColor(context, R.color.barcode_reticle_stroke));
+    mBoxPaint.setColor(ContextCompat.getColor(context, R.color.barcode_reticule_stroke));
     mBoxPaint.setStyle(Paint.Style.STROKE);
-    mBoxPaint.setStrokeWidth(context.getResources().getDimensionPixelOffset(R.dimen.barcode_reticle_stroke_width));
+    mBoxPaint.setStrokeWidth(context.getResources().getDimensionPixelOffset(R.dimen.barcode_reticule_stroke_width));
 
     mScrimPaint = new Paint();
-    mScrimPaint.setColor(ContextCompat.getColor(context, R.color.barcode_reticle_background));
+    mScrimPaint.setColor(ContextCompat.getColor(context, R.color.barcode_reticule_background));
     mEraserPaint = new Paint();
     mEraserPaint.setStrokeWidth(mBoxPaint.getStrokeWidth());
     mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
-    BoxCornerRadius = context.getResources().getDimensionPixelOffset(R.dimen.barcode_reticle_corner_radius);
+    BoxCornerRadius = context.getResources().getDimensionPixelOffset(R.dimen.barcode_reticule_corner_radius);
 
     PathPaint = new Paint();
     PathPaint.setColor(Color.WHITE);
@@ -63,7 +63,7 @@ abstract class BarcodeGraphicBase extends Graphic {
     PathPaint.setStrokeWidth(mBoxPaint.getStrokeWidth());
     PathPaint.setPathEffect(new CornerPathEffect(BoxCornerRadius));
 
-    BoxRect = PreferenceUtils.getBarcodeReticleBox(overlay);
+    BoxRect = PreferenceUtils.getBarcodeReticuleBox(overlay);
   }
 
   @Override

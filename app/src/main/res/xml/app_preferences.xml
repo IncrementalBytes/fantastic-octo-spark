@@ -16,21 +16,21 @@
 
     <androidx.preference.SeekBarPreference
       android:defaultValue="80"
-      android:key="@string/pref_key_barcode_reticle_width"
+      android:key="@string/pref_key_barcode_reticule_width"
       android:max="95"
       android:persistent="true"
-      android:summary="@string/pref_summary_barcode_reticle_width"
-      android:title="@string/pref_title_barcode_reticle_width"
+      android:summary="@string/pref_summary_barcode_reticule_width"
+      android:title="@string/pref_title_barcode_reticule_width"
       app:min="50"
       app:showSeekBarValue="true"/>
 
     <androidx.preference.SeekBarPreference
       android:defaultValue="35"
-      android:key="@string/pref_key_barcode_reticle_height"
+      android:key="@string/pref_key_barcode_reticule_height"
       android:max="80"
       android:persistent="true"
-      android:summary="@string/pref_summary_barcode_reticle_height"
-      android:title="@string/pref_title_barcode_reticle_height"
+      android:summary="@string/pref_summary_barcode_reticule_height"
+      android:title="@string/pref_title_barcode_reticule_height"
       app:min="20"
       app:showSeekBarValue="true"/>
 

@@ -66,37 +66,31 @@ import net.whollynugatory.android.cloudycurator.PreferenceUtils;
 import net.whollynugatory.android.cloudycurator.R;
 import net.whollynugatory.android.cloudycurator.common.GoogleBookApiTask;
 import net.whollynugatory.android.cloudycurator.common.PathUtils;
-import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
 import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
-import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.fragments.BarcodeScanFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ItemListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.LibrarianFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ManualSearchFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.QueryFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ResultListFragment;
-import net.whollynugatory.android.cloudycurator.ui.fragments.UpdateBookEntityFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.UserPreferenceFragment;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
   BarcodeScanFragment.OnBarcodeScanListener,
   ItemListFragment.OnItemListListener,
   NavigationView.OnNavigationItemSelectedListener,
   QueryFragment.OnQueryListener,
-  ResultListFragment.OnResultListListener,
-  UpdateBookEntityFragment.OnUpdateBookEntityListener {
+  ResultListFragment.OnResultListListener {
 
   private static final String TAG = BaseActivity.BASE_TAG + "MainActivity";
 
-  private BottomNavigationView mBottomNavigationView;
   private TextView mNavigationBooksText;
   private DrawerLayout mDrawerLayout;
   private NavigationView mNavigationView;
@@ -104,8 +98,6 @@ public class MainActivity extends AppCompatActivity implements
 
   private BookListViewModel mBookListViewModel;
 
-  private int mAttempts;
-  private ArrayList<BookDetail> mBookDetailList;
   private Bitmap mImageBitmap;
   private int mRotationAttempts;
   private UserEntity mUser;
@@ -130,10 +122,10 @@ public class MainActivity extends AppCompatActivity implements
     setContentView(R.layout.activity_main);
 
     mDrawerLayout = findViewById(R.id.main_drawer_layout);
-    mBottomNavigationView = findViewById(R.id.main_bottom_navigation);
+    BottomNavigationView bottomNavigationView = findViewById(R.id.main_bottom_navigation);
     Toolbar toolbar = findViewById(R.id.main_toolbar);
-    setSupportActionBar(toolbar);
 
+    setSupportActionBar(toolbar);
     ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
       this,
       mDrawerLayout,
@@ -157,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements
           setTitle(getString(R.string.fragment_query));
         } else if (fragmentClassName.equals(ResultListFragment.class.getName())) {
           setTitle(R.string.fragment_select_book);
-        } else if (fragmentClassName.equals(UpdateBookEntityFragment.class.getName())) {
-          setTitle(R.string.fragment_book_update);
         } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
           setTitle(getString(R.string.fragment_settings));
         } else {
@@ -169,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements
 
     mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
 
-    mBottomNavigationView.setOnNavigationItemSelectedListener(menuItem -> {
+    bottomNavigationView.setOnNavigationItemSelectedListener(menuItem -> {
 
       Log.d(TAG, "++onNavigationItemSelectedListener(MenuItem)");
       switch (menuItem.getItemId()) {
@@ -177,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements
           replaceFragment(ItemListFragment.newInstance(ItemListFragment.ItemType.Authors));
           return true;
         case R.id.navigation_categories:
+          replaceFragment(ItemListFragment.newInstance(ItemListFragment.ItemType.Categories));
           return true;
         case R.id.navigation_recent:
           replaceFragment(ItemListFragment.newInstance());
@@ -189,7 +180,6 @@ public class MainActivity extends AppCompatActivity implements
       return false;
     });
 
-    mBookDetailList = new ArrayList<>();
 
     mUser = new UserEntity();
     mUser.Id = getIntent().getStringExtra(BaseActivity.ARG_FIREBASE_USER_ID);
@@ -200,12 +190,6 @@ public class MainActivity extends AppCompatActivity implements
     TextView navigationFullName = navigationHeaderView.findViewById(R.id.navigation_text_full_name);
     navigationFullName.setText(mUser.FullName);
     mNavigationBooksText = navigationHeaderView.findViewById(R.id.navigation_text_books);
-    if (mBookDetailList == null || mBookDetailList.size() == 0) {
-      mNavigationBooksText.setVisibility(View.INVISIBLE);
-    } else {
-      mNavigationBooksText.setVisibility(View.VISIBLE);
-      mNavigationBooksText.setText(String.format(Locale.US, getString(R.string.navigation_book_format), mBookDetailList.size()));
-    }
 
     String queryPath = PathUtils.combine(UserEntity.ROOT, mUser.Id);
     FirebaseFirestore.getInstance().document(queryPath).get().addOnCompleteListener(this, task -> {
@@ -437,24 +421,10 @@ public class MainActivity extends AppCompatActivity implements
   }
 
   @Override
-  public void onItemListDeleteBook(String volumeId) {
+  public void onItemListPopulated(int size) {
 
-    Log.d(TAG, "++onItemListDeleteBook(String)");
-    // TODO: new DeleteDataTask(this, CuratorDatabase.getInstance(this), volumeId).execute();
-  }
-
-  @Override
-  public void onAuthorItemSelected(AuthorEntity authorEntity) {
-
-    Log.d(TAG, "++onAuthorItemSelected(AuthorEntity)");
-    Log.w(TAG, "Not yet implemented!");
-  }
-
-  @Override
-  public void onBookItemSelected(BookDetail bookDetail) {
-
-    Log.d(TAG, "++onBookItemSelected(BookDetail)");
-    replaceFragment(UpdateBookEntityFragment.newInstance(bookDetail));
+    Log.d(TAG, "++onItemListPopulated(int)");
+    mNavigationBooksText.setText(getResources().getQuantityString(R.plurals.navigation_book_format, size, size));
   }
 
   @Override
@@ -537,45 +507,6 @@ public class MainActivity extends AppCompatActivity implements
 
     Log.d(TAG, "++onResultListItemSelected(BookEntity)");
     replaceFragment(ItemListFragment.newInstance());
-  }
-
-  @Override
-  public void onUpdateBookEntityActionComplete(String message) {
-
-    Log.d(TAG, "++onUpdateBookEntityActionComplete(String)");
-    showDismissableSnackbar(message);
-  }
-
-  @Override
-  public void onUpdateBookEntityInit(boolean isSuccessful) {
-
-    Log.d(TAG, "++onUpdateBookEntityInit(boolean)");
-  }
-
-  @Override
-  public void onUpdateBookEntityRemove(String volumeId) {
-
-    Log.d(TAG, "++onUpdateBookEntityRemove(String)");
-    // TODO: CuratorDatabase.getInstance(this).bookDao().delete(volumeId);
-    replaceFragment(ItemListFragment.newInstance());
-  }
-
-  @Override
-  public void onUpdateBookEntityStarted() {
-
-    Log.d(TAG, "++onUpdateBookEntityStarted()");
-  }
-
-  @Override
-  public void onUpdateBookEntityUpdate(BookDetail updatedBookDetail) {
-
-    Log.d(TAG, "++onUpdateBookEntityUpdate(BookDetail)");
-    if (updatedBookDetail == null) {
-      showDismissableSnackbar(getString(R.string.err_update_book));
-    } else {
-      BookEntity bookEntity = BookEntity.fromBookDetail(updatedBookDetail);
-      // TODO: new InsertDataTask(this, CuratorDatabase.getInstance(this), bookEntity).execute();
-    }
   }
 
   /*

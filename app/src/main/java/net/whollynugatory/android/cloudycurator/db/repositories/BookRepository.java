@@ -20,6 +20,8 @@ import android.util.Log;
 
 import net.whollynugatory.android.cloudycurator.db.CuratorDatabase;
 import net.whollynugatory.android.cloudycurator.db.dao.BookDao;
+import net.whollynugatory.android.cloudycurator.db.data.BookAuthor;
+import net.whollynugatory.android.cloudycurator.db.data.BookCategory;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
@@ -56,12 +58,22 @@ public class BookRepository {
 
   public void delete(String volumeId) {
 
-    mBookDao.delete(volumeId);
+    CuratorDatabase.databaseWriteExecutor.execute(() -> mBookDao.delete(volumeId));
   }
 
   public LiveData<BookEntity> find(String barcodeValue) {
 
     return mBookDao.find(barcodeValue);
+  }
+
+  public LiveData<List<BookAuthor>> getByAuthors() {
+
+    return mBookDao.getAllByAuthors();
+  }
+
+  public LiveData<List<BookCategory>> getByCategories() {
+
+    return mBookDao.getAllByCategories();
   }
 
   public LiveData<List<BookEntity>> getRecent() {

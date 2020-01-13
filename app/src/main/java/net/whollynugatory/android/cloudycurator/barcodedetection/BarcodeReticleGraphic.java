@@ -22,33 +22,33 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.camera.CameraReticleAnimator;
+import net.whollynugatory.android.cloudycurator.camera.CameraReticuleAnimator;
 import net.whollynugatory.android.cloudycurator.camera.GraphicOverlay;
 
 import androidx.core.content.ContextCompat;
 
 /**
- * A camera reticle that locates at the center of canvas to indicate the system is active but has not detected a barcode yet.
+ * A camera reticule that locates at the center of canvas to indicate the system is active but has not detected a barcode yet.
  **/
-class BarcodeReticleGraphic extends BarcodeGraphicBase {
+class BarcodeReticuleGraphic extends BarcodeGraphicBase {
 
-  private final CameraReticleAnimator mAnimator;
+  private final CameraReticuleAnimator mAnimator;
 
   private final Paint mRipplePaint;
   private final int mRippleSizeOffset;
   private final int mRippleStrokeWidth;
   private final int mRippleAlpha;
 
-  BarcodeReticleGraphic(GraphicOverlay overlay, CameraReticleAnimator animator) {
+  BarcodeReticuleGraphic(GraphicOverlay overlay, CameraReticuleAnimator animator) {
     super(overlay);
 
     mAnimator = animator;
     Resources resources = overlay.getResources();
     mRipplePaint = new Paint();
     mRipplePaint.setStyle(Paint.Style.STROKE);
-    mRipplePaint.setColor(ContextCompat.getColor(context, R.color.reticle_ripple));
-    mRippleSizeOffset = resources.getDimensionPixelOffset(R.dimen.barcode_reticle_ripple_size_offset);
-    mRippleStrokeWidth = resources.getDimensionPixelOffset(R.dimen.barcode_reticle_ripple_stroke_width);
+    mRipplePaint.setColor(ContextCompat.getColor(context, R.color.reticule_ripple));
+    mRippleSizeOffset = resources.getDimensionPixelOffset(R.dimen.barcode_reticule_ripple_size_offset);
+    mRippleStrokeWidth = resources.getDimensionPixelOffset(R.dimen.barcode_reticule_ripple_stroke_width);
     mRippleAlpha = mRipplePaint.getAlpha();
   }
 

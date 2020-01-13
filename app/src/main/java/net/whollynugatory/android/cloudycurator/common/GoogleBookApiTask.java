@@ -20,7 +20,6 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
-import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
@@ -135,9 +134,28 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
           BookEntity bookEntity = new BookEntity();
           if (volumeInfo.has("authors")) {
             JSONArray infoArray = volumeInfo.getJSONArray("authors");
+            StringBuilder authorString = new StringBuilder();
             for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
-              bookEntity.Authors.add((String) infoArray.get(subIndex));
+              authorString.append(infoArray.get(subIndex));
+              if ((subIndex + 1) < infoArray.length()) {
+                authorString.append(",");
+              }
             }
+
+            bookEntity.Authors = authorString.toString();
+          }
+
+          if (volumeInfo.has("categories")) {
+            JSONArray infoArray = volumeInfo.getJSONArray("categories");
+            StringBuilder categoryString = new StringBuilder();
+            for (int subIndex = 0; subIndex < infoArray.length(); subIndex++) {
+              categoryString.append(infoArray.get(subIndex));
+              if ((subIndex + 1) < infoArray.length()) {
+                categoryString.append(",");
+              }
+            }
+
+            bookEntity.Categories = categoryString.toString();
           }
 
           if (volumeInfo.has("industryIdentifiers")) {
@@ -156,6 +174,10 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
 
           if (volumeInfo.has("publishedDate")) {
             bookEntity.PublishedDate = volumeInfo.getString("publishedDate");
+          }
+
+          if (volumeInfo.has("publisher")) {
+            bookEntity.Publisher = volumeInfo.getString("publisher");
           }
 
           // if title or id are missing, allow exception to be thrown to skip

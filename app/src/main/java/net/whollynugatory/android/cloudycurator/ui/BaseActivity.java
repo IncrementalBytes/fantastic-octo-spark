@@ -13,27 +13,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 package net.whollynugatory.android.cloudycurator.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 
-  public static final String ARG_BARCODE_HINT = "barcode_hint";
   public static final String ARG_BOOK = "book";
-  public static final String ARG_BOOK_DETAIL = "book_detail";
   public static final String ARG_DEBUG_FILE_NAME = "debug_file_name";
   public static final String ARG_EMAIL = "email";
   public static final String ARG_FIREBASE_USER_ID = "firebase_user_id";
-  public static final String ARG_LIST_AUTHOR = "list_author";
   public static final String ARG_LIST_BOOK = "list_book";
-  public static final String ARG_LIST_CATEGORY = "list_category";
   public static final String ARG_LIST_TYPE = "list_type";
   public static final String ARG_MESSAGE = "message";
-  public static final String ARG_MESSAGE_ID = "message_id";
-  public static final String ARG_RESULT_LIST = "result_list";
-  public static final String ARG_SCAN_RESULTS = "scan_results";
-  public static final String ARG_USER = "user";
   public static final String ARG_USER_NAME = "user_name";
 
   public static final String DEFAULT_ISBN_8 = "00000000";
@@ -43,7 +36,6 @@ public class BaseActivity extends AppCompatActivity {
   public static final String DEFAULT_VOLUME_ID = "000000000000";
 
   public static final String DATABASE_NAME = "curator-db.sqlite";
-  public static final String UNKNOWN_STRING = "UNKNOWN";
   public static final int MAX_RESULTS = 10;
 
   public static final int REQUEST_IMAGE_CAPTURE = 4201;

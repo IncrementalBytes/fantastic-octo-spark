@@ -14,34 +14,21 @@
  *    limitations under the License.
  */
 
-package net.whollynugatory.android.cloudycurator.db.entity;
+package net.whollynugatory.android.cloudycurator.db.data;
 
-import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
-
-import java.io.Serializable;
-
-import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
-@Entity(
-  tableName = "authors_table"
-)
-public class AuthorEntity implements Serializable {
+public class BookAuthor {
 
-  @PrimaryKey
-  @NonNull
-  @ColumnInfo(name = "AuthorId")
-  public String Id;
+  @ColumnInfo(name = "AuthorName")
+  public String AuthorName;
 
-  @NonNull
-  @ColumnInfo(name = "Authors")
-  public String Name;
+  @ColumnInfo(name = "BookCount")
+  public int BookCount;
 
-  public AuthorEntity() {
+  public BookAuthor() {
 
-    Id = BaseActivity.DEFAULT_ID;
-    Name = BaseActivity.UNKNOWN_STRING;
+    AuthorName = "";
+    BookCount = 0;
   }
 }

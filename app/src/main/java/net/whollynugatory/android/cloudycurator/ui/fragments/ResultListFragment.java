@@ -28,7 +28,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
@@ -176,8 +175,8 @@ public class ResultListFragment extends Fragment {
    */
   private class ResultHolder extends RecyclerView.ViewHolder {
 
-    private final Button mAddButton;
     private final TextView mAuthorsTextView;
+    private final TextView mCategoriesTextView;
     private final TextView mISBNTextView;
     private final TextView mPublishedTextView;
     private final TextView mPublisherTextView;
@@ -188,14 +187,15 @@ public class ResultListFragment extends Fragment {
     ResultHolder(LayoutInflater inflater, ViewGroup parent) {
       super(inflater.inflate(R.layout.item_result, parent, false));
 
-      mAddButton = itemView.findViewById(R.id.result_button_add);
+      Button addButton = itemView.findViewById(R.id.result_button_add);
       mAuthorsTextView = itemView.findViewById(R.id.result_text_authors);
+      mCategoriesTextView = itemView.findViewById(R.id.result_text_categories);
       mISBNTextView = itemView.findViewById(R.id.result_text_isbn);
       mPublishedTextView = itemView.findViewById(R.id.result_text_published);
       mPublisherTextView = itemView.findViewById(R.id.result_text_publisher);
       mTitleTextView = itemView.findViewById(R.id.result_text_title);
 
-      mAddButton.setOnClickListener(v -> {
+      addButton.setOnClickListener(v -> {
 
         Log.d(TAG, "++ResultHolder::onClick(View)");
         mBookListViewModel.insert(mBookEntity);
@@ -207,14 +207,15 @@ public class ResultListFragment extends Fragment {
 
       mBookEntity = bookEntity;
 
-      mAuthorsTextView.setText(mBookEntity.getAuthorsDelimited());
+      mAuthorsTextView.setText(mBookEntity.Authors);
+      mCategoriesTextView.setText(mBookEntity.Categories);
       mISBNTextView.setText(
         String.format(
           Locale.US,
           getString(R.string.isbn_format),
           mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
       mPublishedTextView.setText(String.format(Locale.US, getString(R.string.published_date_format), mBookEntity.PublishedDate));
-//      mPublishedTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.getPublisherDelimited()));
+      mPublisherTextView.setText(String.format(Locale.US, getString(R.string.publisher_format), mBookEntity.Publisher));
       mTitleTextView.setText(mBookEntity.Title);
     }
   }
