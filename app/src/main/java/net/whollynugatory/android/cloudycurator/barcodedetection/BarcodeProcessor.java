@@ -27,7 +27,7 @@ import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 
 import net.whollynugatory.android.cloudycurator.PreferenceUtils;
-import net.whollynugatory.android.cloudycurator.camera.CameraReticleAnimator;
+import net.whollynugatory.android.cloudycurator.camera.CameraReticuleAnimator;
 import net.whollynugatory.android.cloudycurator.camera.FrameProcessorBase;
 import net.whollynugatory.android.cloudycurator.camera.GraphicOverlay;
 import net.whollynugatory.android.cloudycurator.camera.WorkflowModel;
@@ -48,13 +48,13 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
 
   private final FirebaseVisionBarcodeDetector detector = FirebaseVision.getInstance().getVisionBarcodeDetector();
   private final WorkflowModel workflowModel;
-  private final CameraReticleAnimator cameraReticleAnimator;
+  private final CameraReticuleAnimator cameraReticuleAnimator;
 
   public BarcodeProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
 
     Log.d(TAG, "++BarcodeProcessor(GraphicOverlay, WorkflowModel)");
     this.workflowModel = workflowModel;
-    this.cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
+    this.cameraReticuleAnimator = new CameraReticuleAnimator(graphicOverlay);
   }
 
   @Override
@@ -83,11 +83,11 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
 
     graphicOverlay.clear();
     if (barcodeInCenter == null) {
-      cameraReticleAnimator.start();
-      graphicOverlay.add(new BarcodeReticleGraphic(graphicOverlay, cameraReticleAnimator));
+      cameraReticuleAnimator.start();
+      graphicOverlay.add(new BarcodeReticuleGraphic(graphicOverlay, cameraReticuleAnimator));
       workflowModel.setWorkflowState(WorkflowState.DETECTING);
     } else {
-      cameraReticleAnimator.cancel();
+      cameraReticuleAnimator.cancel();
       float sizeProgress =
         PreferenceUtils.getProgressToMeetBarcodeSizeRequirement(graphicOverlay, barcodeInCenter);
       if (sizeProgress < 1) { // Barcode in the camera view is too small, so prompt user to move camera closer.

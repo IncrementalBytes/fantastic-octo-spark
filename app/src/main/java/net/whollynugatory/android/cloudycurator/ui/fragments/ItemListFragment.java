@@ -22,7 +22,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -30,10 +29,10 @@ import android.widget.TextView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.whollynugatory.android.cloudycurator.R;
-import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
+import net.whollynugatory.android.cloudycurator.db.data.BookAuthor;
+import net.whollynugatory.android.cloudycurator.db.data.BookCategory;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
-import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.List;
@@ -42,7 +41,6 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -60,9 +58,7 @@ public class ItemListFragment  extends Fragment {
   public interface OnItemListListener {
 
     void onItemListAddBook();
-    void onItemListDeleteBook(String volumeId);
-    void onAuthorItemSelected(AuthorEntity authorEntity);
-    void onBookItemSelected(BookDetail bookDetail);
+    void onItemListPopulated(int size);
   }
 
   private OnItemListListener mCallback;
@@ -101,26 +97,21 @@ public class ItemListFragment  extends Fragment {
     mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
     switch (mItemType) {
       case Authors:
-        AuthorEntityAdapter authorEntityAdapter = new AuthorEntityAdapter(getContext());
-        mRecyclerView.setAdapter(authorEntityAdapter);
-//        mCuratorViewModel.getAllAuthors().observe(this, new Observer<List<AuthorEntity>>() {
-//          @Override
-//          public void onChanged(List<AuthorEntity> authorEntityList) {
-//            authorEntityAdapter.setAuthorEntityList(authorEntityList);
-//          }
-//        });
+        BookAuthorAdapter bookAuthorAdapter = new BookAuthorAdapter(getContext());
+        mRecyclerView.setAdapter(bookAuthorAdapter);
+        mBookListViewModel.getAllByAuthors().observe(this, bookAuthorAdapter::setBookAuthorList);
 
         break;
       case Books:
         BookEntityAdapter bookEntityAdapter = new BookEntityAdapter(getContext());
         mRecyclerView.setAdapter(bookEntityAdapter);
-        mBookListViewModel.getAll().observe(this, new Observer<List<BookEntity>>() {
-          @Override
-          public void onChanged(List<BookEntity> bookEntityList) {
-            bookEntityAdapter.setBookEntityList(bookEntityList);
-          }
-        });
+        mBookListViewModel.getAll().observe(this, bookEntityAdapter::setBookEntityList);
 
+        break;
+      case Categories:
+        BookCategoryAdapter bookCategoryAdapter = new BookCategoryAdapter(getContext());
+        mRecyclerView.setAdapter(bookCategoryAdapter);
+        mBookListViewModel.getAllByCategories().observe(this, bookCategoryAdapter::setBookCategoryList);
         break;
     }
 
@@ -175,97 +166,162 @@ public class ItemListFragment  extends Fragment {
     super.onResume();
 
     Log.d(TAG, "++onResume()");
-    updateUI();
   }
 
   /*
-     Private Method(s)
+    Adapter class for BookAuthor objects
   */
-  private void updateUI() {
-  }
-
-  /*
-    Adapter class for AuthorDetail objects
-   */
-  private class AuthorEntityAdapter extends RecyclerView.Adapter<AuthorEntityAdapter.AuthorEntityHolder> {
+  private class BookAuthorAdapter extends RecyclerView.Adapter<BookAuthorAdapter.BookAuthorHolder> {
 
     /*
-      Holder class for AuthorEntity objects
+      Holder class for BookAuthor objects
      */
-    class AuthorEntityHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class BookAuthorHolder extends RecyclerView.ViewHolder {
 
-      private final TextView mNameTextView;
-      private final TextView mCountTextView;
+      private final TextView mAuthorTextView;
+      private final TextView mBookCountTextView;
 
-      private AuthorEntity mAuthorEntity;
+      private BookAuthor mBookAuthor;
 
-      AuthorEntityHolder(View itemView) {
+      BookAuthorHolder(View itemView) {
         super(itemView);
 
-        mNameTextView = itemView.findViewById(R.id.author_item_name);
-        mCountTextView = itemView.findViewById(R.id.author_item_count);
-        itemView.setOnClickListener(this);
+        mAuthorTextView = itemView.findViewById(R.id.author_item_name);
+        mBookCountTextView = itemView.findViewById(R.id.author_item_count);
       }
 
-      void bind(AuthorEntity authorEntity) {
+      void bind(BookAuthor bookAuthor) {
 
-        mAuthorEntity = authorEntity;
+        mBookAuthor = bookAuthor;
 
-        if (mAuthorEntity != null) {
-          mNameTextView.setText(mAuthorEntity.Name);
-          mCountTextView.setText(String.format(getString(R.string.books_by_author), 0));
+        if (mBookAuthor != null) {
+          mAuthorTextView.setText(mBookAuthor.AuthorName);
+          mBookCountTextView.setText(String.format(getString(R.string.books_by_author), mBookAuthor.BookCount));
         }
-      }
-
-      @Override
-      public void onClick(View view) {
-
-        Log.d(TAG, "++AuthorEntityHolder::onClick(View)");
-        mCallback.onAuthorItemSelected(mAuthorEntity);
       }
     }
 
     private final LayoutInflater mInflater;
-    private List<AuthorEntity> mAuthorEntityList;
+    private List<BookAuthor> mBookAuthorList;
 
-    AuthorEntityAdapter(Context context) {
+    BookAuthorAdapter(Context context) {
 
       mInflater = LayoutInflater.from(context);
     }
 
     @NonNull
     @Override
-    public AuthorEntityHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public BookAuthorHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
       View itemView = mInflater.inflate(R.layout.item_author, parent, false);
-      return new AuthorEntityHolder(itemView);
+      return new BookAuthorHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AuthorEntityHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BookAuthorHolder holder, int position) {
 
-      if (mAuthorEntityList != null) {
-        AuthorEntity authorEntity = mAuthorEntityList.get(position);
-        holder.bind(authorEntity);
+      if (mBookAuthorList != null) {
+        BookAuthor bookAuthor = mBookAuthorList.get(position);
+        holder.bind(bookAuthor);
       } else {
-        // No authors!
+        // No books!
       }
     }
 
     @Override
     public int getItemCount() {
 
-      if (mAuthorEntityList != null) {
-        return mAuthorEntityList.size();
+      if (mBookAuthorList != null) {
+        return mBookAuthorList.size();
       } else {
         return 0;
       }
     }
 
-    void setAuthorEntityList(List<AuthorEntity> authorEntityList) {
+    void setBookAuthorList(List<BookAuthor> bookAuthorList) {
 
-      Log.d(TAG, "++setAuthorEntityList(List<AuthorEntity>");
-      mAuthorEntityList = authorEntityList;
+      Log.d(TAG, "++setBookAuthorList(List<BookAuthor>");
+      mBookAuthorList = bookAuthorList;
+      mCallback.onItemListPopulated(mBookAuthorList.size());
+      notifyDataSetChanged();
+    }
+  }
+
+  /*
+  Adapter class for BookCategory objects
+*/
+  private class BookCategoryAdapter extends RecyclerView.Adapter<BookCategoryAdapter.BookCategoryHolder> {
+
+    /*
+      Holder class for BookCategory objects
+     */
+    class BookCategoryHolder extends RecyclerView.ViewHolder {
+
+      private final TextView mCategoryTextView;
+      private final TextView mBookCountTextView;
+
+      private BookCategory mBookCategory;
+
+      BookCategoryHolder(View itemView) {
+        super(itemView);
+
+        mCategoryTextView = itemView.findViewById(R.id.category_item_name);
+        mBookCountTextView = itemView.findViewById(R.id.category_item_count);
+      }
+
+      void bind(BookCategory bookCategory) {
+
+        mBookCategory = bookCategory;
+
+        if (mBookCategory != null) {
+          mCategoryTextView.setText(mBookCategory.CategoryName);
+          mBookCountTextView.setText(String.format(getString(R.string.books_within_category), mBookCategory.BookCount));
+        }
+      }
+    }
+
+    private final LayoutInflater mInflater;
+    private List<BookCategory> mBookCategoryList;
+
+    BookCategoryAdapter(Context context) {
+
+      mInflater = LayoutInflater.from(context);
+    }
+
+    @NonNull
+    @Override
+    public BookCategoryHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+      View itemView = mInflater.inflate(R.layout.item_category, parent, false);
+      return new BookCategoryHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull BookCategoryHolder holder, int position) {
+
+      if (mBookCategoryList != null) {
+        BookCategory bookCategory = mBookCategoryList.get(position);
+        holder.bind(bookCategory);
+      } else {
+        // No books!
+      }
+    }
+
+    @Override
+    public int getItemCount() {
+
+      if (mBookCategoryList != null) {
+        return mBookCategoryList.size();
+      } else {
+        return 0;
+      }
+    }
+
+    void setBookCategoryList(List<BookCategory> bookCategoryList) {
+
+      Log.d(TAG, "++setBookCategoryList(List<BookCategory>");
+      mBookCategoryList = bookCategoryList;
+      mCallback.onItemListPopulated(bookCategoryList.size());
       notifyDataSetChanged();
     }
   }
@@ -328,13 +384,9 @@ public class ItemListFragment  extends Fragment {
           mDeleteImage.setOnClickListener(v -> {
             if (getActivity() != null) {
               String message = String.format(Locale.US, getString(R.string.remove_specific_book_message), mBookEntity.Title);
-              if (mBookEntity.Title.isEmpty()) {
-                message = getString(R.string.remove_book_message);
-              }
-
               AlertDialog removeBookDialog = new AlertDialog.Builder(getActivity())
                 .setMessage(message)
-                .setPositiveButton(android.R.string.yes, (dialog, which) -> mCallback.onItemListDeleteBook(mBookEntity.VolumeId))
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> mBookListViewModel.delete(mBookEntity.VolumeId))
                 .setNegativeButton(android.R.string.no, null)
                 .create();
               removeBookDialog.show();
@@ -343,7 +395,7 @@ public class ItemListFragment  extends Fragment {
             }
           });
 
-          mAuthorsTextView.setText(mBookEntity.AuthorId);
+          mAuthorsTextView.setText(mBookEntity.Authors);
           mCategoriesTextView.setVisibility(View.GONE);
           mISBNTextView.setText(
             String.format(
@@ -351,7 +403,9 @@ public class ItemListFragment  extends Fragment {
               getString(R.string.isbn_format),
               mBookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13) ? mBookEntity.ISBN_8 : mBookEntity.ISBN_13));
 
+          mOwnSwitch.setText(mBookEntity.IsOwned ? getString(R.string.owned) : getString(R.string.not_owned));
           mOwnSwitch.setChecked(mBookEntity.IsOwned);
+          mReadSwitch.setText(mBookEntity.HasRead ? getString(R.string.read) : getString(R.string.unread));
           mReadSwitch.setChecked(mBookEntity.HasRead);
 
           mPublishedTextView.setVisibility(View.GONE);
@@ -402,6 +456,7 @@ public class ItemListFragment  extends Fragment {
 
       Log.d(TAG, "++setBookDetailList(List<BookEntity>");
       mBookEntityList = bookEntityList;
+      mCallback.onItemListPopulated(bookEntityList.size());
       notifyDataSetChanged();
     }
   }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <dimen name="default_view_margin">8dp</dimen>
-  <dimen name="default_image_margin">4dp</dimen>
   <dimen name="image_height_thumbnail">@android:dimen/thumbnail_height</dimen>
   <dimen name="image_width_thumbnail">@android:dimen/thumbnail_width</dimen>
 
@@ -19,10 +18,10 @@
   <dimen name="bottom_prompt_chip_text_size">14sp</dimen>
   <dimen name="bottom_prompt_chip_margin_bottom">28dp</dimen>
   <dimen name="bottom_prompt_chip_corner_radius">8dp</dimen>
-  <dimen name="barcode_reticle_ripple_stroke_width">4dp</dimen>
-  <dimen name="barcode_reticle_ripple_size_offset">40dp</dimen>
-  <dimen name="barcode_reticle_stroke_width">4dp</dimen>
-  <dimen name="barcode_reticle_corner_radius">8dp</dimen>
+  <dimen name="barcode_reticule_ripple_stroke_width">4dp</dimen>
+  <dimen name="barcode_reticule_ripple_size_offset">40dp</dimen>
+  <dimen name="barcode_reticule_stroke_width">4dp</dimen>
+  <dimen name="barcode_reticule_corner_radius">8dp</dimen>
   <dimen name="barcode_field_padding_horizontal">24dp</dimen>
   <dimen name="barcode_field_padding_vertical">12dp</dimen>
   <dimen name="barcode_field_value_size">16sp</dimen>

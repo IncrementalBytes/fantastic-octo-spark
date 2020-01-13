@@ -35,15 +35,15 @@ import androidx.annotation.StringRes;
  **/
 public class PreferenceUtils {
 
-  public static RectF getBarcodeReticleBox(GraphicOverlay overlay) {
+  public static RectF getBarcodeReticuleBox(GraphicOverlay overlay) {
 
     Context context = overlay.getContext();
     float overlayWidth = overlay.getWidth();
     float overlayHeight = overlay.getHeight();
     float boxWidth =
-      overlayWidth * getIntPref(context, R.string.pref_key_barcode_reticle_width, 80) / 100;
+      overlayWidth * getIntPref(context, R.string.pref_key_barcode_reticule_width, 80) / 100;
     float boxHeight =
-      overlayHeight * getIntPref(context, R.string.pref_key_barcode_reticle_height, 35) / 100;
+      overlayHeight * getIntPref(context, R.string.pref_key_barcode_reticule_height, 35) / 100;
     float cx = overlayWidth / 2;
     float cy = overlayHeight / 2;
     return new RectF(cx - boxWidth / 2, cy - boxHeight / 2, cx + boxWidth / 2, cy + boxHeight / 2);
@@ -54,10 +54,10 @@ public class PreferenceUtils {
     GraphicOverlay overlay, FirebaseVisionBarcode barcode) {
     Context context = overlay.getContext();
     if (getBooleanPref(context, R.string.pref_key_enable_barcode_size_check, false)) {
-      float reticleBoxWidth = getBarcodeReticleBox(overlay).width();
+      float reticuleBoxWidth = getBarcodeReticuleBox(overlay).width();
       if (barcode != null && barcode.getBoundingBox() != null) {
         float barcodeWidth = overlay.translateX(barcode.getBoundingBox().width());
-        float requiredWidth = reticleBoxWidth * getIntPref(context, R.string.pref_key_minimum_barcode_width, 50) / 100;
+        float requiredWidth = reticuleBoxWidth * getIntPref(context, R.string.pref_key_minimum_barcode_width, 50) / 100;
         return Math.min(barcodeWidth / requiredWidth, 1);
       } else {
         return 1;

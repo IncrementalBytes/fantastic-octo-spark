@@ -28,27 +28,21 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import net.whollynugatory.android.cloudycurator.db.dao.AuthorDao;
 import net.whollynugatory.android.cloudycurator.db.dao.BookDao;
-import net.whollynugatory.android.cloudycurator.db.entity.AuthorEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
-import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Database(
-  entities = {AuthorEntity.class, BookEntity.class},
-  views = {BookDetail.class },
+  entities = {BookEntity.class},
   version = 1,
   exportSchema = false
 )
 public abstract class CuratorDatabase extends RoomDatabase {
 
   private static final String TAG = BaseActivity.BASE_TAG + "CuratorDatabase";
-
-  public abstract AuthorDao authorDao();
 
   public abstract BookDao bookDao();
 
@@ -82,7 +76,14 @@ public abstract class CuratorDatabase extends RoomDatabase {
     public void onCreate(@NonNull SupportSQLiteDatabase db) {
       super.onCreate(db);
 
-      databaseWriteExecutor.execute(() -> INSTANCE.authorDao().insert(new AuthorEntity()));
+      Log.d(TAG, "++onCreate(SupportSQLiteDatabase)");
+    }
+
+    @Override
+    public void onOpen(@NonNull SupportSQLiteDatabase db) {
+      super.onOpen(db);
+
+      Log.d(TAG, "++onOpen(SupportSQLiteDatabase)");
     }
   };
 }

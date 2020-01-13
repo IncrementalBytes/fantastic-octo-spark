@@ -19,6 +19,8 @@ package net.whollynugatory.android.cloudycurator.db.viewmodel;
 import android.app.Application;
 
 import net.whollynugatory.android.cloudycurator.db.CuratorDatabase;
+import net.whollynugatory.android.cloudycurator.db.data.BookAuthor;
+import net.whollynugatory.android.cloudycurator.db.data.BookCategory;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.repositories.BookRepository;
 
@@ -47,6 +49,16 @@ public class BookListViewModel extends AndroidViewModel {
   public LiveData<BookEntity> find(String barcodeValue) {
 
     return mRepository.find(barcodeValue);
+  }
+
+  public LiveData<List<BookAuthor>> getAllByAuthors() {
+
+    return mRepository.getByAuthors();
+  }
+
+  public LiveData<List<BookCategory>> getAllByCategories() {
+
+    return mRepository.getByCategories();
   }
 
   public LiveData<List<BookEntity>> getAll() {

@@ -16,8 +16,9 @@
 
 package net.whollynugatory.android.cloudycurator.db.dao;
 
+import net.whollynugatory.android.cloudycurator.db.data.BookAuthor;
+import net.whollynugatory.android.cloudycurator.db.data.BookCategory;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
-import net.whollynugatory.android.cloudycurator.db.views.BookDetail;
 
 import java.util.List;
 
@@ -37,11 +38,17 @@ public interface BookDao {
   @Query("SELECT * FROM books_table WHERE volume_id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
   LiveData<BookEntity> find(String bookId);
 
+  @Query("SELECT Authors AS AuthorName, COUNT() AS BookCount FROM books_table GROUP BY AuthorName")
+  LiveData<List<BookAuthor>> getAllByAuthors();
+
+  @Query("SELECT Categories AS CategoryName, COUNT() AS BookCount FROM books_table GROUP BY CategoryName")
+  LiveData<List<BookCategory>> getAllByCategories();
+
   @Query("SELECT * FROM books_table LIMIT 50")
   LiveData<List<BookEntity>> getAllByRecent();
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  long insert(BookEntity bookEntity);
+  void insert(BookEntity bookEntity);
 
   @Update
   void update(BookEntity bookEntity);

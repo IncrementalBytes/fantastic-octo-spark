@@ -5,8 +5,8 @@ import android.animation.ValueAnimator;
 
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
-/** Custom animator for the object or barcode reticle in live camera. */
-public class CameraReticleAnimator {
+/** Custom animator for the object or barcode reticule in live camera. */
+public class CameraReticuleAnimator {
 
   private static final long DURATION_RIPPLE_FADE_IN_MS = 333;
   private static final long DURATION_RIPPLE_FADE_OUT_MS = 500;
@@ -24,7 +24,7 @@ public class CameraReticleAnimator {
 
   private final AnimatorSet animatorSet;
 
-  public CameraReticleAnimator(GraphicOverlay graphicOverlay) {
+  public CameraReticuleAnimator(GraphicOverlay graphicOverlay) {
     ValueAnimator rippleFadeInAnimator =
       ValueAnimator.ofFloat(0f, 1f).setDuration(DURATION_RIPPLE_FADE_IN_MS);
     rippleFadeInAnimator.addUpdateListener(

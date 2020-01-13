@@ -53,7 +53,7 @@ class BarcodeLoadingGraphic extends BarcodeGraphicBase {
     for (int j = 0; j < 4; j++) {
       int index = (i + j) % 4;
       int nextIndex = (i + j + 1) % 4;
-      // The length between path's current end point and reticle box's next coordinate point.
+      // The length between path's current end point and reticule box's next coordinate point.
       float lineLen =
         Math.abs(boxClockwiseCoordinates[nextIndex].x - lastPathPoint.x)
           + Math.abs(boxClockwiseCoordinates[nextIndex].y - lastPathPoint.y);

@@ -14,27 +14,20 @@
  *    limitations under the License.
  */
 
-package net.whollynugatory.android.cloudycurator.common;
+package net.whollynugatory.android.cloudycurator.db.data;
 
-import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import androidx.room.ColumnInfo;
 
-import java.util.Comparator;
+public class BookCategory {
 
-public class SortUtils {
+  @ColumnInfo(name = "CategoryName")
+  public String CategoryName;
 
-    public static class ByBookName implements Comparator<BookEntity> {
+  @ColumnInfo(name = "BookCount")
+  public int BookCount;
 
-        public int compare(BookEntity a, BookEntity b) {
-
-            return a.Title.compareTo(b.Title);
-        }
-    }
-
-    public static class ByRecent implements Comparator<BookEntity> {
-
-        public int compare(BookEntity a, BookEntity b) {
-
-            return Long.compare(a.AddedDate, b.AddedDate);
-        }
-    }
+  public BookCategory() {
+    CategoryName = "";
+    BookCount = 0;
+  }
 }
