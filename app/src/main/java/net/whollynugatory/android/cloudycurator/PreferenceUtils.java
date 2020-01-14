@@ -49,6 +49,21 @@ public class PreferenceUtils {
     return new RectF(cx - boxWidth / 2, cy - boxHeight / 2, cx + boxWidth / 2, cy + boxHeight / 2);
   }
 
+  public static boolean getCameraBypass(Context context) {
+
+    return getBooleanPref(context, R.string.pref_key_bypass, false);
+  }
+
+  public static boolean getDelayLoadingBarcodeResult(Context context) {
+
+    return getBooleanPref(context, R.string.pref_key_delay_loading_barcode_result, true);
+  }
+
+  public static boolean getExceptionTest(Context context) {
+
+    return getBooleanPref(context, R.string.pref_key_exception, false);
+  }
+
   public static float getProgressToMeetBarcodeSizeRequirement(
 
     GraphicOverlay overlay, FirebaseVisionBarcode barcode) {
@@ -67,6 +82,11 @@ public class PreferenceUtils {
     }
   }
 
+  public static boolean getUseCamera(Context context) {
+
+    return getBooleanPref(context, R.string.perf_key_use_camera, true);
+  }
+
   @Nullable
   public static CameraSizePair getUserSpecifiedPreviewSize(Context context) {
 
@@ -80,16 +100,6 @@ public class PreferenceUtils {
     } catch (Exception e) {
       return null;
     }
-  }
-
-  public static boolean isBypass(Context context) {
-
-    return getBooleanPref(context, R.string.pref_key_bypass, false);
-  }
-
-  public static boolean isException(Context context) {
-
-    return getBooleanPref(context, R.string.pref_key_exception, false);
   }
 
   public static void saveBooleanPreference(
@@ -110,11 +120,10 @@ public class PreferenceUtils {
       .apply();
   }
 
-  public static boolean shouldDelayLoadingBarcodeResult(Context context) {
 
-    return getBooleanPref(context, R.string.pref_key_delay_loading_barcode_result, true);
-  }
-
+  /*
+    Private Method(s)
+   */
   private static boolean getBooleanPref(
 
     Context context, @StringRes int prefKeyId, boolean defaultValue) {

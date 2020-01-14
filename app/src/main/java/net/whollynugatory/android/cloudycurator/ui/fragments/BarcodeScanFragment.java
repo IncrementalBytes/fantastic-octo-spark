@@ -51,6 +51,7 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
 
   public interface OnBarcodeScanListener {
 
+    void onBarcodeManual();
     void onBarcodeScanClose();
     void onBarcodeScanned(String barcodeValue);
     void onBarcodeScanSettings();
@@ -59,14 +60,15 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
   private OnBarcodeScanListener mCallback;
 
   private CameraSource mCameraSource;
-  private CameraSourcePreview mPreview;
-  private GraphicOverlay mGraphicOverlay;
-  private View mSettingsButton;
+  private WorkflowModel.WorkflowState mCurrentWorkflowState;
   private View mFlashButton;
+  private GraphicOverlay mGraphicOverlay;
+  private View mManualButton;
+  private CameraSourcePreview mPreview;
   private Chip mPromptChip;
   private AnimatorSet mPromptChipAnimator;
+  private View mSettingsButton;
   private WorkflowModel mWorkflowModel;
-  private WorkflowModel.WorkflowState mCurrentWorkflowState;
 
   public static BarcodeScanFragment newInstance() {
 
@@ -105,6 +107,7 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
     View closeButton = view.findViewById(R.id.close_button);
     mFlashButton = view.findViewById(R.id.flash_button);
     mGraphicOverlay = view.findViewById(R.id.camera_preview_graphic_overlay);
+    mManualButton = view.findViewById(R.id.manual_button);
     mPreview = view.findViewById(R.id.camera_preview);
     mPromptChip = view.findViewById(R.id.bottom_prompt_chip);
     mSettingsButton = view.findViewById(R.id.settings_button);
@@ -117,6 +120,7 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
 
     closeButton.setOnClickListener(this);
     mFlashButton.setOnClickListener(this);
+    mManualButton.setOnClickListener(this);
     mSettingsButton.setOnClickListener(this);
     return view;
   }
@@ -173,20 +177,26 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
   public void onClick(View view) {
 
     Log.d(TAG, "++onClick(View)");
-    int id = view.getId();
-    if (id == R.id.close_button) {
-      mCallback.onBarcodeScanClose();
-    } else if (id == R.id.flash_button) {
-      if (mFlashButton.isSelected()) {
-        mFlashButton.setSelected(false);
-        mCameraSource.updateFlashMode(Parameters.FLASH_MODE_OFF);
-      } else {
-        mFlashButton.setSelected(true);
-        mCameraSource.updateFlashMode(Parameters.FLASH_MODE_TORCH);
-      }
-    } else if (id == R.id.settings_button) {
-      mSettingsButton.setEnabled(false);
-      mCallback.onBarcodeScanSettings();
+    switch (view.getId()) {
+      case R.id.close_button:
+        mCallback.onBarcodeScanClose();
+        break;
+      case R.id.flash_button:
+        if (mFlashButton.isSelected()) {
+          mFlashButton.setSelected(false);
+          mCameraSource.updateFlashMode(Parameters.FLASH_MODE_OFF);
+        } else {
+          mFlashButton.setSelected(true);
+          mCameraSource.updateFlashMode(Parameters.FLASH_MODE_TORCH);
+        }
+        break;
+      case R.id.manual_button:
+        mCallback.onBarcodeManual();
+        break;
+      case R.id.settings_button:
+        mSettingsButton.setEnabled(false);
+        mCallback.onBarcodeScanSettings();
+        break;
     }
   }
 

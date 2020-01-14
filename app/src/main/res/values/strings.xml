@@ -48,7 +48,7 @@
   <string name="err_image_empty">Image was empty.</string>
   <string name="err_image_not_found">Image does not exist.</string>
   <string name="debug_prompt">Select image file to use:</string>
-  <string name="hint_search_isbn">8 or 13 digit ISBN number.</string>
+  <string name="hint_search_isbn">8 or 13 digit ISBN number</string>
   <string name="hint_example">Example:</string>
   <string name="hint_img_barcode">Sample ISNB barcode.</string>
   <string name="menu_settings">Settings</string>
@@ -106,6 +106,10 @@
   <string name="menu_categories">Categories</string>
   <string name="books_by_author">Books by author: %d</string>
   <string name="books_within_category">Books within category: %d</string>
+  <string name="cd_manual_button">Manually enter ISBN</string>
+  <string name="perf_summary_use_camera">Use camera to detect barcode.</string>
+  <string name="perf_title_use_camera">Use Camera</string>
+  <string name="perf_key_use_camera">use_camera</string>
 
   <plurals name="navigation_book_format">
     <item quantity="one">You have 1 book).</item>

@@ -6,17 +6,6 @@
   android:orientation="vertical">
 
   <TextView
-    android:id="@+id/manual_search_text_no_barcode"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_margin="@dimen/default_view_margin"
-    android:text="@string/err_bar_code_not_found"
-    android:textColor="@color/warningTextColor"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"/>
-
-  <TextView
     android:id="@+id/manual_search_text_isbn"
     android:textStyle="bold"
     android:layout_width="wrap_content"
@@ -25,9 +14,9 @@
     android:text="@string/isbn"
     android:textAppearance="?android:attr/textAppearanceMedium"
     android:textSize="18sp"
-    app:layout_constraintBottom_toBottomOf="@id/manual_search_edit_isbn"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="@id/manual_search_edit_isbn"/>
+    app:layout_constraintTop_toTopOf="@id/manual_search_edit_isbn"
+    app:layout_constraintBottom_toBottomOf="@id/manual_search_edit_isbn"/>
   <EditText
     android:id="@+id/manual_search_edit_isbn"
     android:layout_width="0dp"
@@ -38,7 +27,7 @@
     android:hint="@string/hint_search_isbn"
     android:inputType="number|textNoSuggestions"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/manual_search_text_no_barcode"/>
+    app:layout_constraintTop_toTopOf="parent"/>
 
   <TextView
     android:id="@+id/manual_search_text_product_example"
@@ -67,16 +56,8 @@
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/default_view_margin"
     android:text="@string/continue_button"
+    app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toBottomOf="@id/manual_search_image_isbn" />
-  <Button
-    android:id="@+id/manual_search_button_retry"
-    style="@style/Widget.AppCompat.Button.Borderless"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/retry"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="@id/manual_search_button_continue"
-    app:layout_constraintBottom_toBottomOf="@id/manual_search_button_continue"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

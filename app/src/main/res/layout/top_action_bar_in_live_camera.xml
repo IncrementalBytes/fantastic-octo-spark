@@ -34,4 +34,13 @@
     android:contentDescription="@string/cd_flash_button"
     app:srcCompat="@drawable/camera_flash"/>
 
+  <ImageView
+    android:id="@+id/manual_button"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_toStartOf="@id/flash_button"
+    android:padding="@dimen/top_action_button_padding"
+    android:contentDescription="@string/cd_manual_button"
+    app:srcCompat="@drawable/ic_manual_dark"/>
+
 </RelativeLayout>

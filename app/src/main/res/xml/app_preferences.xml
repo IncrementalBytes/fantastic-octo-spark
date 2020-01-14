@@ -5,6 +5,13 @@
 
   <androidx.preference.PreferenceCategory android:title="@string/pref_category_camera">
 
+    <androidx.preference.SwitchPreference
+      android:title="@string/perf_title_use_camera"
+      android:defaultValue="true"
+      android:key="@string/perf_key_use_camera"
+      android:persistent="true"
+      android:summary="@string/perf_summary_use_camera"/>
+
     <androidx.preference.ListPreference
       android:key="@string/pref_key_rear_camera_preview_size"
       android:persistent="true"

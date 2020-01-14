@@ -17,6 +17,7 @@
 package net.whollynugatory.android.cloudycurator.ui;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -56,6 +57,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
@@ -85,6 +87,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements
   BarcodeScanFragment.OnBarcodeScanListener,
   ItemListFragment.OnItemListListener,
+  ManualSearchFragment.OnManualSearchListener,
   NavigationView.OnNavigationItemSelectedListener,
   QueryFragment.OnQueryListener,
   ResultListFragment.OnResultListListener {
@@ -381,6 +384,13 @@ public class MainActivity extends AppCompatActivity implements
       Fragment Override(s)
    */
   @Override
+  public void onBarcodeManual() {
+
+    Log.d(TAG, "++onBarcodeManual()");
+    replaceFragment(ManualSearchFragment.newInstance());
+  }
+
+  @Override
   public void onBarcodeScanClose() {
 
     Log.d(TAG, "++onBarcodeScanClose()");
@@ -391,19 +401,7 @@ public class MainActivity extends AppCompatActivity implements
   public void onBarcodeScanned(String barcodeValue) {
 
     Log.d(TAG, "++onBarcodeScanned(String)");
-    mBookListViewModel.find(barcodeValue).observe(this, bookEntity -> {
-
-      if (bookEntity == null) {
-        BookEntity queryForBook = new BookEntity();
-        if (barcodeValue != null && barcodeValue.length() == 8) {
-          queryForBook.ISBN_8 = barcodeValue;
-        } else if (barcodeValue != null && barcodeValue.length() == 13) {
-          queryForBook.ISBN_13 = barcodeValue;
-        }
-
-        new GoogleBookApiTask(this, queryForBook).execute();
-      } // TODO: found book, show summary fragment
-    });
+    lookupBarcode(barcodeValue);
   }
 
   @Override
@@ -425,6 +423,13 @@ public class MainActivity extends AppCompatActivity implements
 
     Log.d(TAG, "++onItemListPopulated(int)");
     mNavigationBooksText.setText(getResources().getQuantityString(R.plurals.navigation_book_format, size, size));
+  }
+
+  @Override
+  public void onManualSearchContinue(String barcodeValue) {
+
+    Log.d(TAG, "++onManualSearchContinue(String)");
+    lookupBarcode(barcodeValue);
   }
 
   @Override
@@ -562,24 +567,28 @@ public class MainActivity extends AppCompatActivity implements
       Log.d(TAG, "Permission granted: " + permission);
       switch (permissionRequest) {
         case BaseActivity.REQUEST_CAMERA_PERMISSIONS:
-          if (PreferenceUtils.isBypass(this)) {
-            LayoutInflater layoutInflater = LayoutInflater.from(this);
-            View promptView = layoutInflater.inflate(R.layout.dialog_debug_camera, null);
-            Spinner spinner = promptView.findViewById(R.id.debug_spinner_file);
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-            alertDialogBuilder.setView(promptView);
-            alertDialogBuilder.setCancelable(false)
-              .setPositiveButton(R.string.ok, (dialog, id) -> {
-                Intent debugIntent = new Intent();
-                debugIntent.putExtra(BaseActivity.ARG_DEBUG_FILE_NAME, spinner.getSelectedItem().toString());
-                onActivityResult(BaseActivity.REQUEST_IMAGE_CAPTURE, RESULT_OK, debugIntent);
-              })
-              .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
-
-            AlertDialog alert = alertDialogBuilder.create();
-            alert.show();
+          if (!PreferenceUtils.getUseCamera(this)) {
+            replaceFragment(ManualSearchFragment.newInstance());
           } else {
-            replaceFragment(BarcodeScanFragment.newInstance());
+            if (PreferenceUtils.getCameraBypass(this)) {
+              LayoutInflater layoutInflater = LayoutInflater.from(this);
+              View promptView = layoutInflater.inflate(R.layout.dialog_debug_camera, null);
+              Spinner spinner = promptView.findViewById(R.id.debug_spinner_file);
+              AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+              alertDialogBuilder.setView(promptView);
+              alertDialogBuilder.setCancelable(false)
+                .setPositiveButton(R.string.ok, (dialog, id) -> {
+                  Intent debugIntent = new Intent();
+                  debugIntent.putExtra(BaseActivity.ARG_DEBUG_FILE_NAME, spinner.getSelectedItem().toString());
+                  onActivityResult(BaseActivity.REQUEST_IMAGE_CAPTURE, RESULT_OK, debugIntent);
+                })
+                .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
+
+              AlertDialog alert = alertDialogBuilder.create();
+              alert.show();
+            } else {
+              replaceFragment(BarcodeScanFragment.newInstance());
+            }
           }
 
           break;
@@ -588,6 +597,37 @@ public class MainActivity extends AppCompatActivity implements
           break;
       }
     }
+  }
+
+  private void hideKeyboard() {
+
+    Log.d(TAG, "++hideKeyboard()");
+    InputMethodManager imm = (InputMethodManager) this.getSystemService(Activity.INPUT_METHOD_SERVICE);
+    View view = this.getCurrentFocus();
+    if (view == null) {
+      view = new View(this);
+    }
+
+    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+  }
+
+  private void lookupBarcode(String barcodeValue) {
+
+    Log.d(TAG, "++lookupBarcode(String)");
+    hideKeyboard();
+    mBookListViewModel.find(barcodeValue).observe(this, bookEntity -> {
+
+      if (bookEntity == null) {
+        BookEntity queryForBook = new BookEntity();
+        if (barcodeValue != null && barcodeValue.length() == 8) {
+          queryForBook.ISBN_8 = barcodeValue;
+        } else if (barcodeValue != null && barcodeValue.length() == 13) {
+          queryForBook.ISBN_13 = barcodeValue;
+        }
+
+        new GoogleBookApiTask(this, queryForBook).execute();
+      } // TODO: found book, show summary fragment
+    });
   }
 
   private void queryInUserBooks(BookEntity bookEntity) {
