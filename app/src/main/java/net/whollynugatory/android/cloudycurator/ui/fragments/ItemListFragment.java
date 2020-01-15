@@ -36,6 +36,8 @@ import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -69,16 +71,26 @@ public class ItemListFragment extends Fragment {
   private FloatingActionButton mAddButton;
   private RecyclerView mRecyclerView;
 
-  private ItemType mItemType;
-
   private BookListViewModel mBookListViewModel;
 
+  private BookEntity mBookEntity;
   private String mItemName;
+  private ItemType mItemType;
 
   public static ItemListFragment newInstance() {
 
     Log.d(TAG, "++newInstance()");
     return newInstance(ItemType.Books, "");
+  }
+
+  public static ItemListFragment newInstance(BookEntity bookEntity) {
+
+    Log.d(TAG, "++newInstance(BookEntity)");
+    ItemListFragment fragment = new ItemListFragment();
+    Bundle arguments = new Bundle();
+    arguments.putSerializable(BaseActivity.ARG_BOOK, bookEntity);
+    fragment.setArguments(arguments);
+    return fragment;
   }
 
   public static ItemListFragment newInstance(ItemType itemType) {
@@ -122,7 +134,12 @@ public class ItemListFragment extends Fragment {
       case Books:
         BookEntityAdapter bookEntityAdapter = new BookEntityAdapter(getContext());
         mRecyclerView.setAdapter(bookEntityAdapter);
-        mBookListViewModel.getAll().observe(this, bookEntityAdapter::setBookEntityList);
+        if (mBookEntity != null) {
+          bookEntityAdapter.setBookEntityList(Collections.singletonList(mBookEntity));
+        } else {
+          mBookListViewModel.getAll().observe(this, bookEntityAdapter::setBookEntityList);
+        }
+
         break;
       case Categories:
         if (mItemName != null && mItemName.length() > 0) {
@@ -169,6 +186,10 @@ public class ItemListFragment extends Fragment {
 
       if (arguments.containsKey(BaseActivity.ARG_ITEM_NAME)) {
         mItemName = arguments.getString(BaseActivity.ARG_ITEM_NAME);
+      }
+
+      if (arguments.containsKey(BaseActivity.ARG_BOOK)) {
+        mBookEntity = (BookEntity) arguments.getSerializable(BaseActivity.ARG_BOOK);
       }
     }
 
@@ -412,6 +433,7 @@ public class ItemListFragment extends Fragment {
         mOwnSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
 
           mBookEntity.IsOwned = isChecked;
+          mBookEntity.UpdatedDate = Calendar.getInstance().getTimeInMillis();
           mBookListViewModel.update(mBookEntity);
           mOwnSwitch.setText(isChecked ? getString(R.string.owned) : getString(R.string.not_owned));
         });
@@ -419,6 +441,7 @@ public class ItemListFragment extends Fragment {
         mReadSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
 
           mBookEntity.HasRead = isChecked;
+          mBookEntity.UpdatedDate = Calendar.getInstance().getTimeInMillis();
           mBookListViewModel.update(mBookEntity);
           mReadSwitch.setText(isChecked ? getString(R.string.read) : getString(R.string.unread));
         });

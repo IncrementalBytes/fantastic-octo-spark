@@ -16,15 +16,7 @@
   <string name="add_to_library">Add to Library?</string>
   <string name="err_add_book">Unable to add book to library, please try again later.</string>
   <string name="search">Search</string>
-  <string name="search_hint">Search term</string>
-  <string name="fragment_query">Search for Book</string>
   <string name="debug_path">/storage/self/primary/DCIM/Camera</string>
-  <string name="err_no_camera_detected">Camera was not detected.</string>
-  <string name="search_manual">Manual Search</string>
-  <string name="type_of_search">Search by:</string>
-  <string name="search_type_title">Title</string>
-  <string name="search_type_isbn">ISBN</string>
-  <string name="search_type_lccn">Library of Congress Control Number</string>
   <string name="published_date_format">Published: %s</string>
   <string name="dismiss">Dismiss</string>
   <string name="isbn_format">ISBN: %s</string>
@@ -32,11 +24,9 @@
   <string name="categories_format">Categories: %s</string>
   <string name="fragment_select_book">Select a Book to Add</string>
   <string name="librarian">Librarian</string>
-  <string name="scan_photo">Scan Photo</string>
   <string name="check_back_later">Check back later!</string>
   <string name="fragment_librarian">Break Room</string>
   <string name="fragment_manual">Search</string>
-  <string name="err_invalid_isbn">Invalid ISBN value.</string>
   <string name="cancel">Cancel</string>
   <string name="ok">OK</string>
   <string name="continue_button">Continue</string>

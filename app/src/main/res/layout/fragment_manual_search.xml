@@ -40,8 +40,8 @@
     app:layout_constraintBottom_toBottomOf="@id/manual_search_image_isbn"/>
   <ImageView
     android:id="@+id/manual_search_image_isbn"
-    android:layout_width="@android:dimen/thumbnail_width"
-    android:layout_height="@android:dimen/notification_large_icon_width"
+    android:layout_width="@dimen/image_width_thumbnail"
+    android:layout_height="@dimen/image_height_thumbnail"
     android:layout_margin="@dimen/default_view_margin"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toEndOf="@id/manual_search_text_product_example"

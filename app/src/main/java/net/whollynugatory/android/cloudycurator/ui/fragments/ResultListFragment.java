@@ -36,6 +36,7 @@ import net.whollynugatory.android.cloudycurator.R;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -198,6 +199,7 @@ public class ResultListFragment extends Fragment {
       addButton.setOnClickListener(v -> {
 
         Log.d(TAG, "++ResultHolder::onClick(View)");
+        mBookEntity.AddedDate = mBookEntity.UpdatedDate = Calendar.getInstance().getTimeInMillis();
         mBookListViewModel.insert(mBookEntity);
         mCallback.onResultListItemSelected(mBookEntity);
       });

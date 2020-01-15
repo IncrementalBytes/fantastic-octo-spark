@@ -36,6 +36,8 @@ import net.whollynugatory.android.cloudycurator.camera.CameraSource;
 import net.whollynugatory.android.cloudycurator.camera.CameraSourcePreview;
 import net.whollynugatory.android.cloudycurator.camera.GraphicOverlay;
 import net.whollynugatory.android.cloudycurator.camera.WorkflowModel;
+import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.io.IOException;
@@ -53,6 +55,7 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
 
     void onBarcodeManual();
     void onBarcodeScanClose();
+    void onBarcodeScanned(BookEntity bookEntity);
     void onBarcodeScanned(String barcodeValue);
     void onBarcodeScanSettings();
   }
@@ -69,6 +72,8 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
   private AnimatorSet mPromptChipAnimator;
   private View mSettingsButton;
   private WorkflowModel mWorkflowModel;
+
+  private BookListViewModel mBookListViewModel;
 
   public static BarcodeScanFragment newInstance() {
 
@@ -97,6 +102,7 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
     super.onCreate(savedInstanceState);
 
     Log.d(TAG, "++onCreate(Bundle)");
+    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
   }
 
   @Override
@@ -279,7 +285,14 @@ public class BarcodeScanFragment extends Fragment implements View.OnClickListene
       barcode -> {
         if (barcode != null) {
           if (barcode.getValueType() == FirebaseVisionBarcode.TYPE_ISBN) {
-            mCallback.onBarcodeScanned(barcode.getDisplayValue());
+            mBookListViewModel.find(barcode.getDisplayValue()).observe(this, bookEntity -> {
+
+              if (bookEntity != null) {
+                mCallback.onBarcodeScanned(bookEntity);
+              } else {
+                mCallback.onBarcodeScanned(barcode.getDisplayValue());
+              }
+            });
           } else {
             Log.w(TAG, "Unexpected bar code: " + barcode.getDisplayValue());
           }

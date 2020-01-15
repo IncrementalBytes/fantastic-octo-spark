@@ -28,12 +28,15 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import net.whollynugatory.android.cloudycurator.R;
+import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
+import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 public class ManualSearchFragment extends Fragment {
 
@@ -41,6 +44,7 @@ public class ManualSearchFragment extends Fragment {
 
   public interface OnManualSearchListener {
 
+    void onManualSearchContinue(BookEntity bookEntity);
     void onManualSearchContinue(String barcodeValue);
   }
 
@@ -49,10 +53,24 @@ public class ManualSearchFragment extends Fragment {
   private Button mContinueButton;
   private EditText mISBNEdit;
 
+  private BookListViewModel mBookListViewModel;
+
+  private String mBarcode;
+
   public static ManualSearchFragment newInstance() {
 
     Log.d(TAG, "++newInstance()");
     return new ManualSearchFragment();
+  }
+
+  public static ManualSearchFragment newInstance(String barcodeValue) {
+
+    Log.d(TAG, "++newInstance(String)");
+    ManualSearchFragment fragment = new ManualSearchFragment();
+    Bundle arguments = new Bundle();
+    arguments.putString(BaseActivity.ARG_BAR_CODE, barcodeValue);
+    fragment.setArguments(arguments);
+    return fragment;
   }
 
   /*
@@ -76,6 +94,14 @@ public class ManualSearchFragment extends Fragment {
     super.onCreate(savedInstanceState);
 
     Log.d(TAG, "++onCreate(Bundle)");
+    Bundle arguments = getArguments();
+    if (arguments != null) {
+      if (arguments.containsKey(BaseActivity.ARG_BAR_CODE)) {
+        mBarcode = arguments.getString(BaseActivity.ARG_BAR_CODE);
+      }
+    }
+
+    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
   }
 
   @Override
@@ -101,8 +127,17 @@ public class ManualSearchFragment extends Fragment {
 
     mISBNEdit = view.findViewById(R.id.manual_search_edit_isbn);
     mContinueButton = view.findViewById(R.id.manual_search_button_continue);
+
     mContinueButton.setEnabled(false);
-    mContinueButton.setOnClickListener(v -> mCallback.onManualSearchContinue(mISBNEdit.getText().toString()));
+    mContinueButton.setOnClickListener(v ->
+      mBookListViewModel.find(mISBNEdit.getText().toString()).observe(this, bookEntity -> {
+
+          if (bookEntity != null) {
+            mCallback.onManualSearchContinue(bookEntity);
+          } else {
+            mCallback.onManualSearchContinue(mISBNEdit.getText().toString());
+          }
+        }));
 
     // setup text change watchers
     mISBNEdit.addTextChangedListener(new TextWatcher() {
@@ -120,6 +155,11 @@ public class ManualSearchFragment extends Fragment {
         validateAll();
       }
     });
+
+
+    if (mBarcode != null && mBarcode.length() > 0) {
+      mISBNEdit.setText(mBarcode);
+    }
   }
 
   /*

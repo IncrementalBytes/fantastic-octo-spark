@@ -51,16 +51,13 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -70,12 +67,10 @@ import net.whollynugatory.android.cloudycurator.common.GoogleBookApiTask;
 import net.whollynugatory.android.cloudycurator.common.PathUtils;
 import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.entity.UserEntity;
-import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.fragments.BarcodeScanFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ItemListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.LibrarianFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ManualSearchFragment;
-import net.whollynugatory.android.cloudycurator.ui.fragments.QueryFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.ResultListFragment;
 import net.whollynugatory.android.cloudycurator.ui.fragments.UserPreferenceFragment;
 
@@ -89,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements
   ItemListFragment.OnItemListListener,
   ManualSearchFragment.OnManualSearchListener,
   NavigationView.OnNavigationItemSelectedListener,
-  QueryFragment.OnQueryListener,
   ResultListFragment.OnResultListListener {
 
   private static final String TAG = BaseActivity.BASE_TAG + "MainActivity";
@@ -98,8 +92,6 @@ public class MainActivity extends AppCompatActivity implements
   private DrawerLayout mDrawerLayout;
   private NavigationView mNavigationView;
   private Snackbar mSnackbar;
-
-  private BookListViewModel mBookListViewModel;
 
   private Bitmap mImageBitmap;
   private int mRotationAttempts;
@@ -148,8 +140,6 @@ public class MainActivity extends AppCompatActivity implements
           setTitle(getString(R.string.fragment_librarian));
         } else if (fragmentClassName.equals(ManualSearchFragment.class.getName())) {
           setTitle(getString(R.string.fragment_manual));
-        } else if (fragmentClassName.equals(QueryFragment.class.getName())) {
-          setTitle(getString(R.string.fragment_query));
         } else if (fragmentClassName.equals(ResultListFragment.class.getName())) {
           setTitle(R.string.fragment_select_book);
         } else if (fragmentClassName.equals(UserPreferenceFragment.class.getName())) {
@@ -159,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements
         }
       }
     });
-
-    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
 
     bottomNavigationView.setOnNavigationItemSelectedListener(menuItem -> {
 
@@ -397,6 +385,13 @@ public class MainActivity extends AppCompatActivity implements
   }
 
   @Override
+  public void onBarcodeScanned(BookEntity bookEntity) {
+
+    Log.d(TAG, "++onBarcodeScanned(BookEntity)");
+    replaceFragment(ItemListFragment.newInstance(bookEntity));
+  }
+
+  @Override
   public void onBarcodeScanned(String barcodeValue) {
 
     Log.d(TAG, "++onBarcodeScanned(String)");
@@ -439,76 +434,17 @@ public class MainActivity extends AppCompatActivity implements
   }
 
   @Override
+  public void onManualSearchContinue(BookEntity bookEntity) {
+
+    Log.d(TAG, "++onManualSearchContinue(BookEntity)");
+    replaceFragment(ItemListFragment.newInstance(bookEntity));
+  }
+
+  @Override
   public void onManualSearchContinue(String barcodeValue) {
 
     Log.d(TAG, "++onManualSearchContinue(String)");
     lookupBarcode(barcodeValue);
-  }
-
-  @Override
-  public void onQueryActionComplete(String message) {
-
-    Log.d(TAG, "++onQueryActionComplete(String)");
-    if (!message.isEmpty()) {
-      showDismissableSnackbar(message);
-    }
-  }
-
-  @Override
-  public void onQueryShowManualDialog() {
-
-    Log.d(TAG, "++onQueryShowManualDialog()");
-    LayoutInflater layoutInflater = LayoutInflater.from(this);
-    View promptView = layoutInflater.inflate(R.layout.dialog_search_manual, null);
-    EditText editText = promptView.findViewById(R.id.manual_dialog_edit_search);
-    RadioGroup radioGroup = promptView.findViewById(R.id.manual_dialog_radio_search);
-    androidx.appcompat.app.AlertDialog.Builder alertDialogBuilder = new androidx.appcompat.app.AlertDialog.Builder(this);
-    alertDialogBuilder.setView(promptView);
-    alertDialogBuilder.setCancelable(false)
-      .setPositiveButton(R.string.ok, (dialog, id) -> {
-
-        BookEntity bookEntity = new BookEntity();
-        switch (radioGroup.getCheckedRadioButtonId()) {
-          case R.id.manual_dialog_radio_isbn:
-            String value = editText.getText().toString();
-            if (value.length() == 8) {
-              bookEntity.ISBN_8 = value;
-            } else if (value.length() == 13) {
-              bookEntity.ISBN_13 = value;
-            }
-
-            if (!bookEntity.ISBN_8.equals(BaseActivity.DEFAULT_ISBN_8) ||
-              !bookEntity.ISBN_13.equals(BaseActivity.DEFAULT_ISBN_13)) {
-              queryInUserBooks(bookEntity);
-            } else {
-              showDismissableSnackbar(getString(R.string.err_invalid_isbn));
-            }
-
-            break;
-          case R.id.manual_dialog_radio_title:
-            bookEntity.Title = editText.getText().toString();
-            queryInUserBooks(bookEntity);
-            break;
-          case R.id.manual_dialog_radio_lccn:
-            bookEntity.LCCN = editText.getText().toString();
-            queryInUserBooks(bookEntity);
-        }
-      })
-      .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
-
-    androidx.appcompat.app.AlertDialog alert = alertDialogBuilder.create();
-    alert.show();
-  }
-
-  @Override
-  public void onQueryTakePicture() {
-
-    Log.d(TAG, "++onQueryTakePicture()");
-    if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-      checkForPermission(Manifest.permission.CAMERA, BaseActivity.REQUEST_CAMERA_PERMISSIONS);
-    } else {
-      showDismissableSnackbar(getString(R.string.err_no_camera_detected));
-    }
   }
 
   @Override
@@ -628,25 +564,14 @@ public class MainActivity extends AppCompatActivity implements
 
     Log.d(TAG, "++lookupBarcode(String)");
     hideKeyboard();
-    mBookListViewModel.find(barcodeValue).observe(this, bookEntity -> {
+    BookEntity queryForBook = new BookEntity();
+    if (barcodeValue != null && barcodeValue.length() == 8) {
+      queryForBook.ISBN_8 = barcodeValue;
+    } else if (barcodeValue != null && barcodeValue.length() == 13) {
+      queryForBook.ISBN_13 = barcodeValue;
+    }
 
-      if (bookEntity == null) {
-        BookEntity queryForBook = new BookEntity();
-        if (barcodeValue != null && barcodeValue.length() == 8) {
-          queryForBook.ISBN_8 = barcodeValue;
-        } else if (barcodeValue != null && barcodeValue.length() == 13) {
-          queryForBook.ISBN_13 = barcodeValue;
-        }
-
-        new GoogleBookApiTask(this, queryForBook).execute();
-      } // TODO: found book, show summary fragment
-    });
-  }
-
-  private void queryInUserBooks(BookEntity bookEntity) {
-
-    Log.d(TAG, "++queryInUserBooks(BookEntity)");
-    //new QueryBookDatabaseTask(this, CuratorRepository.getInstance(this), bookEntity).execute();
+    new GoogleBookApiTask(MainActivity.this, queryForBook).execute();
   }
 
   private void replaceFragment(Fragment fragment) {
@@ -696,7 +621,7 @@ public class MainActivity extends AppCompatActivity implements
 
           if (barcodeValue != null && !barcodeValue.isEmpty()) {
             mRotationAttempts = 0;
-            onBarcodeScanned(barcodeValue);
+            replaceFragment(ManualSearchFragment.newInstance(barcodeValue));
           } else if (mRotationAttempts < 3) {
             mRotationAttempts++;
             Matrix matrix = new Matrix();

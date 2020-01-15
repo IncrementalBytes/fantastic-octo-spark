@@ -20,9 +20,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 
-  public static final String ARG_AUTHOR_NAME = "author_name";
+  public static final String ARG_BAR_CODE = "bar_code";
   public static final String ARG_BOOK = "book";
-  public static final String ARG_CATEGORY_NAME = "category_name";
   public static final String ARG_DEBUG_FILE_NAME = "debug_file_name";
   public static final String ARG_EMAIL = "email";
   public static final String ARG_FIREBASE_USER_ID = "firebase_user_id";

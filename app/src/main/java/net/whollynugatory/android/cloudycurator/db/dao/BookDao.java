@@ -44,7 +44,7 @@ public interface BookDao {
   @Query("SELECT * FROM books_table WHERE Categories = :categoryName")
   LiveData<List<BookEntity>> getAllByCategory(String categoryName);
 
-  @Query("SELECT * FROM books_table LIMIT 50")
+  @Query("SELECT * FROM books_table ORDER BY added_date DESC LIMIT 50")
   LiveData<List<BookEntity>> getAllByRecent();
 
   @Query("SELECT * FROM AuthorSummaryView")
