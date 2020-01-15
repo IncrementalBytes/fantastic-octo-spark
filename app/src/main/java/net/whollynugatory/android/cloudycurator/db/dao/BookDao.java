@@ -38,14 +38,20 @@ public interface BookDao {
   @Query("SELECT * FROM books_table WHERE volume_id = :bookId OR isbn_8 = :bookId OR isbn_13 = :bookId")
   LiveData<BookEntity> find(String bookId);
 
-  @Query("SELECT * FROM AuthorSummaryView")
-  LiveData<List<BookAuthor>> getAllByAuthors();
+  @Query("SELECT * FROM books_table WHERE Authors = :authorName")
+  LiveData<List<BookEntity>> getAllByAuthor(String authorName);
 
-  @Query("SELECT * FROM CategorySummaryView")
-  LiveData<List<BookCategory>> getAllByCategories();
+  @Query("SELECT * FROM books_table WHERE Categories = :categoryName")
+  LiveData<List<BookEntity>> getAllByCategory(String categoryName);
 
   @Query("SELECT * FROM books_table LIMIT 50")
   LiveData<List<BookEntity>> getAllByRecent();
+
+  @Query("SELECT * FROM AuthorSummaryView")
+  LiveData<List<BookAuthor>> getSummaryByAuthors();
+
+  @Query("SELECT * FROM CategorySummaryView")
+  LiveData<List<BookCategory>> getSummaryByCategories();
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insert(BookEntity bookEntity);

@@ -56,10 +56,10 @@ public abstract class CuratorDatabase extends RoomDatabase {
 
   public static CuratorDatabase getInstance(final Context context) {
 
-    Log.d(TAG, "++getDatabase(Context)");
     if (INSTANCE == null) {
       synchronized (CuratorDatabase.class) {
         if (INSTANCE == null) {
+          Log.d(TAG, "++getInstance(Context)");
           INSTANCE = Room.databaseBuilder(
             context.getApplicationContext(),
             CuratorDatabase.class,

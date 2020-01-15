@@ -230,7 +230,6 @@ public class MainActivity extends AppCompatActivity implements
     Log.d(TAG, "++onNavigationItemSelected(MenuItem)");
     switch (item.getItemId()) {
       case R.id.navigation_menu_home:
-//        new GetDataTask(this, CuratorDatabase.getInstance(this)).execute();
         replaceFragment(ItemListFragment.newInstance());
         break;
       case R.id.navigation_menu_add:
@@ -416,6 +415,20 @@ public class MainActivity extends AppCompatActivity implements
 
     Log.d(TAG, "++onItemListAddBook()");
     checkForPermission(Manifest.permission.CAMERA, BaseActivity.REQUEST_CAMERA_PERMISSIONS);
+  }
+
+  @Override
+  public void onItemListAuthorSelected(String authorName) {
+
+    Log.d(TAG, "++onItemListAuthorSelected(String)");
+    replaceFragment(ItemListFragment.newInstance(ItemListFragment.ItemType.Authors, authorName));
+  }
+
+  @Override
+  public void onItemListCategorySelected(String categoryName) {
+
+    Log.d(TAG, "++onItemListCategorySelected(String)");
+    replaceFragment(ItemListFragment.newInstance(ItemListFragment.ItemType.Categories, categoryName));
   }
 
   @Override

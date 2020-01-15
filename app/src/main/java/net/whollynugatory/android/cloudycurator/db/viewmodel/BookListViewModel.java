@@ -51,19 +51,29 @@ public class BookListViewModel extends AndroidViewModel {
     return mRepository.find(barcodeValue);
   }
 
-  public LiveData<List<BookAuthor>> getAllByAuthors() {
-
-    return mRepository.getByAuthors();
-  }
-
-  public LiveData<List<BookCategory>> getAllByCategories() {
-
-    return mRepository.getByCategories();
-  }
-
   public LiveData<List<BookEntity>> getAll() {
 
     return mAllBooks;
+  }
+
+  public LiveData<List<BookEntity>> getAllByAuthor(String authorName) {
+
+    return mRepository.getByAuthor(authorName);
+  }
+
+  public LiveData<List<BookEntity>> getAllByCategory(String categoryName) {
+
+    return mRepository.getByCategory(categoryName);
+  }
+
+  public LiveData<List<BookAuthor>> getSummaryByAuthors() {
+
+    return mRepository.getSummaryByAuthors();
+  }
+
+  public LiveData<List<BookCategory>> getSummaryByCategories() {
+
+    return mRepository.getSummaryByCategories();
   }
 
   public void insert(BookEntity bookEntity) {

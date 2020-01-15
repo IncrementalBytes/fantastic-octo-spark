@@ -44,10 +44,10 @@ public class BookRepository {
 
   public static BookRepository getInstance(final BookDao bookDao) {
 
-    Log.d(TAG, "++getDatabase(Context)");
     if (INSTANCE == null) {
       synchronized (BookRepository.class) {
         if (INSTANCE == null) {
+          Log.d(TAG, "++getInstance(Context)");
           INSTANCE = new BookRepository(bookDao);
         }
       }
@@ -66,19 +66,29 @@ public class BookRepository {
     return mBookDao.find(barcodeValue);
   }
 
-  public LiveData<List<BookAuthor>> getByAuthors() {
+  public LiveData<List<BookEntity>> getByAuthor(String authorName) {
 
-    return mBookDao.getAllByAuthors();
+    return mBookDao.getAllByAuthor(authorName);
   }
 
-  public LiveData<List<BookCategory>> getByCategories() {
+  public LiveData<List<BookEntity>> getByCategory(String categoryName) {
 
-    return mBookDao.getAllByCategories();
+    return mBookDao.getAllByCategory(categoryName);
   }
 
   public LiveData<List<BookEntity>> getRecent() {
 
     return mBookDao.getAllByRecent();
+  }
+
+  public LiveData<List<BookAuthor>> getSummaryByAuthors() {
+
+    return mBookDao.getSummaryByAuthors();
+  }
+
+  public LiveData<List<BookCategory>> getSummaryByCategories() {
+
+    return mBookDao.getSummaryByCategories();
   }
 
   public void insert(BookEntity bookEntity) {

@@ -40,8 +40,6 @@
   <string name="cancel">Cancel</string>
   <string name="ok">OK</string>
   <string name="continue_button">Continue</string>
-  <string name="err_bar_code_not_found">Barcode not found in image.</string>
-  <string name="retry">Retry</string>
   <string name="permission_camera">Permission needed for capturing barcode images for processing.</string>
   <string name="permission_storage">Permission needed for book database.</string>
   <string name="permission_default">Permission needed for application to function properly.</string>
@@ -50,7 +48,7 @@
   <string name="debug_prompt">Select image file to use:</string>
   <string name="hint_search_isbn">8 or 13 digit ISBN number</string>
   <string name="hint_example">Example:</string>
-  <string name="hint_img_barcode">Sample ISNB barcode.</string>
+  <string name="hint_img_barcode">Sample ISBN barcode.</string>
   <string name="menu_settings">Settings</string>
   <string name="message_unknown_activity_result">Unfortunately an unknown error occurred. Please try again later.</string>
   <string name="hint_remove_book">Remove book from library?</string>
@@ -70,34 +68,34 @@
 
   <!-- Strings for camera settings. -->
   <string name="pref_category_camera">Camera</string>
-  <string name="pref_key_rear_camera_preview_size" translatable="false">rcpvs</string>
-  <string name="pref_key_rear_camera_picture_size" translatable="false">rcpts</string>
+  <string name="pref_key_rear_camera_preview_size" translatable="false">camera_rear_preview_size</string>
+  <string name="pref_key_rear_camera_picture_size" translatable="false">camera_rear_picture_size</string>
   <string name="pref_title_rear_camera_preview_size">Rear camera preview size</string>
 
   <!-- Strings for barcode detection settings. -->
   <string name="pref_category_barcode_detection">Barcode detection</string>
-  <string name="pref_key_barcode_reticule_width" translatable="false">barcode_brw</string>
+  <string name="pref_key_barcode_reticule_width" translatable="false">barcode_reticule_width</string>
   <string name="pref_title_barcode_reticule_width">Barcode reticule width</string>
   <string name="pref_summary_barcode_reticule_width" formatted="false">Relative to the camera view width, ranges from 50% to 95%</string>
-  <string name="pref_key_barcode_reticule_height" translatable="false">barcode_brh</string>
+  <string name="pref_key_barcode_reticule_height" translatable="false">barcode_reticule_height</string>
   <string name="pref_title_barcode_reticule_height">Barcode reticule height</string>
   <string name="pref_summary_barcode_reticule_height" formatted="false">Relative to the camera view height, ranges from 20% to 80%</string>
-  <string name="pref_key_enable_barcode_size_check" translatable="false">barcode_ebsc</string>
+  <string name="pref_key_enable_barcode_size_check" translatable="false">barcode_size_check</string>
   <string name="pref_title_enable_barcode_size_check">Enable barcode size check</string>
   <string name="pref_summary_enable_barcode_size_check">Will prompt user to move camera closer if the detected barcode is too small</string>
-  <string name="pref_key_minimum_barcode_width" translatable="false">barcode_mbw</string>
+  <string name="pref_key_minimum_barcode_width" translatable="false">barcode_minimum_width</string>
   <string name="pref_title_minimum_barcode_width">Minimum barcode width</string>
   <string name="pref_summary_minimum_barcode_width" formatted="false">Relative to the reticule width, ranges from 20% to 80% (only applicable when barcode size check enabled)</string>
-  <string name="pref_key_delay_loading_barcode_result" translatable="false">barcode_dlbr</string>
+  <string name="pref_key_delay_loading_barcode_result" translatable="false">barcode_delay_loading</string>
   <string name="pref_title_delay_loading_barcode_result">Delay loading barcode result</string>
   <string name="pref_summary_delay_loading_barcode_result">Will show the loading spinner for 2s</string>
 
   <!-- Strings for debug settings. -->
   <string name="pref_category_debug">Debug</string>
-  <string name="pref_key_bypass" translatable="false">dbg_bypass</string>
+  <string name="pref_key_bypass" translatable="false">debug_bypass</string>
   <string name="pref_title_bypass">Detection Bypass</string>
   <string name="pref_summary_bypass" formatted="false">Bypass Barcode Detection</string>
-  <string name="pref_key_exception" translatable="false">dbg_exception</string>
+  <string name="pref_key_exception" translatable="false">debug_exception</string>
   <string name="pref_title_exception">Force Exception</string>
   <string name="pref_summary_exception" formatted="false">Force exception (debug test)</string>
   <string name="fragment_settings">Settings</string>
@@ -109,7 +107,7 @@
   <string name="cd_manual_button">Manually enter ISBN</string>
   <string name="perf_summary_use_camera">Use camera to detect barcode.</string>
   <string name="perf_title_use_camera">Use Camera</string>
-  <string name="perf_key_use_camera">use_camera</string>
+  <string name="perf_key_use_camera">camera_use</string>
 
   <plurals name="navigation_book_format">
     <item quantity="one">You have 1 book).</item>

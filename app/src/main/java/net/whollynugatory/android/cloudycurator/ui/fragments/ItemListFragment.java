@@ -35,6 +35,7 @@ import net.whollynugatory.android.cloudycurator.db.entity.BookEntity;
 import net.whollynugatory.android.cloudycurator.db.viewmodel.BookListViewModel;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -45,7 +46,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class ItemListFragment  extends Fragment {
+public class ItemListFragment extends Fragment {
 
   private static final String TAG = BaseActivity.BASE_TAG + "ItemListFragment";
 
@@ -58,6 +59,8 @@ public class ItemListFragment  extends Fragment {
   public interface OnItemListListener {
 
     void onItemListAddBook();
+    void onItemListAuthorSelected(String authorName);
+    void onItemListCategorySelected(String category);
     void onItemListPopulated(int size);
   }
 
@@ -70,18 +73,27 @@ public class ItemListFragment  extends Fragment {
 
   private BookListViewModel mBookListViewModel;
 
+  private String mItemName;
+
   public static ItemListFragment newInstance() {
 
     Log.d(TAG, "++newInstance()");
-    return newInstance(ItemType.Books);
+    return newInstance(ItemType.Books, "");
   }
 
   public static ItemListFragment newInstance(ItemType itemType) {
 
     Log.d(TAG, "++newInstance(ItemType)");
+    return newInstance(itemType, "");
+  }
+
+  public static ItemListFragment newInstance(ItemType itemType, String itemName) {
+
+    Log.d(TAG, "++newInstance(ItemType, String)");
     ItemListFragment fragment = new ItemListFragment();
     Bundle arguments = new Bundle();
     arguments.putSerializable(BaseActivity.ARG_LIST_TYPE, itemType);
+    arguments.putString(BaseActivity.ARG_ITEM_NAME, itemName);
     fragment.setArguments(arguments);
     return fragment;
   }
@@ -94,24 +106,35 @@ public class ItemListFragment  extends Fragment {
     super.onActivityCreated(savedInstanceState);
 
     Log.d(TAG, "++onActivityCreated()");
-    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
     switch (mItemType) {
       case Authors:
-        BookAuthorAdapter bookAuthorAdapter = new BookAuthorAdapter(getContext());
-        mRecyclerView.setAdapter(bookAuthorAdapter);
-        mBookListViewModel.getAllByAuthors().observe(this, bookAuthorAdapter::setBookAuthorList);
+        if (mItemName != null && mItemName.length() > 0) {
+          BookEntityAdapter specificAuthorAdapter = new BookEntityAdapter(getContext());
+          mRecyclerView.setAdapter(specificAuthorAdapter);
+          mBookListViewModel.getAllByAuthor(mItemName).observe(this, specificAuthorAdapter::setBookEntityList);
+        } else {
+          BookAuthorAdapter bookAuthorAdapter = new BookAuthorAdapter(getContext());
+          mRecyclerView.setAdapter(bookAuthorAdapter);
+          mBookListViewModel.getSummaryByAuthors().observe(this, bookAuthorAdapter::setBookAuthorList);
+        }
 
         break;
       case Books:
         BookEntityAdapter bookEntityAdapter = new BookEntityAdapter(getContext());
         mRecyclerView.setAdapter(bookEntityAdapter);
         mBookListViewModel.getAll().observe(this, bookEntityAdapter::setBookEntityList);
-
         break;
       case Categories:
-        BookCategoryAdapter bookCategoryAdapter = new BookCategoryAdapter(getContext());
-        mRecyclerView.setAdapter(bookCategoryAdapter);
-        mBookListViewModel.getAllByCategories().observe(this, bookCategoryAdapter::setBookCategoryList);
+        if (mItemName != null && mItemName.length() > 0) {
+          BookEntityAdapter specificCategoryAdapter = new BookEntityAdapter(getContext());
+          mRecyclerView.setAdapter(specificCategoryAdapter);
+          mBookListViewModel.getAllByCategory(mItemName).observe(this, specificCategoryAdapter::setBookEntityList);
+        } else {
+          BookCategoryAdapter bookCategoryAdapter = new BookCategoryAdapter(getContext());
+          mRecyclerView.setAdapter(bookCategoryAdapter);
+          mBookListViewModel.getSummaryByCategories().observe(this, bookCategoryAdapter::setBookCategoryList);
+        }
+
         break;
     }
 
@@ -138,9 +161,18 @@ public class ItemListFragment  extends Fragment {
 
     Log.d(TAG, "++onCreate(Bundle)");
     Bundle arguments = getArguments();
+    mItemType = ItemType.Books;
     if (arguments != null) {
-      mItemType = (ItemType)arguments.getSerializable(BaseActivity.ARG_LIST_TYPE);
+      if (arguments.containsKey(BaseActivity.ARG_LIST_TYPE)) {
+        mItemType = (ItemType) arguments.getSerializable(BaseActivity.ARG_LIST_TYPE);
+      }
+
+      if (arguments.containsKey(BaseActivity.ARG_ITEM_NAME)) {
+        mItemName = arguments.getString(BaseActivity.ARG_ITEM_NAME);
+      }
     }
+
+    mBookListViewModel = ViewModelProviders.of(this).get(BookListViewModel.class);
   }
 
   @Override
@@ -176,7 +208,7 @@ public class ItemListFragment  extends Fragment {
     /*
       Holder class for BookAuthor objects
      */
-    class BookAuthorHolder extends RecyclerView.ViewHolder {
+    class BookAuthorHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
       private final TextView mAuthorTextView;
       private final TextView mBookCountTextView;
@@ -188,6 +220,8 @@ public class ItemListFragment  extends Fragment {
 
         mAuthorTextView = itemView.findViewById(R.id.author_item_name);
         mBookCountTextView = itemView.findViewById(R.id.author_item_count);
+
+        itemView.setOnClickListener(this);
       }
 
       void bind(BookAuthor bookAuthor) {
@@ -198,6 +232,13 @@ public class ItemListFragment  extends Fragment {
           mAuthorTextView.setText(mBookAuthor.AuthorName);
           mBookCountTextView.setText(String.format(getString(R.string.books_by_author), mBookAuthor.BookCount));
         }
+      }
+
+      @Override
+      public void onClick(View view) {
+
+        Log.d(TAG, "++BookAuthorHolder::onClick(View)");
+        mCallback.onItemListAuthorSelected(mBookAuthor.AuthorName);
       }
     }
 
@@ -240,9 +281,8 @@ public class ItemListFragment  extends Fragment {
 
     void setBookAuthorList(List<BookAuthor> bookAuthorList) {
 
-      Log.d(TAG, "++setBookAuthorList(List<BookAuthor>");
+      Log.d(TAG, "++setBookAuthorList(List<BookAuthor>)");
       mBookAuthorList = bookAuthorList;
-      mCallback.onItemListPopulated(mBookAuthorList.size());
       notifyDataSetChanged();
     }
   }
@@ -255,7 +295,7 @@ public class ItemListFragment  extends Fragment {
     /*
       Holder class for BookCategory objects
      */
-    class BookCategoryHolder extends RecyclerView.ViewHolder {
+    class BookCategoryHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
       private final TextView mCategoryTextView;
       private final TextView mBookCountTextView;
@@ -267,6 +307,8 @@ public class ItemListFragment  extends Fragment {
 
         mCategoryTextView = itemView.findViewById(R.id.category_item_name);
         mBookCountTextView = itemView.findViewById(R.id.category_item_count);
+
+        itemView.setOnClickListener(this);
       }
 
       void bind(BookCategory bookCategory) {
@@ -277,6 +319,13 @@ public class ItemListFragment  extends Fragment {
           mCategoryTextView.setText(mBookCategory.CategoryName);
           mBookCountTextView.setText(String.format(getString(R.string.books_within_category), mBookCategory.BookCount));
         }
+      }
+
+      @Override
+      public void onClick(View view) {
+
+        Log.d(TAG, "++BookCategoryHolder::onClick(View)");
+        mCallback.onItemListCategorySelected(mBookCategory.CategoryName);
       }
     }
 
@@ -319,9 +368,8 @@ public class ItemListFragment  extends Fragment {
 
     void setBookCategoryList(List<BookCategory> bookCategoryList) {
 
-      Log.d(TAG, "++setBookCategoryList(List<BookCategory>");
+      Log.d(TAG, "++setBookCategoryList(List<BookCategory>)");
       mBookCategoryList = bookCategoryList;
-      mCallback.onItemListPopulated(bookCategoryList.size());
       notifyDataSetChanged();
     }
   }
@@ -454,8 +502,8 @@ public class ItemListFragment  extends Fragment {
 
     void setBookEntityList(List<BookEntity> bookEntityList) {
 
-      Log.d(TAG, "++setBookDetailList(List<BookEntity>");
-      mBookEntityList = bookEntityList;
+      Log.d(TAG, "++setBookDetailList(List<BookEntity>)");
+      mBookEntityList = new ArrayList<>(bookEntityList);
       mCallback.onItemListPopulated(bookEntityList.size());
       notifyDataSetChanged();
     }

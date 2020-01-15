@@ -102,10 +102,7 @@ public class ManualSearchFragment extends Fragment {
     mISBNEdit = view.findViewById(R.id.manual_search_edit_isbn);
     mContinueButton = view.findViewById(R.id.manual_search_button_continue);
     mContinueButton.setEnabled(false);
-    mContinueButton.setOnClickListener(v -> {
-
-      mCallback.onManualSearchContinue(mISBNEdit.getText().toString());
-    });
+    mContinueButton.setOnClickListener(v -> mCallback.onManualSearchContinue(mISBNEdit.getText().toString()));
 
     // setup text change watchers
     mISBNEdit.addTextChangedListener(new TextWatcher() {
