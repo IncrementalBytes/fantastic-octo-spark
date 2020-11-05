@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Ryan Ward
+ * Copyright 2020 Ryan Ward
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ProgressBar;
 
-import com.crashlytics.android.Crashlytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -153,7 +153,7 @@ public class SignInActivity extends AppCompatActivity implements OnClickListener
 
     if (mAuth.getCurrentUser() != null && mAccount != null) {
       Log.d(TAG, "++onAuthenticateSuccess()");
-      Crashlytics.setUserIdentifier(mAuth.getCurrentUser().getUid());
+      FirebaseCrashlytics.getInstance().setUserId(mAuth.getCurrentUser().getUid());
       Bundle bundle = new Bundle();
       bundle.putString(FirebaseAnalytics.Param.METHOD, "onAuthenticateSuccess");
       mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle);
@@ -184,7 +184,7 @@ public class SignInActivity extends AppCompatActivity implements OnClickListener
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SIGN_UP, bundle);
         onAuthenticateSuccess();
       } else {
-        Crashlytics.logException(task.getException());
+        FirebaseCrashlytics.getInstance().recordException(task.getException());
         String message = "Authenticating with Google account failed.";
         showErrorInSnackBar(message);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Ryan Ward
+ * Copyright 2020 Ryan Ward
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package net.whollynugatory.android.cloudycurator.common;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import net.whollynugatory.android.cloudycurator.ui.MainActivity;
 import net.whollynugatory.android.cloudycurator.ui.BaseActivity;
@@ -189,7 +189,7 @@ public class GoogleBookApiTask extends AsyncTask<Void, Void, ArrayList<BookEntit
           bookEntities.add(bookEntity);
         } catch (JSONException e) {
           Log.d(TAG, "Failed to parse JSON object.");
-          Crashlytics.logException(e);
+          FirebaseCrashlytics.getInstance().recordException(e);
         }
       }
     } else {
